@@ -7,6 +7,7 @@ import {
   completeReview,
   loadReview,
   loadReviewProgress,
+  loadReviewPrompt,
   resolveReview,
 } from "./review-flow.server"
 
@@ -49,6 +50,10 @@ function memorySnapshotStore(seedDemo = true): CorpusSnapshotStore {
   return {
     async append(ownerId, value) {
       snapshots.set(`${ownerId}:${value.corpusId}`, value)
+    },
+    async find(ownerId, corpusId, digest) {
+      const value = snapshots.get(`${ownerId}:${corpusId}`) ?? null
+      return value?.digest === digest ? value : null
     },
     async latest(ownerId, corpusId) {
       return snapshots.get(`${ownerId}:${corpusId}`) ?? null
@@ -124,6 +129,51 @@ describe("review flow", () => {
       attempt: "Paris",
       presentation: ["What is the capital of France?", "Paris"],
     })
+  })
+
+  test("given a submitted review context, should load only the exact owned snapshot and Prompt revision", async () => {
+    const store = memorySnapshotStore()
+
+    await expect(
+      loadReviewPrompt({
+        corpusId: demoCorpus.corpusId,
+        promptId: "capital-of-france",
+        promptRevision: 1,
+        snapshotDigest: "demo-digest",
+        snapshotStore: store,
+        userId: "user-1",
+      }),
+    ).resolves.toMatchObject({ id: "capital-of-france", revision: 1 })
+    await expect(
+      loadReviewPrompt({
+        corpusId: demoCorpus.corpusId,
+        promptId: "red-planet",
+        promptRevision: 2,
+        snapshotDigest: "demo-digest",
+        snapshotStore: store,
+        userId: "user-1",
+      }),
+    ).resolves.toBeNull()
+    await expect(
+      loadReviewPrompt({
+        corpusId: demoCorpus.corpusId,
+        promptId: "capital-of-france",
+        promptRevision: 1,
+        snapshotDigest: "tampered-digest",
+        snapshotStore: store,
+        userId: "user-1",
+      }),
+    ).resolves.toBeNull()
+    await expect(
+      loadReviewPrompt({
+        corpusId: demoCorpus.corpusId,
+        promptId: "capital-of-france",
+        promptRevision: 1,
+        snapshotDigest: "demo-digest",
+        snapshotStore: store,
+        userId: "user-2",
+      }),
+    ).resolves.toBeNull()
   })
 
   test("selects the next unreviewed Prompt from corpus order", async () => {

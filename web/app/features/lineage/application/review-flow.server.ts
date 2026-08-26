@@ -1,8 +1,8 @@
 import type { ReviewContract } from "../domain/corpus"
+import { parseCorpusDocument } from "../domain/corpus"
 import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewCore, ReviewRecordStore } from "../domain/review"
 import { reviewAssessmentSchema } from "../domain/review"
-import { exportCorpus } from "./import-corpus.server"
 import { selectNextPrompt } from "./review-queue"
 import { dueAt, isDue, scheduleReview } from "./review-scheduling"
 
@@ -32,12 +32,9 @@ export async function loadReview({
   snapshotStore: CorpusSnapshotStore
   userId: string
 }) {
-  const corpus = await exportCorpus({
-    corpusId,
-    ownerId: userId,
-    store: snapshotStore,
-  })
-  if (!corpus) throw new Error("The selected review corpus was not found")
+  const snapshot = await snapshotStore.latest(userId, corpusId)
+  if (!snapshot) throw new Error("The selected review corpus was not found")
+  const corpus = parseCorpusDocument(JSON.parse(snapshot.canonicalJson))
   const latestReviews = await reviewStore.latestForCorpus({
     corpusId: corpus.corpusId,
     userId,
@@ -50,7 +47,33 @@ export async function loadReview({
     prompt: queued.prompt,
     queueDueAt: queued.dueAt?.toISOString() ?? null,
     queueReviewed: queued.reviewed,
+    snapshotDigest: snapshot.digest,
   }
+}
+
+export async function loadReviewPrompt({
+  corpusId,
+  promptId,
+  promptRevision,
+  snapshotDigest,
+  snapshotStore,
+  userId,
+}: {
+  corpusId: string
+  promptId: string
+  promptRevision: number
+  snapshotDigest: string
+  snapshotStore: CorpusSnapshotStore
+  userId: string
+}) {
+  const snapshot = await snapshotStore.find(userId, corpusId, snapshotDigest)
+  if (!snapshot) return null
+  const corpus = parseCorpusDocument(JSON.parse(snapshot.canonicalJson))
+  return (
+    corpus.prompts.find(
+      (prompt) => prompt.id === promptId && prompt.revision === promptRevision,
+    ) ?? null
+  )
 }
 
 export async function loadReviewProgress({

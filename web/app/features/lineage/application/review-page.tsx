@@ -34,6 +34,7 @@ type ReviewLoaderData = {
   presentation: string[]
   prompt: { id: string; revision: number }
   reviewCount: number
+  snapshotDigest: string
   userEmail: string
 }
 
@@ -104,6 +105,21 @@ export function ReviewPage({
                 type="hidden"
                 value={loaderData.corpusId}
               />
+              <input
+                name="promptId"
+                type="hidden"
+                value={loaderData.prompt.id}
+              />
+              <input
+                name="promptRevision"
+                type="hidden"
+                value={loaderData.prompt.revision}
+              />
+              <input
+                name="snapshotDigest"
+                type="hidden"
+                value={loaderData.snapshotDigest}
+              />
               <FieldLabel htmlFor="review-attempt">Your answer</FieldLabel>
               <Input autoComplete="off" id="review-attempt" name="attempt" />
               <div className={s.actions}>
@@ -134,6 +150,21 @@ export function ReviewPage({
                   name="corpusId"
                   type="hidden"
                   value={loaderData.corpusId}
+                />
+                <input
+                  name="promptId"
+                  type="hidden"
+                  value={loaderData.prompt.id}
+                />
+                <input
+                  name="promptRevision"
+                  type="hidden"
+                  value={loaderData.prompt.revision}
+                />
+                <input
+                  name="snapshotDigest"
+                  type="hidden"
+                  value={loaderData.snapshotDigest}
                 />
                 <input
                   name="attempt"

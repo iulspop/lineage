@@ -46,6 +46,25 @@ describe("corpusSnapshotStore", () => {
     })
   })
 
+  test("given an exact owner, corpus, and digest, should return only that immutable snapshot", async () => {
+    await corpusSnapshotStore.append(owner1, {
+      canonicalJson: '{"revision":1}',
+      corpusId: "corpus-1",
+      digest: "digest-1",
+      formatVersion: 1,
+    })
+
+    await expect(
+      corpusSnapshotStore.find(owner1, "corpus-1", "digest-1"),
+    ).resolves.toMatchObject({ canonicalJson: '{"revision":1}' })
+    await expect(
+      corpusSnapshotStore.find(owner1, "corpus-1", "wrong-digest"),
+    ).resolves.toBeNull()
+    await expect(
+      corpusSnapshotStore.find(owner2, "corpus-1", "digest-1"),
+    ).resolves.toBeNull()
+  })
+
   test("lists one latest snapshot per corpus in stable corpus order", async () => {
     await corpusSnapshotStore.append(owner1, {
       canonicalJson: '{"revision":1}',

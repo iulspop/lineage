@@ -7,6 +7,7 @@ import {
   listReviewCorpora,
   loadReview,
   loadReviewProgress,
+  loadReviewPrompt,
   resolveReview,
 } from "~/features/lineage/application/review-flow.server"
 import { ReviewPage } from "~/features/lineage/application/review-page"
@@ -56,13 +57,33 @@ export async function action({ request }: Route.ActionArgs) {
   if (typeof corpusId !== "string" || !corpusId) {
     return data({ error: "A review corpus is required" }, { status: 400 })
   }
-  const review = await loadReview({
-    core: reviewCore,
+  const promptId = formData.get("promptId")
+  const promptRevision = Number(formData.get("promptRevision"))
+  const snapshotDigest = formData.get("snapshotDigest")
+  if (
+    typeof promptId !== "string" ||
+    !promptId ||
+    typeof snapshotDigest !== "string" ||
+    !snapshotDigest ||
+    !Number.isInteger(promptRevision) ||
+    promptRevision < 1
+  ) {
+    return data({ error: "A valid review Prompt is required" }, { status: 400 })
+  }
+  const prompt = await loadReviewPrompt({
     corpusId,
-    reviewStore: reviewRecordStore,
+    promptId,
+    promptRevision,
+    snapshotDigest,
     snapshotStore: corpusSnapshotStore,
     userId,
   })
+  if (!prompt) {
+    return data(
+      { error: "This review Prompt is no longer available" },
+      { status: 409 },
+    )
+  }
   const attempt =
     typeof formData.get("attempt") === "string"
       ? String(formData.get("attempt"))
@@ -71,7 +92,7 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "resolve") {
     return data({
       completed: false as const,
-      ...resolveReview({ attempt, core: reviewCore, prompt: review.prompt }),
+      ...resolveReview({ attempt, core: reviewCore, prompt }),
     })
   }
 
@@ -80,8 +101,8 @@ export async function action({ request }: Route.ActionArgs) {
       assessment: formData.get("assessment"),
       attempt,
       core: reviewCore,
-      corpusId: review.corpusId,
-      prompt: review.prompt,
+      corpusId,
+      prompt,
       store: reviewRecordStore,
       userId,
     })

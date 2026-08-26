@@ -13,6 +13,7 @@ const loaderData = {
   presentation: ["What is the capital of France?"],
   prompt: { id: "capital-of-france", revision: 1 },
   reviewCount: 0,
+  snapshotDigest: "demo-digest",
   userEmail: "learner@example.com",
 }
 
@@ -26,7 +27,7 @@ describe("ReviewPage", () => {
         path: "/review",
       },
     ])
-    render(<Router initialEntries={["/review"]} />)
+    const { container } = render(<Router initialEntries={["/review"]} />)
 
     expect(
       screen.getByText("What is the capital of France?"),
@@ -36,6 +37,15 @@ describe("ReviewPage", () => {
       screen.getByRole("button", { name: "Show answer" }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText("Corpus")).toHaveValue("lineage-demo")
+    expect(container.querySelector('input[name="promptId"]')).toHaveValue(
+      "capital-of-france",
+    )
+    expect(container.querySelector('input[name="promptRevision"]')).toHaveValue(
+      "1",
+    )
+    expect(container.querySelector('input[name="snapshotDigest"]')).toHaveValue(
+      "demo-digest",
+    )
   })
 
   test("shows the resolution and assessment controls after an attempt", () => {

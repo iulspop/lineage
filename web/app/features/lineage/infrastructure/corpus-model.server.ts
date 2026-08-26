@@ -19,6 +19,20 @@ export const corpusSnapshotStore: CorpusSnapshotStore = {
     })
   },
 
+  async find(ownerId, corpusId, digest): Promise<CorpusSnapshot | null> {
+    return prisma.lineageCorpusSnapshot.findUnique({
+      select: {
+        canonicalJson: true,
+        corpusId: true,
+        digest: true,
+        formatVersion: true,
+      },
+      where: {
+        ownerId_corpusId_digest: { corpusId, digest, ownerId },
+      },
+    })
+  },
+
   async latest(ownerId, corpusId): Promise<CorpusSnapshot | null> {
     return prisma.lineageCorpusSnapshot.findFirst({
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],

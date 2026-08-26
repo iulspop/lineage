@@ -16,6 +16,10 @@ function memoryStore(): CorpusSnapshotStore {
     async append(ownerId, snapshot) {
       snapshots.set(`${ownerId}:${snapshot.corpusId}`, snapshot)
     },
+    async find(ownerId, corpusId, digest) {
+      const value = snapshots.get(`${ownerId}:${corpusId}`) ?? null
+      return value?.digest === digest ? value : null
+    },
     async latest(ownerId, corpusId) {
       return snapshots.get(`${ownerId}:${corpusId}`) ?? null
     },

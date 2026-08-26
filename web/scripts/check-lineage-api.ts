@@ -113,6 +113,13 @@ test("compiled Lineage validation guards the corpus persistence boundary", async
       state.ownerId = ownerId
       state.persisted = snapshot
     },
+    async find(ownerId, corpusId, digest) {
+      return ownerId === state.ownerId &&
+        state.persisted?.corpusId === corpusId &&
+        state.persisted.digest === digest
+        ? state.persisted
+        : null
+    },
     async latest(ownerId) {
       return ownerId === state.ownerId ? state.persisted : null
     },
