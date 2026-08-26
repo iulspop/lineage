@@ -22,9 +22,24 @@ private
     Response : Set r
 ```
 
+Untrusted data first enters the executable world as a raw contract. It contains
+only data and therefore can be produced by a codec or host-language DTO without
+manufacturing Agda proof terms.
+
+```agda
+record RawContract (Content : Set c) (Response : Set r) : Set (c ⊔ r) where
+  field
+    challenge  : List Content
+    resolution : List Content
+    response   : Response
+    withheld   : List Content
+
+module Raw = RawContract
+```
+
 A valid executable contract carries the disclosure evidence required by the
-semantic domain. Untrusted serialized input will eventually be decoded and
-validated into this type; hosts will not manufacture the evidence themselves.
+semantic domain. Validation is the only normal path from a raw contract to this
+type; hosts do not manufacture the evidence themselves.
 
 ```agda
 record Contract (Content : Set c) (Response : Set r) : Set (c ⊔ r) where

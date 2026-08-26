@@ -12,13 +12,17 @@ module Lineage.Examples.ReviewContract where
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Unit.Base using (⊤; tt)
-open import Relation.Binary.PropositionalEquality using (refl)
+open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Nullary.Decidable using (yes; no)
 
 import Lineage.Correctness.ReviewContract as C
 import Lineage.Denotation.ReviewContract as D
 import Lineage.Implementation.ReviewContract as I
 import Lineage.Specification.ReviewContract as S
+import Lineage.Validation.ReviewContract as V
 ```
 
 The atoms stand for semantic content fragments, not literal strings. A future
@@ -28,6 +32,12 @@ alternatives without changing the review-contract laws.
 ```agda
 data Atom : Set where
   capital-question paris-answer : Atom
+
+atom-equality : DecidableEquality Atom
+atom-equality capital-question capital-question = yes refl
+atom-equality capital-question paris-answer = no λ ()
+atom-equality paris-answer capital-question = no λ ()
+atom-equality paris-answer paris-answer = yes refl
 
 challenge : List Atom
 challenge = capital-question ∷ []
@@ -70,6 +80,50 @@ capital-of-france = record
 
 capital-of-france-meaning : S.Contract Atom ⊤
 capital-of-france-meaning = D.denote capital-of-france
+```
+
+## Validation fixtures
+
+The valid raw contract is accepted without requiring a host to provide proof
+terms. Two malformed variants exercise each side of the disclosure boundary.
+
+```agda
+valid-raw : I.RawContract Atom ⊤
+valid-raw = record
+  { challenge = challenge
+  ; resolution = resolution
+  ; response = tt
+  ; withheld = withheld
+  }
+
+leaking-raw : I.RawContract Atom ⊤
+leaking-raw = record
+  { challenge = capital-question ∷ paris-answer ∷ []
+  ; resolution = resolution
+  ; response = tt
+  ; withheld = withheld
+  }
+
+missing-resolution-raw : I.RawContract Atom ⊤
+missing-resolution-raw = record
+  { challenge = challenge
+  ; resolution = challenge
+  ; response = tt
+  ; withheld = withheld
+  }
+
+data IsJust {A : Set} : Maybe A → Set where
+  is-just : ∀ {value} → IsJust (just value)
+
+valid-raw-accepted : IsJust (V.validate atom-equality valid-raw)
+valid-raw-accepted = is-just
+
+leak-rejected : V.validate atom-equality leaking-raw ≡ nothing
+leak-rejected = refl
+
+missing-resolution-rejected :
+  V.validate atom-equality missing-resolution-raw ≡ nothing
+missing-resolution-rejected = refl
 ```
 
 The general homomorphism theorems specialize directly to this fixture.
