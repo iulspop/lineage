@@ -1,4 +1,5 @@
 import type { ReviewContract } from "../domain/corpus"
+import { responseDescriptor } from "../domain/corpus"
 import type { ReviewAssessment, ReviewCore } from "../domain/review"
 import api from "../generated/lineage-core.mjs"
 
@@ -13,7 +14,7 @@ type ResolutionSession = unknown
 
 function contractFrom(document: ReviewContract): CoreContract {
   const raw = api.rawReviewContract(document.challenge)(document.resolution)(
-    document.response,
+    responseDescriptor(document),
   )(document.withheld)
   const contract = api.validateReviewContract(raw)({
     just: (value) => value,

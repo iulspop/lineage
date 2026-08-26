@@ -71,8 +71,8 @@ export function SettingsPageComponent({
             Manage your account and workspace preferences.
           </p>
         </div>
-        <Link className={s.backLink} to="/">
-          Back to todos
+        <Link className={s.backLink} to="/review">
+          Back to review
         </Link>
       </header>
 
@@ -88,7 +88,7 @@ export function SettingsPageComponent({
           <section className={s.section} id="appearance">
             <div className={s.sectionHeading}>
               <h2>Appearance</h2>
-              <p>Choose how Todo looks on this device.</p>
+              <p>Choose how Lineage looks on this device.</p>
             </div>
             <div className={s.settingRow}>
               <div className={s.settingCopy}>

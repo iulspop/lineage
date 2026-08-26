@@ -40,7 +40,7 @@ export function VerifyPageComponent({
             src="/images/logo.png"
             width={28}
           />
-          Todo
+          Lineage
         </Link>
         <h1 className={pageStyles.heading}>Check your email</h1>
         <p className={pageStyles.subcopy}>

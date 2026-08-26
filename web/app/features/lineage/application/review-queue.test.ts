@@ -34,27 +34,50 @@ function review(
   }
 }
 
+const now = new Date("2026-08-26T00:05:00Z")
+
 describe("selectNextPrompt", () => {
-  test("selects unreviewed Prompts before reviewed Prompts in corpus order", () => {
+  test("selects new Prompts before reviewed Prompts that are not due", () => {
     expect(
-      selectNextPrompt(prompts, [review("first", "2026-08-26T00:00:00Z", 1)])
-        ?.prompt.id,
+      selectNextPrompt(
+        prompts,
+        [review("first", "2026-08-26T00:00:00Z", 10)],
+        now,
+      )?.prompt.id,
     ).toBe("second")
   })
 
+  test("selects due learning reviews before new Prompts", () => {
+    expect(
+      selectNextPrompt(
+        prompts,
+        [review("first", "2026-08-26T00:00:00Z", 1)],
+        now,
+      )?.prompt.id,
+    ).toBe("first")
+  })
+
   test("selects the earliest due reviewed Prompt", () => {
-    const selected = selectNextPrompt(prompts.slice(0, 2), [
-      review("first", "2026-08-26T00:00:00Z", 20),
-      review("second", "2026-08-26T00:00:00Z", 10),
-    ])
+    const selected = selectNextPrompt(
+      prompts.slice(0, 2),
+      [
+        review("first", "2026-08-26T00:00:00Z", 4),
+        review("second", "2026-08-26T00:00:00Z", 2),
+      ],
+      now,
+    )
     expect(selected?.prompt.id).toBe("second")
   })
 
   test("uses corpus order as the stable tie-break", () => {
-    const selected = selectNextPrompt(prompts.slice(0, 2), [
-      review("first", "2026-08-26T00:00:00Z", 10),
-      review("second", "2026-08-26T00:00:00Z", 10),
-    ])
+    const selected = selectNextPrompt(
+      prompts.slice(0, 2),
+      [
+        review("first", "2026-08-26T00:00:00Z", 1),
+        review("second", "2026-08-26T00:00:00Z", 1),
+      ],
+      now,
+    )
     expect(selected?.prompt.id).toBe("first")
   })
 })

@@ -92,6 +92,9 @@ importers:
       spin-delay:
         specifier: ^2.0.1
         version: 2.0.1(react@19.2.8)
+      ts-fsrs:
+        specifier: 5.4.1
+        version: 5.4.1
       ts-pattern:
         specifier: ^5.9.0
         version: 5.9.0
@@ -4536,6 +4539,10 @@ packages:
   ts-dedent@2.2.0:
     resolution: {integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==}
     engines: {node: '>=6.10'}
+
+  ts-fsrs@5.4.1:
+    resolution: {integrity: sha512-mOp9+oexJexBTkwjg/jQI1aSUQRLIAvbimeKHLSmVdNJPwObugFNKmZkoggH5d6kZ0uaWLboP1Al1DnXAfIb9w==}
+    engines: {node: '>=20.0.0'}
 
   ts-pattern@5.9.0:
     resolution: {integrity: sha512-6s5V71mX8qBUmlgbrfL33xDUwO0fq48rxAu2LBE11WBeGdpCPOsXksQbZJHvHwhrd3QjUusd3mAOM5Gg0mFBLg==}
@@ -9176,6 +9183,8 @@ snapshots:
   tr46@0.0.3: {}
 
   ts-dedent@2.2.0: {}
+
+  ts-fsrs@5.4.1: {}
 
   ts-pattern@5.9.0: {}
 

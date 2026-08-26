@@ -17,10 +17,10 @@ describe("SignUpPageComponent", () => {
     render(<RouterStub initialEntries={[path]} />)
 
     expect(
-      screen.getByRole("heading", { name: /sign up/i }),
+      screen.getByRole("heading", { name: /create your lineage account/i }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/verify your email to create your account/i),
+      screen.getByText(/verify your email, import a corpus/i),
     ).toBeInTheDocument()
     expect(
       screen.getByText(/add a passkey after signing in/i),

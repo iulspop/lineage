@@ -28,18 +28,30 @@ export type ReviewRecord = {
   assessment: ReviewAssessment
   attemptedResponse: string | null
   corpusId: string
+  fsrsDifficulty?: number | null
+  fsrsDueAt?: Date | null
+  fsrsElapsedDays?: number | null
+  fsrsLapses?: number | null
+  fsrsLearningSteps?: number | null
+  fsrsReps?: number | null
+  fsrsScheduledDays?: number | null
+  fsrsStability?: number | null
+  fsrsState?: number | null
   nextIntervalMinutes: number
+  parameterSet?: string | null
   previousIntervalMinutes: number
   promptId: string
   promptRevision: number
+  reviewedAt: Date
   scheduler: string
+  schedulerImplementation?: string | null
+  schedulerProfile?: string | null
   schedulerVersion: string
   userId: string
 }
 
 export type ReviewHistoryEntry = ReviewRecord & {
   id: number
-  reviewedAt: Date
 }
 
 export type ReviewRecordStore = {

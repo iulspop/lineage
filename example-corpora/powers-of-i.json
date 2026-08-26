@@ -1,0 +1,39 @@
+{
+  "corpusId": "powers-of-i",
+  "format": "lineage.corpus",
+  "formatVersion": 1,
+  "prompts": [
+    {
+      "challenge": ["Recall the value of i^1."],
+      "id": "power-of-i-1",
+      "resolution": ["i^1 = i", "i"],
+      "response": { "mode": "self-check", "capture": "none" },
+      "revision": 1,
+      "withheld": ["i"]
+    },
+    {
+      "challenge": ["Recall the value of i^2."],
+      "id": "power-of-i-2",
+      "resolution": ["i^2 = -1", "-1"],
+      "response": { "mode": "self-check", "capture": "none" },
+      "revision": 1,
+      "withheld": ["-1"]
+    },
+    {
+      "challenge": ["Recall the value of i^3."],
+      "id": "power-of-i-3",
+      "resolution": ["i^3 = -i", "-i"],
+      "response": { "mode": "self-check", "capture": "none" },
+      "revision": 1,
+      "withheld": ["-i"]
+    },
+    {
+      "challenge": ["Recall the value of i^4."],
+      "id": "power-of-i-4",
+      "resolution": ["i^4 = 1", "1"],
+      "response": { "mode": "self-check", "capture": "none" },
+      "revision": 1,
+      "withheld": ["1"]
+    }
+  ]
+}

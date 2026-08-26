@@ -1,51 +1,80 @@
+import type { Prisma } from "generated/prisma/client"
+
 import type { ReviewHistoryEntry, ReviewRecordStore } from "../domain/review"
 import { reviewAssessmentSchema } from "../domain/review"
 import { prisma } from "~/utils/db.server"
 
-function toHistoryEntry(
-  record: NonNullable<
-    Awaited<ReturnType<typeof prisma.lineageReview.findFirst>>
-  >,
-) {
+const reviewSelect = {
+  assessment: true,
+  attemptedResponse: true,
+  corpusId: true,
+  fsrsDifficulty: true,
+  fsrsDueAt: true,
+  fsrsElapsedDays: true,
+  fsrsLapses: true,
+  fsrsLearningSteps: true,
+  fsrsReps: true,
+  fsrsScheduledDays: true,
+  fsrsStability: true,
+  fsrsState: true,
+  id: true,
+  nextIntervalMinutes: true,
+  parameterSet: true,
+  previousIntervalMinutes: true,
+  promptId: true,
+  promptRevision: true,
+  reviewedAt: true,
+  scheduler: true,
+  schedulerImplementation: true,
+  schedulerProfile: true,
+  schedulerVersion: true,
+  userId: true,
+} satisfies Prisma.LineageReviewSelect
+
+type ReviewRow = Prisma.LineageReviewGetPayload<{ select: typeof reviewSelect }>
+
+function toHistoryEntry(row: ReviewRow): ReviewHistoryEntry {
   return {
-    ...record,
-    assessment: reviewAssessmentSchema.parse(record.assessment),
-  } satisfies ReviewHistoryEntry
+    ...row,
+    assessment: reviewAssessmentSchema.parse(row.assessment),
+  }
 }
 
 export const reviewRecordStore: ReviewRecordStore = {
   async append(record) {
     await prisma.lineageReview.create({ data: record })
   },
-  async countForUser(userId) {
+
+  countForUser(userId) {
     return prisma.lineageReview.count({ where: { userId } })
   },
+
   async latestForCorpus({ corpusId, userId }) {
-    const records = await prisma.lineageReview.findMany({
+    const reviews = await prisma.lineageReview.findMany({
+      distinct: ["promptId"],
       orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+      select: reviewSelect,
       where: { corpusId, userId },
     })
-    const latest = new Map<string, ReviewHistoryEntry>()
-    for (const record of records) {
-      if (!latest.has(record.promptId)) {
-        latest.set(record.promptId, toHistoryEntry(record))
-      }
-    }
-    return [...latest.values()]
+    return reviews.map(toHistoryEntry)
   },
+
   async latestForPrompt({ corpusId, promptId, userId }) {
-    const record = await prisma.lineageReview.findFirst({
-      orderBy: { reviewedAt: "desc" },
+    const review = await prisma.lineageReview.findFirst({
+      orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+      select: reviewSelect,
       where: { corpusId, promptId, userId },
     })
-    return record ? toHistoryEntry(record) : null
+    return review ? toHistoryEntry(review) : null
   },
+
   async recentForUser(userId, limit) {
-    const records = await prisma.lineageReview.findMany({
-      orderBy: { reviewedAt: "desc" },
+    const reviews = await prisma.lineageReview.findMany({
+      orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+      select: reviewSelect,
       take: limit,
       where: { userId },
     })
-    return records.map(toHistoryEntry)
+    return reviews.map(toHistoryEntry)
   },
 }

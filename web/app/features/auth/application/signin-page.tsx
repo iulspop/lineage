@@ -73,10 +73,12 @@ export function SignInPageComponent({
             src="/images/logo.png"
             width={28}
           />
-          Todo
+          Lineage
         </Link>
-        <h1 className={pageStyles.heading}>Sign in</h1>
-        <p className={pageStyles.subcopy}>Sign in to your account.</p>
+        <h1 className={pageStyles.heading}>Return to your reviews</h1>
+        <p className={pageStyles.subcopy}>
+          Sign in to continue practicing from your durable corpus history.
+        </p>
 
         <div className={pageStyles.stack}>
           <Button

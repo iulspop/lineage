@@ -19,7 +19,10 @@ describe("AppShell", () => {
 
     render(<RoutesStub initialEntries={["/"]} />)
 
-    expect(screen.getAllByRole("link", { name: "Todos" })).toHaveLength(2)
+    expect(screen.getAllByRole("link", { name: "Review" })).toHaveLength(2)
+    expect(
+      screen.getByRole("link", { name: "Lineage review" }),
+    ).toHaveAttribute("href", "/review")
     expect(
       screen.getAllByRole("link", { name: "Chat with founder 3" }),
     ).toHaveLength(2)

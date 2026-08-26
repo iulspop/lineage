@@ -6,7 +6,7 @@ const contract = {
   challenge: ["What is the capital of France?"],
   id: "capital-of-france",
   resolution: ["What is the capital of France?", "Paris"],
-  response: "text",
+  response: "text" as const,
   revision: 1,
   withheld: ["Paris"],
 }

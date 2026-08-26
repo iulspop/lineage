@@ -24,7 +24,7 @@ export type AppConfig = {
 export const appConfig = {
   backgroundColor: "#faf9f7",
   description:
-    "A focused personal workspace for todos and founder conversations.",
+    "A durable spaced-repetition workspace for portable corpora and review history.",
   display: "standalone",
   icons: [
     {
@@ -47,9 +47,9 @@ export const appConfig = {
     },
   ],
   locale: "en",
-  name: "Personal App",
+  name: "Lineage",
   scope: "/",
-  shortName: "Personal",
+  shortName: "Lineage",
   startUrl: "/",
   themeColor: {
     dark: "#11100f",

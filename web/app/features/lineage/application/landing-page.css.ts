@@ -23,6 +23,7 @@ export const nav = style({
 
 export const brand = style({
   alignItems: "center",
+  color: theme.color.text.primary,
   display: "inline-flex",
   fontSize: theme.font.role.body,
   fontWeight: theme.font.weight.semibold,
@@ -33,8 +34,10 @@ export const brand = style({
 export const brandMark = style({
   background: theme.color.intent.primary.background,
   borderRadius: theme.radius.sm,
-  height: "1.25rem",
-  width: "1.25rem",
+  color: theme.color.intent.primary.foreground,
+  height: "1.75rem",
+  padding: theme.space[1],
+  width: "1.75rem",
 })
 
 export const navActions = style({
@@ -108,17 +111,18 @@ export const hero = style({
   paddingBlock: theme.space[12],
 })
 
-export const heroCopy = style({ maxWidth: "34rem" })
+export const heroCopy = style({ maxWidth: "36rem" })
 export const eyebrow = style({
   color: theme.color.text.muted,
   fontSize: theme.font.role.supporting,
+  fontWeight: theme.font.weight.medium,
   marginBottom: theme.space[4],
 })
 export const title = style({
-  fontSize: "clamp(2rem, 5vw, 3rem)",
+  fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
   fontWeight: theme.font.weight.semibold,
-  letterSpacing: "-0.035em",
-  lineHeight: "1.05",
+  letterSpacing: "-0.04em",
+  lineHeight: "1.02",
   marginBottom: theme.space[5],
 })
 export const lead = style({
@@ -137,133 +141,96 @@ export const ctaRow = style({
 export const reassurance = style({
   color: theme.color.text.muted,
   fontSize: theme.font.role.metadata,
+  lineHeight: theme.font.lineHeight.normal,
 })
 
 export const preview = style({
-  "@media": { "(max-width: 34rem)": { gridTemplateColumns: "1fr" } },
   background: theme.color.background.card,
   border: `1px solid ${theme.color.border.default}`,
   borderRadius: theme.radius.lg,
   boxShadow: theme.shadow.sm,
-  display: "grid",
-  gridTemplateColumns: "8.5rem minmax(0, 1fr)",
-  minHeight: "22rem",
-  overflow: "hidden",
+  padding: theme.space[6],
 })
-export const previewRail = style({
-  "@media": { "(max-width: 34rem)": { display: "none" } },
-  background: theme.color.background.sunken,
-  borderRight: `1px solid ${theme.color.border.subtle}`,
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.space[2],
-  padding: theme.space[4],
-})
-export const previewBrand = style({
-  fontSize: theme.font.role.supporting,
-  fontWeight: theme.font.weight.semibold,
-  marginBottom: theme.space[4],
-})
-export const previewNav = style({
-  color: theme.color.text.muted,
-  fontSize: theme.font.role.metadata,
-  padding: `${theme.space[2]} ${theme.space[2]}`,
-})
-export const previewNavActive = style([
-  previewNav,
-  {
-    background: theme.color.background.subtle,
-    borderRadius: theme.radius.sm,
-    color: theme.color.text.primary,
-    fontWeight: theme.font.weight.medium,
-  },
-])
-export const previewWorkspace = style({ minWidth: 0, padding: theme.space[5] })
 export const previewHeader = style({
   alignItems: "start",
   display: "flex",
   gap: theme.space[4],
   justifyContent: "space-between",
-  marginBottom: theme.space[5],
+  marginBottom: theme.space[6],
+})
+export const previewEyebrow = style({
+  color: theme.color.text.muted,
+  fontSize: theme.font.role.metadata,
+  marginBottom: theme.space[1],
 })
 export const previewTitle = style({
   fontSize: theme.font.role.sectionTitle,
   fontWeight: theme.font.weight.semibold,
 })
-export const previewMeta = style({
-  color: theme.color.text.muted,
-  fontSize: theme.font.role.metadata,
-  marginTop: theme.space[1],
-})
 export const previewCount = style({
-  color: theme.color.text.muted,
+  background: theme.color.background.subtle,
+  borderRadius: theme.radius.full,
+  color: theme.color.text.secondary,
   fontSize: theme.font.role.metadata,
+  padding: `${theme.space[1]} ${theme.space[3]}`,
   whiteSpace: "nowrap",
 })
-export const capture = style({
-  border: `1px solid ${theme.color.border.interactive}`,
+export const reviewFlow = style({ display: "grid", gap: theme.space[3] })
+export const reviewStep = style({
+  alignItems: "start",
+  background: theme.color.background.sunken,
+  border: `1px solid ${theme.color.border.subtle}`,
   borderRadius: theme.radius.md,
-  color: theme.color.text.muted,
-  fontSize: theme.font.role.supporting,
-  marginBottom: theme.space[4],
-  padding: `${theme.space[2]} ${theme.space[3]}`,
-})
-export const taskList = style({
-  borderTop: `1px solid ${theme.color.border.subtle}`,
-})
-export const task = style({
-  alignItems: "center",
-  borderBottom: `1px solid ${theme.color.border.subtle}`,
   display: "grid",
   gap: theme.space[3],
-  gridTemplateColumns: "auto minmax(0, 1fr) auto",
-  minHeight: "3rem",
+  gridTemplateColumns: "auto minmax(0, 1fr)",
+  padding: theme.space[4],
 })
-export const checkbox = style({
+export const stepNumber = style({
   alignItems: "center",
-  border: `1px solid ${theme.color.border.interactive}`,
+  background: theme.color.intent.primary.background,
   borderRadius: theme.radius.full,
-  color: theme.color.text.muted,
+  color: theme.color.intent.primary.foreground,
   display: "inline-flex",
-  height: "1rem",
+  fontSize: theme.font.role.metadata,
+  fontWeight: theme.font.weight.semibold,
+  height: "1.5rem",
   justifyContent: "center",
-  width: "1rem",
+  width: "1.5rem",
 })
-export const taskText = style({
-  fontSize: theme.font.role.supporting,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-})
-export const taskStatus = style({
+export const stepLabel = style({
   color: theme.color.text.muted,
   fontSize: theme.font.role.metadata,
+  marginBottom: theme.space[1],
+})
+export const stepContent = style({
+  fontSize: theme.font.role.supporting,
+  fontWeight: theme.font.weight.medium,
+})
+export const previewFootnote = style({
+  color: theme.color.text.muted,
+  fontSize: theme.font.role.metadata,
+  lineHeight: theme.font.lineHeight.normal,
+  marginTop: theme.space[4],
 })
 
 export const sections = style({
   "@media": { "(max-width: 44rem)": { gridTemplateColumns: "1fr" } },
-  borderBlock: `1px solid ${theme.color.border.subtle}`,
+  borderTop: `1px solid ${theme.color.border.subtle}`,
   display: "grid",
+  gap: theme.space[6],
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  paddingBlock: theme.space[10],
 })
-export const section = style({
-  "@media": {
-    "(max-width: 44rem)": {
-      selectors: {
-        "& + &": {
-          borderLeft: 0,
-          borderTop: `1px solid ${theme.color.border.subtle}`,
-        },
-      },
-    },
-  },
-  padding: `${theme.space[6]} ${theme.space[5]}`,
-  selectors: {
-    "& + &": { borderLeft: `1px solid ${theme.color.border.subtle}` },
-  },
+export const section = style({ paddingRight: theme.space[4] })
+export const sectionIcon = style({
+  color: theme.color.text.muted,
+  height: "1.25rem",
+  marginBottom: theme.space[3],
+  width: "1.25rem",
 })
 export const sectionTitle = style({
-  fontSize: theme.font.role.sectionTitle,
+  fontSize: theme.font.role.body,
   fontWeight: theme.font.weight.semibold,
   marginBottom: theme.space[2],
 })
@@ -274,13 +241,15 @@ export const sectionCopy = style({
 })
 export const footer = style({
   alignItems: "center",
+  borderTop: `1px solid ${theme.color.border.subtle}`,
   color: theme.color.text.muted,
   display: "flex",
   fontSize: theme.font.role.metadata,
+  gap: theme.space[4],
   justifyContent: "space-between",
   paddingTop: theme.space[6],
 })
 export const footerLink = style({
-  color: theme.color.text.secondary,
+  color: theme.color.text.primary,
   fontWeight: theme.font.weight.medium,
 })

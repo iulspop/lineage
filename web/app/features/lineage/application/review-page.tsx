@@ -14,12 +14,15 @@ type ReviewActionData =
       assessment: (typeof assessments)[number]
       attempt: string | null
       completed: true
+      nextIntervalMinutes: number
       presentation: string[]
     }
   | { error: string }
   | undefined
 
 type ReviewLoaderData = {
+  assessmentPreviews: Record<(typeof assessments)[number], number>
+  captureResponse: boolean
   corpora: Array<{ corpusId: string; formatVersion: number }>
   corpusId: string
   due: boolean
@@ -34,6 +37,7 @@ type ReviewLoaderData = {
   presentation: string[]
   prompt: { id: string; revision: number }
   reviewCount: number
+  reviewedAt: string
   snapshotDigest: string
   userEmail: string
 }
@@ -120,8 +124,18 @@ export function ReviewPage({
                 type="hidden"
                 value={loaderData.snapshotDigest}
               />
-              <FieldLabel htmlFor="review-attempt">Your answer</FieldLabel>
-              <Input autoComplete="off" id="review-attempt" name="attempt" />
+              {loaderData.captureResponse ? (
+                <>
+                  <FieldLabel htmlFor="review-attempt">Your answer</FieldLabel>
+                  <Input
+                    autoComplete="off"
+                    id="review-attempt"
+                    name="attempt"
+                  />
+                </>
+              ) : (
+                <p>Recall the answer, then reveal it and assess yourself.</p>
+              )}
               <div className={s.actions}>
                 <Button name="intent" type="submit" value="resolve">
                   Show answer
@@ -131,6 +145,9 @@ export function ReviewPage({
           ) : resolved.completed ? (
             <div className={s.complete}>
               <strong>Review recorded as {resolved.assessment}.</strong>
+              <p>
+                Next review in {formatInterval(resolved.nextIntervalMinutes)}.
+              </p>
               <Form action="/review" method="get">
                 <input
                   name="corpusId"
@@ -171,6 +188,11 @@ export function ReviewPage({
                   type="hidden"
                   value={resolved.attempt ?? ""}
                 />
+                <input
+                  name="reviewedAt"
+                  type="hidden"
+                  value={loaderData.reviewedAt}
+                />
                 <fieldset className={s.assessmentGroup}>
                   <legend>How well did you remember?</legend>
                   {assessments.map((assessment) => (
@@ -180,8 +202,15 @@ export function ReviewPage({
                       type="submit"
                       value={assessment}
                     >
-                      {assessment[0]?.toUpperCase()}
-                      {assessment.slice(1)}
+                      <span>
+                        {assessment[0]?.toUpperCase()}
+                        {assessment.slice(1)}
+                      </span>
+                      <span>
+                        {formatInterval(
+                          loaderData.assessmentPreviews[assessment],
+                        )}
+                      </span>
                     </Button>
                   ))}
                 </fieldset>

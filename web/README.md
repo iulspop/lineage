@@ -53,7 +53,7 @@ The application runs at `http://localhost:5250`. See [Getting Started](#getting-
 
 - Magic link authentication with [TOTP](https://github.com/epicweb-dev/totp) verification codes
 - Transactional emails with [Resend](https://resend.com/) (console fallback in dev)
-- Todo CRUD as a reference feature implementation
+- Lineage corpus import, review, and durable history features
 - Content Security Policy with per-request nonces
 - Optional product analytics and session replay with [PostHog](https://posthog.com/)
 - Healthcheck endpoint (`/healthcheck`)
@@ -78,7 +78,7 @@ Installation depends on the browser and requires HTTPS in production (`localhost
 
 Browser wording and install UI vary by platform and version. This template intentionally has **no service worker, offline mode, Cache Storage strategy, update lifecycle, push notifications, background sync, offline mutation queue, or app-store packaging**. Installed launches use normal network behavior, just like the website.
 
-Before a production launch, manually verify the native install UI in iOS/iPadOS Safari, Android Chrome, and desktop Chromium. Also smoke-test authentication, passkeys, Todos, founder chat/SSE/attachments, Settings, PostHog, and Sentry against the deployed HTTPS application. These platform and live-integration checks are intentionally not reported as automated doctor passes.
+Before a production launch, manually verify the native install UI in iOS/iPadOS Safari, Android Chrome, and desktop Chromium. Also smoke-test authentication, passkeys, corpus import/export, review flows, founder chat/SSE/attachments, Settings, PostHog, and Sentry against the deployed HTTPS application. These platform and live-integration checks are intentionally not reported as automated doctor passes.
 
 ## Getting Started
 
@@ -202,7 +202,7 @@ app/features/<name>/
 - Application imports domain + infrastructure
 - UI imports domain pure helpers but never model/action files
 
-The `app/features/todos/` directory is a complete reference implementation of this pattern.
+The `app/features/lineage/` directory demonstrates this pattern across corpus, review, persistence, and compiled-core boundaries.
 
 ### Client state and effects
 

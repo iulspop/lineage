@@ -5,7 +5,7 @@ import { LandingPageComponent } from "./landing-page"
 import { render, screen } from "~/test/react-test-utils"
 
 describe("LandingPageComponent", () => {
-  test("given: a logged-out visitor, should: present the todo app offer and primary signup CTA", () => {
+  test("given: a logged-out visitor, should: present Lineage and its primary actions", () => {
     const RouterStub = createRoutesStub([
       {
         Component: () => <LandingPageComponent />,
@@ -17,15 +17,15 @@ describe("LandingPageComponent", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /turn scattered tasks into a clear plan/i,
+        name: /your knowledge should outlive the app/i,
       }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("link", { name: /create your todo list/i }),
+      screen.getByRole("link", { name: /start building your corpus/i }),
     ).toHaveAttribute("href", "/auth/signup")
     expect(
-      screen.getByRole("link", { name: /i already have an account/i }),
+      screen.getByRole("link", { name: /continue reviewing/i }),
     ).toHaveAttribute("href", "/auth/signin")
-    expect(screen.getByLabelText(/todo list preview/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/lineage review preview/i)).toBeInTheDocument()
   })
 })

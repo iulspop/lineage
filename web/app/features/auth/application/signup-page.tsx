@@ -28,12 +28,12 @@ export function SignUpPageComponent({
             src="/images/logo.png"
             width={28}
           />
-          Todo
+          Lineage
         </Link>
-        <h1 className={pageStyles.heading}>Sign up</h1>
+        <h1 className={pageStyles.heading}>Create your Lineage account</h1>
         <p className={pageStyles.subcopy}>
-          Verify your email to create your account. You can add a passkey after
-          signing in.
+          Verify your email, import a corpus, and begin building durable review
+          history. You can add a passkey after signing in.
         </p>
 
         <div className={pageStyles.stack}>

@@ -22,9 +22,9 @@ afterEach(async () => {
 })
 
 describe("doctor checks", () => {
-  test("given starter identity, should report customization guidance", () => {
+  test("given the Lineage identity, should report successful customization", () => {
     expect(checkApp()).toContainEqual(
-      expect.objectContaining({ id: "identity", status: "warn" }),
+      expect.objectContaining({ id: "identity", status: "pass" }),
     )
   })
 

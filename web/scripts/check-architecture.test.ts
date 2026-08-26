@@ -34,12 +34,12 @@ afterEach(async () => {
 describe("architecture analysis", () => {
   test("given valid feature layers, should return no violations", async () => {
     const root = await createProject({
-      "app/features/todos/application/todos-page.tsx":
-        'import { summarize } from "../domain/todos-domain"\nexport const value = summarize([])',
-      "app/features/todos/domain/todos-domain.ts":
+      "app/features/example/application/example-page.tsx":
+        'import { summarize } from "../domain/example-domain"\nexport const value = summarize([])',
+      "app/features/example/domain/example-domain.ts":
         "export const summarize = (items: unknown[]) => items.length",
-      "app/features/todos/infrastructure/todos-model.server.ts":
-        'import { summarize } from "../domain/todos-domain"\nexport const count = summarize([])',
+      "app/features/example/infrastructure/example-model.server.ts":
+        'import { summarize } from "../domain/example-domain"\nexport const count = summarize([])',
     })
 
     await expect(analyzeArchitecture(root)).resolves.toEqual([])

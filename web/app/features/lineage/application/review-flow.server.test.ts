@@ -321,6 +321,7 @@ describe("review flow", () => {
       core: reviewCore,
       corpusId: review.corpusId,
       prompt: review.prompt,
+      reviewedAt: new Date("2026-08-26T12:00:00.000Z"),
       store: {
         async append(record) {
           records.push(record)
@@ -341,20 +342,28 @@ describe("review flow", () => {
       userId: "user-1",
     })
 
-    expect(completed.assessment).toBe("good")
-    expect(records).toEqual([
-      {
-        assessment: "good",
-        attemptedResponse: "Paris",
-        corpusId: "lineage-demo",
-        nextIntervalMinutes: 1440,
-        previousIntervalMinutes: 0,
-        promptId: "capital-of-france",
-        promptRevision: 1,
-        scheduler: "lineage-prototype",
-        schedulerVersion: "1",
-        userId: "user-1",
-      },
-    ])
+    expect(completed).toMatchObject({
+      assessment: "good",
+      nextIntervalMinutes: 10,
+    })
+    expect(records).toHaveLength(1)
+    expect(records[0]).toMatchObject({
+      assessment: "good",
+      attemptedResponse: "Paris",
+      corpusId: "lineage-demo",
+      fsrsDueAt: new Date("2026-08-26T12:10:00.000Z"),
+      nextIntervalMinutes: 10,
+      parameterSet:
+        "sha256:68ec99cf2c9d3129f7e81f0ad77aaf08892e68417f3809d85c37442708dc6732",
+      previousIntervalMinutes: 0,
+      promptId: "capital-of-france",
+      promptRevision: 1,
+      reviewedAt: new Date("2026-08-26T12:00:00.000Z"),
+      scheduler: "fsrs",
+      schedulerImplementation: "ts-fsrs@5.4.1",
+      schedulerProfile: "fsrs-6-default-r90-v1",
+      schedulerVersion: "6",
+      userId: "user-1",
+    })
   })
 })

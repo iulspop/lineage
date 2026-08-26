@@ -97,12 +97,17 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "assess") {
+    const reviewedAt = new Date(String(formData.get("reviewedAt")))
+    if (Number.isNaN(reviewedAt.getTime())) {
+      return data({ error: "A valid review time is required" }, { status: 400 })
+    }
     const completed = await completeReview({
       assessment: formData.get("assessment"),
       attempt,
       core: reviewCore,
       corpusId,
       prompt,
+      reviewedAt,
       store: reviewRecordStore,
       userId,
     })

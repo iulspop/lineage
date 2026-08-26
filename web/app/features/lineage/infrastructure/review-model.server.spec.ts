@@ -20,12 +20,26 @@ describe("reviewRecordStore", () => {
       assessment: "good",
       attemptedResponse: "Paris",
       corpusId: "lineage-demo",
-      nextIntervalMinutes: 1440,
+      fsrsDifficulty: 2.1,
+      fsrsDueAt: new Date("2026-08-26T12:10:00.000Z"),
+      fsrsElapsedDays: 0,
+      fsrsLapses: 0,
+      fsrsLearningSteps: 1,
+      fsrsReps: 1,
+      fsrsScheduledDays: 0,
+      fsrsStability: 2.3,
+      fsrsState: 1,
+      nextIntervalMinutes: 10,
+      parameterSet:
+        "sha256:68ec99cf2c9d3129f7e81f0ad77aaf08892e68417f3809d85c37442708dc6732",
       previousIntervalMinutes: 0,
       promptId: "capital-of-france",
       promptRevision: 1,
-      scheduler: "lineage-prototype",
-      schedulerVersion: "1",
+      reviewedAt: new Date("2026-08-26T12:00:00.000Z"),
+      scheduler: "fsrs",
+      schedulerImplementation: "ts-fsrs@5.4.1",
+      schedulerProfile: "fsrs-6-default-r90-v1",
+      schedulerVersion: "6",
       userId: user.id,
     })
 
@@ -39,9 +53,12 @@ describe("reviewRecordStore", () => {
     ).resolves.toMatchObject({
       assessment: "good",
       attemptedResponse: "Paris",
-      nextIntervalMinutes: 1440,
+      fsrsDueAt: new Date("2026-08-26T12:10:00.000Z"),
+      nextIntervalMinutes: 10,
+      parameterSet:
+        "sha256:68ec99cf2c9d3129f7e81f0ad77aaf08892e68417f3809d85c37442708dc6732",
       promptRevision: 1,
-      scheduler: "lineage-prototype",
+      scheduler: "fsrs",
     })
     await expect(
       reviewRecordStore.recentForUser(user.id, 10),

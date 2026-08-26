@@ -27,7 +27,7 @@ export function OwnerChatDashboard({
   return (
     <section aria-labelledby="owner-inbox-title" className={s.page}>
       <header className={s.header}>
-        <Link aria-label="Back to todos" className={s.backLink} to="/">
+        <Link aria-label="Back to review" className={s.backLink} to="/review">
           <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
         </Link>
         <div className={s.heading}>

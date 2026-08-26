@@ -1,4 +1,5 @@
 import type { ReviewContract } from "../domain/corpus"
+import { responseDescriptor } from "../domain/corpus"
 import type { ReviewContractValidator } from "../domain/corpus-ports"
 
 type RawReviewContract = unknown
@@ -19,7 +20,7 @@ export function createCompiledCoreValidator(
     isValid(contract: ReviewContract) {
       const raw = api.rawReviewContract(contract.challenge)(
         contract.resolution,
-      )(contract.response)(contract.withheld)
+      )(responseDescriptor(contract))(contract.withheld)
       return api.isValidReviewContract(raw)
     },
   }

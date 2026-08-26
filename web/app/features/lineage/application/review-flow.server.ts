@@ -1,10 +1,15 @@
 import type { ReviewContract } from "../domain/corpus"
-import { parseCorpusDocument } from "../domain/corpus"
+import { capturesResponse, parseCorpusDocument } from "../domain/corpus"
 import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewCore, ReviewRecordStore } from "../domain/review"
 import { reviewAssessmentSchema } from "../domain/review"
 import { selectNextPrompt } from "./review-queue"
-import { dueAt, isDue, scheduleReview } from "./review-scheduling"
+import {
+  dueAt,
+  isDue,
+  previewReview,
+  scheduleReview,
+} from "./review-scheduling"
 
 export async function listReviewCorpora({
   snapshotStore,
@@ -41,12 +46,16 @@ export async function loadReview({
   })
   const queued = selectNextPrompt(corpus.prompts, latestReviews)
   if (!queued) throw new Error("The review corpus contains no Prompts")
+  const reviewedAt = new Date()
   return {
+    assessmentPreviews: previewReview(queued.latest, reviewedAt),
+    captureResponse: capturesResponse(queued.prompt),
     corpusId: corpus.corpusId,
     presentation: core.begin(queued.prompt),
     prompt: queued.prompt,
     queueDueAt: queued.dueAt?.toISOString() ?? null,
     queueReviewed: queued.reviewed,
+    reviewedAt: reviewedAt.toISOString(),
     snapshotDigest: snapshot.digest,
   }
 }
@@ -124,6 +133,7 @@ export async function completeReview({
   core,
   corpusId,
   prompt,
+  reviewedAt,
   store,
   userId,
 }: {
@@ -132,6 +142,7 @@ export async function completeReview({
   core: ReviewCore
   corpusId: string
   prompt: ReviewContract
+  reviewedAt: Date
   store: ReviewRecordStore
   userId: string
 }) {
@@ -146,14 +157,16 @@ export async function completeReview({
     promptId: prompt.id,
     userId,
   })
+  const scheduling = scheduleReview(completed.assessment, previous, reviewedAt)
   await store.append({
     assessment: completed.assessment,
     attemptedResponse: completed.attempt,
     corpusId,
     promptId: prompt.id,
     promptRevision: prompt.revision,
+    reviewedAt,
     userId,
-    ...scheduleReview(completed.assessment, previous),
+    ...scheduling,
   })
-  return completed
+  return { ...completed, nextIntervalMinutes: scheduling.nextIntervalMinutes }
 }

@@ -27,15 +27,6 @@ model User {
   lineageReviews         LineageReview[]
 }
 
-model Todo {
-  id          String   @id @default(cuid())
-  title       String
-  description String   @default("")
-  completed   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
 model LineageCorpusSnapshot {
   id            Int      @id @default(autoincrement())
   ownerId       String?
@@ -51,22 +42,35 @@ model LineageCorpusSnapshot {
 }
 
 model LineageReview {
-  id                Int      @id @default(autoincrement())
-  userId            String
-  corpusId          String
-  promptId          String
-  promptRevision    Int
+  id                      Int      @id @default(autoincrement())
+  userId                  String
+  corpusId                String
+  promptId                String
+  promptRevision          Int
   attemptedResponse       String?
   assessment              String
   scheduler               String
   schedulerVersion        String
+  schedulerImplementation String?
+  schedulerProfile        String?
+  parameterSet            String?
   previousIntervalMinutes Int
   nextIntervalMinutes     Int
+  fsrsDueAt               DateTime?
+  fsrsStability           Float?
+  fsrsDifficulty          Float?
+  fsrsElapsedDays         Float?
+  fsrsScheduledDays       Int?
+  fsrsLearningSteps       Int?
+  fsrsReps                Int?
+  fsrsLapses              Int?
+  fsrsState               Int?
   reviewedAt              DateTime @default(now())
   user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, reviewedAt])
   @@index([corpusId, promptId, promptRevision])
+  @@index([userId, corpusId, fsrsDueAt])
 }
 
 model Session {

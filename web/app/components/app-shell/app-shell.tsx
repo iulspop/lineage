@@ -1,12 +1,10 @@
 import {
   IconBrain,
-  IconChecklist,
   IconDatabase,
   IconLogout,
   IconMenu2,
   IconMessageCircle,
   IconSettings,
-  IconSquareCheck,
 } from "@tabler/icons-react"
 import type { ReactNode } from "react"
 import { Form, NavLink } from "react-router"
@@ -33,10 +31,6 @@ function PrimaryNavigation({
 }: Pick<AppShellProps, "chatUnreadCount" | "isOwner">) {
   return (
     <nav aria-label="Primary navigation" className={s.navigation}>
-      <NavLink className={navClassName} end to="/">
-        <IconChecklist aria-hidden="true" />
-        <span>Todos</span>
-      </NavLink>
       <NavLink className={navClassName} to="/review">
         <IconBrain aria-hidden="true" />
         <span>Review</span>
@@ -67,9 +61,9 @@ function AppShell({
         Skip to content
       </a>
       <header className={s.header}>
-        <NavLink aria-label="Todo home" className={s.brand} to="/">
-          <IconSquareCheck aria-hidden="true" className={s.brandMark} />
-          <span className={s.brandName}>Todo</span>
+        <NavLink aria-label="Lineage review" className={s.brand} to="/review">
+          <IconBrain aria-hidden="true" className={s.brandMark} />
+          <span className={s.brandName}>Lineage</span>
         </NavLink>
         <div className={s.desktopNavigation}>
           <PrimaryNavigation

@@ -17,9 +17,11 @@ describe("SignInPageComponent", () => {
     render(<RouterStub initialEntries={[path]} />)
 
     expect(
-      screen.getByRole("heading", { name: /^sign in$/i }),
+      screen.getByRole("heading", { name: /return to your reviews/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/sign in to your account/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/continue practicing from your durable corpus history/i),
+    ).toBeInTheDocument()
     const passkeyButton = screen.getByRole("button", {
       name: /sign in with passkey/i,
     })

@@ -93,20 +93,6 @@ export async function deleteAllChatData() {
 }
 
 /**
- * Deletes all todos from the database.
- * Used to ensure test isolation since todos are not user-scoped.
- */
-export async function deleteAllTodos() {
-  const prisma = createPrisma()
-
-  try {
-    await prisma.todo.deleteMany()
-  } finally {
-    await prisma.$disconnect()
-  }
-}
-
-/**
  * Creates a test user + session and sets the session cookie on the page.
  * Use this to authenticate before a test without going through the login flow.
  */

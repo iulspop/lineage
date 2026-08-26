@@ -5,6 +5,8 @@ import { ReviewPage } from "./review-page"
 import { render, screen } from "~/test/react-test-utils"
 
 const loaderData = {
+  assessmentPreviews: { again: 1, easy: 8640, good: 10, hard: 6 },
+  captureResponse: true,
   corpora: [{ corpusId: "lineage-demo", formatVersion: 1 }],
   corpusId: "lineage-demo",
   due: true,
@@ -13,6 +15,7 @@ const loaderData = {
   presentation: ["What is the capital of France?"],
   prompt: { id: "capital-of-france", revision: 1 },
   reviewCount: 0,
+  reviewedAt: "2026-08-26T12:00:00.000Z",
   snapshotDigest: "demo-digest",
   userEmail: "learner@example.com",
 }
@@ -48,6 +51,31 @@ describe("ReviewPage", () => {
     )
   })
 
+  test("supports recall and self-assessment without typed response capture", () => {
+    const Router = createRoutesStub([
+      {
+        Component: () => (
+          <ReviewPage
+            actionData={undefined}
+            loaderData={{ ...loaderData, captureResponse: false }}
+          />
+        ),
+        path: "/review",
+      },
+    ])
+    render(<Router initialEntries={["/review"]} />)
+
+    expect(screen.queryByLabelText("Your answer")).not.toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Recall the answer, then reveal it and assess yourself.",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Show answer" }),
+    ).toBeInTheDocument()
+  })
+
   test("shows the resolution and assessment controls after an attempt", () => {
     const Router = createRoutesStub([
       {
@@ -67,6 +95,11 @@ describe("ReviewPage", () => {
     render(<Router initialEntries={["/review"]} />)
 
     expect(screen.getAllByText("Paris")).toHaveLength(2)
-    expect(screen.getByRole("button", { name: "Good" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /Good.*10 min/i }),
+    ).toBeInTheDocument()
+    expect(document.querySelector('input[name="reviewedAt"]')).toHaveValue(
+      "2026-08-26T12:00:00.000Z",
+    )
   })
 })
