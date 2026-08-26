@@ -1,55 +1,32 @@
 {
-  "assets": [],
-  "corpusId": "example-cloze",
-  "extensions": [],
   "format": "lineage.corpus",
   "formatVersion": 1,
-  "interoperability": [],
-  "materials": [],
-  "migrations": [],
+  "corpusId": "example-cloze",
   "prompts": [
     {
-      "assets": [],
+      "id": "france-capital-cloze",
+      "revision": 1,
+      "kind": "cloze",
       "challenge": [
         "The capital of France is […]."
       ],
-      "extensions": {
-        "optional": [],
-        "required": []
-      },
-      "id": "france-capital-cloze",
-      "kind": "cloze",
-      "materials": [],
-      "presentationProfile": "lineage.review/1",
-      "provenance": [],
+      "withheld": [
+        "Paris"
+      ],
       "resolution": [
         "The capital of France is Paris.",
         "Paris"
       ],
-      "response": {
-        "capture": "none",
-        "mode": "self-check"
-      },
-      "revision": 1,
-      "sources": [],
-      "status": "active",
-      "withheld": [
-        "Paris"
-      ],
+      "response": "text",
       "clozeTargets": [
         {
+          "id": "france-capital",
           "answer": "Paris",
           "hints": [
             "European capital"
-          ],
-          "id": "france-capital"
+          ]
         }
       ]
     }
-  ],
-  "provenance": [],
-  "relationships": [],
-  "repetitionCorrections": [],
-  "repetitions": [],
-  "sources": []
+  ]
 }

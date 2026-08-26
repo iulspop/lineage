@@ -1,24 +1,441 @@
 {
   "examples": [
     {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "example-basic",
+        "prompts": [
+          {
+            "id": "capital-of-france",
+            "revision": 1,
+            "kind": "basic",
+            "challenge": [
+              "What is the capital of France?"
+            ],
+            "withheld": [
+              "Paris"
+            ],
+            "resolution": [
+              "What is the capital of France?",
+              "Paris"
+            ],
+            "response": {
+              "mode": "self-check",
+              "capture": "none"
+            }
+          }
+        ]
+      },
       "fileName": "basic.json",
       "kind": "valid",
       "summary": "Basic self-check Prompt."
     },
     {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "example-cloze",
+        "prompts": [
+          {
+            "id": "france-capital-cloze",
+            "revision": 1,
+            "kind": "cloze",
+            "challenge": [
+              "The capital of France is […]."
+            ],
+            "withheld": [
+              "Paris"
+            ],
+            "resolution": [
+              "The capital of France is Paris.",
+              "Paris"
+            ],
+            "response": "text",
+            "clozeTargets": [
+              {
+                "id": "france-capital",
+                "answer": "Paris",
+                "hints": [
+                  "European capital"
+                ]
+              }
+            ]
+          }
+        ]
+      },
       "fileName": "cloze.json",
       "kind": "valid",
       "summary": "Stable cloze targets."
     },
     {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "example-image-occlusion",
+        "assets": [
+          {
+            "id": "heart-diagram",
+            "mediaType": "image/png",
+            "byteSize": "HOST_COMPUTED_BYTE_SIZE_REQUIRED",
+            "sha256": "HOST_COMPUTED_SHA256_REQUIRED",
+            "path": "assets/heart-diagram.png",
+            "accessibleDescription": "Host-provided diagram."
+          }
+        ],
+        "prompts": [
+          {
+            "id": "heart-left-ventricle",
+            "revision": 1,
+            "kind": "image-occlusion",
+            "challenge": [
+              "Name the covered chamber."
+            ],
+            "withheld": [
+              "Left ventricle"
+            ],
+            "resolution": [
+              "Left ventricle"
+            ],
+            "response": {
+              "mode": "self-check",
+              "capture": "none"
+            },
+            "assets": [
+              "heart-diagram"
+            ],
+            "sourceAsset": "heart-diagram",
+            "occlusionRegions": [
+              {
+                "id": "left-ventricle",
+                "label": "Left ventricle",
+                "accessibleDescription": "Lower-right chamber in anatomical orientation.",
+                "geometry": {
+                  "type": "rectangle",
+                  "x": 0.58,
+                  "y": 0.56,
+                  "width": 0.2,
+                  "height": 0.24
+                }
+              }
+            ]
+          }
+        ]
+      },
       "fileName": "image-occlusion.json",
       "kind": "host-media-required",
       "summary": "Normalized stable regions."
     },
     {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "example-media",
+        "assets": [
+          {
+            "id": "heart-diagram",
+            "mediaType": "image/png",
+            "byteSize": "HOST_COMPUTED_BYTE_SIZE_REQUIRED",
+            "sha256": "HOST_COMPUTED_SHA256_REQUIRED",
+            "path": "assets/heart-diagram.png",
+            "accessibleDescription": "Host-provided diagram."
+          }
+        ],
+        "prompts": [
+          {
+            "id": "heart-media",
+            "revision": 1,
+            "kind": "basic",
+            "challenge": [
+              "Identify the organ in the image."
+            ],
+            "withheld": [
+              "heart"
+            ],
+            "resolution": [
+              "Heart diagram",
+              "heart"
+            ],
+            "response": "text",
+            "assets": [
+              "heart-diagram"
+            ]
+          }
+        ]
+      },
       "fileName": "media.json",
       "kind": "host-media-required",
       "summary": "Host-verified media reference."
+    }
+  ],
+  "fixtures": [
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "example-basic",
+        "prompts": [
+          {
+            "id": "capital-of-france",
+            "revision": 1,
+            "kind": "basic",
+            "challenge": [
+              "What is the capital of France?"
+            ],
+            "withheld": [
+              "Paris"
+            ],
+            "resolution": [
+              "What is the capital of France?",
+              "Paris"
+            ],
+            "response": {
+              "mode": "self-check",
+              "capture": "none"
+            }
+          }
+        ]
+      },
+      "expectation": {
+        "kind": "valid"
+      },
+      "fileName": "basic.json",
+      "summary": "Canonical minimal valid corpus."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "example-history",
+        "prompts": [
+          {
+            "id": "capital-of-france",
+            "revision": 1,
+            "kind": "basic",
+            "challenge": [
+              "What is the capital of France?"
+            ],
+            "withheld": [
+              "Paris"
+            ],
+            "resolution": [
+              "Paris"
+            ],
+            "response": "text"
+          }
+        ],
+        "repetitions": [
+          {
+            "id": "review-1",
+            "promptId": "capital-of-france",
+            "promptRevision": 1,
+            "reviewedAt": "2026-08-26T12:00:00Z",
+            "assessment": "good"
+          }
+        ]
+      },
+      "expectation": {
+        "kind": "valid"
+      },
+      "fileName": "history.json",
+      "summary": "Valid append-oriented review history."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-leak",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 1,
+            "challenge": [
+              "Paris"
+            ],
+            "withheld": [
+              "Paris"
+            ],
+            "resolution": [
+              "Paris"
+            ],
+            "response": "text"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "disclosure.answer-leaked",
+        "kind": "invalid",
+        "path": "/prompts/0/challenge/0"
+      },
+      "fileName": "disclosure-leak.json",
+      "summary": "Challenge leaks withheld material."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-revision",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 0,
+            "challenge": [
+              "Question"
+            ],
+            "withheld": [
+              "Answer"
+            ],
+            "resolution": [
+              "Answer"
+            ],
+            "response": "text"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "revision.non-positive",
+        "kind": "invalid",
+        "path": "/prompts/0/revision"
+      },
+      "fileName": "non-positive-revision.json",
+      "summary": "Prompt revision is zero."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-asset",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 1,
+            "challenge": [
+              "Question"
+            ],
+            "withheld": [
+              "Answer"
+            ],
+            "resolution": [
+              "Answer"
+            ],
+            "response": "text",
+            "assets": [
+              "missing"
+            ]
+          }
+        ]
+      },
+      "expectation": {
+        "code": "asset.unresolved",
+        "kind": "invalid",
+        "path": "/prompts/0/assets/0"
+      },
+      "fileName": "unresolved-asset.json",
+      "summary": "Prompt references an absent asset."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-history",
+        "prompts": [],
+        "repetitions": [
+          {
+            "id": "review-1",
+            "promptId": "missing",
+            "promptRevision": 1,
+            "reviewedAt": "2026-08-26T12:00:00Z",
+            "assessment": "good"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "history.prompt-unresolved",
+        "kind": "invalid",
+        "path": "/repetitions/0/promptId"
+      },
+      "fileName": "unresolved-history.json",
+      "summary": "History references an absent Prompt."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-correction",
+        "prompts": [],
+        "repetitionCorrections": [
+          {
+            "id": "correction-1",
+            "targetRepetitionId": "missing",
+            "correctedAt": "2026-08-26T12:00:00Z",
+            "reason": "Incorrect rating"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "history.correction-invalid",
+        "kind": "invalid",
+        "path": "/repetitionCorrections/0/targetRepetitionId"
+      },
+      "fileName": "invalid-correction.json",
+      "summary": "Correction references an absent repetition."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-migration",
+        "prompts": [],
+        "migrations": [
+          {
+            "id": "m1",
+            "fromVersion": 1,
+            "toVersion": 2,
+            "appliedAt": "2026-08-26T12:00:00Z",
+            "tool": "lineage",
+            "toolVersion": "1"
+          },
+          {
+            "id": "m2",
+            "fromVersion": 3,
+            "toVersion": 4,
+            "appliedAt": "2026-08-26T12:01:00Z",
+            "tool": "lineage",
+            "toolVersion": "1"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "migration.chain-invalid",
+        "kind": "invalid",
+        "path": "/migrations/1/fromVersion"
+      },
+      "fileName": "migration-gap.json",
+      "summary": "Migration chain is not contiguous."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-loss",
+        "prompts": [],
+        "interoperability": [
+          {
+            "id": "anki-export",
+            "sourceFormat": "lineage.corpus/1",
+            "targetFormat": "anki.apkg",
+            "status": "lossy",
+            "losses": []
+          }
+        ]
+      },
+      "expectation": {
+        "code": "interoperability.loss-unreported",
+        "kind": "invalid",
+        "path": "/interoperability/0/losses"
+      },
+      "fileName": "loss-unreported.json",
+      "summary": "Lossy conversion omits its loss report."
     }
   ],
   "formatName": "lineage.corpus",

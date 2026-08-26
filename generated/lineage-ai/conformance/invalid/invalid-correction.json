@@ -1,56 +1,17 @@
 {
   "document": {
-    "assets": [],
-    "corpusId": "example-basic",
-    "extensions": [],
     "format": "lineage.corpus",
     "formatVersion": 1,
-    "interoperability": [],
-    "materials": [],
-    "migrations": [],
-    "prompts": [
-      {
-        "assets": [],
-        "challenge": [
-          "What is the capital of France?"
-        ],
-        "extensions": {
-          "optional": [],
-          "required": []
-        },
-        "id": "capital-of-france",
-        "kind": "basic",
-        "materials": [],
-        "presentationProfile": "lineage.review/1",
-        "provenance": [],
-        "resolution": [
-          "What is the capital of France?",
-          "Paris"
-        ],
-        "response": {
-          "capture": "none",
-          "mode": "self-check"
-        },
-        "revision": 1,
-        "sources": [],
-        "status": "active",
-        "withheld": [
-          "Paris"
-        ]
-      }
-    ],
-    "provenance": [],
-    "relationships": [],
+    "corpusId": "invalid-correction",
+    "prompts": [],
     "repetitionCorrections": [
       {
-        "correctedAt": "2026-08-26T12:00:00Z",
         "id": "correction-1",
-        "reason": "Incorrect rating",
-        "targetRepetitionId": "missing"
+        "targetRepetitionId": "missing",
+        "correctedAt": "2026-08-26T12:00:00Z",
+        "reason": "Incorrect rating"
       }
-    ],
-    "repetitions": [],
-    "sources": []
+    ]
   },
   "expectedDiagnostic": {
     "code": "history.correction-invalid",

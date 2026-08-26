@@ -13,23 +13,19 @@ meaning.
 {-# OPTIONS --safe #-}
 module Lineage.Specification.CorpusWireV1 where
 
+open import Agda.Builtin.Float using (Float)
 open import Data.Bool.Base using (Bool)
 open import Data.List.Base using (List; []; _∷_)
+open import Data.Maybe.Base using (Maybe)
 open import Data.Nat.Base using (ℕ)
 open import Data.String.Base using (String)
 open import Lineage.Specification.FormatDescription
-
-data ResponseMode : Set where
-  capturedText selfCheck : ResponseMode
 
 data PromptKind : Set where
   basic cloze imageOcclusion : PromptKind
 
 data Lifecycle : Set where
   active suspended retired : Lifecycle
-
-data GeometryKind : Set where
-  rectangle polygon : GeometryKind
 
 data RequirementLevel : Set where
   requiredCapability optionalCapability : RequirementLevel
@@ -46,23 +42,61 @@ data ProvenanceKind : Set where
 data ConversionStatus : Set where
   exact lossy : ConversionStatus
 
+data ArchiveEntryRole : Set where
+  corpus asset preserved-original : ArchiveEntryRole
+
+data ResponseInteraction : Set where
+  textResponse selfCheckResponse : ResponseInteraction
+
+record EntityReference : Set where
+  constructor entityReference
+  field
+    referenceId : String
+    referenceRevision : Maybe ℕ
+
+record ExtensionSet : Set where
+  constructor extensionSet
+  field
+    requiredExtensions optionalExtensions : List String
+
+record NormalizedPoint : Set where
+  constructor normalizedPoint
+  field
+    x y : Float
+
+record RectangleGeometry : Set where
+  constructor rectangleGeometry
+  field
+    x y width height : Float
+
+record PolygonGeometry : Set where
+  constructor polygonGeometry
+  field
+    points : List NormalizedPoint
+
+data OcclusionGeometry : Set where
+  rectangleGeometryValue : RectangleGeometry → OcclusionGeometry
+  polygonGeometryValue : PolygonGeometry → OcclusionGeometry
+
 record AssetReference : Set where
   constructor assetReference
   field
     assetId mediaType digest : String
     byteSize : ℕ
-    path accessibleDescription : String
+    path : String
+    accessibleDescription : Maybe String
 
 record ClozeTarget : Set where
   constructor clozeTarget
   field
     targetId answer : String
-    hints : List String
+    hints : Maybe (List String)
 
 record OcclusionRegion : Set where
   constructor occlusionRegion
   field
-    regionId label geometry : String
+    regionId label : String
+    geometry : OcclusionGeometry
     accessibleDescription : String
 
 record SourceRevision : Set where
@@ -71,7 +105,7 @@ record SourceRevision : Set where
     sourceId : String
     revision : ℕ
     title content : String
-    assetIds : List String
+    assetIds provenanceIds : List String
 
 record MaterialRevision : Set where
   constructor materialRevision
@@ -79,7 +113,7 @@ record MaterialRevision : Set where
     materialId : String
     revision : ℕ
     content : List String
-    sourceIds assetIds : List String
+    sourceIds assetIds provenanceIds : List String
 
 record Prompt : Set where
   constructor prompt
@@ -89,50 +123,60 @@ record Prompt : Set where
     lifecycle : Lifecycle
     kind : PromptKind
     challenge withheld resolution : List String
-    responseMode : ResponseMode
+    response : ResponseInteraction
     materialIds sourceIds assetIds : List String
-    clozeTargets : List ClozeTarget
-    sourceAsset : List String
-    occlusionRegions : List OcclusionRegion
+    clozeTargets : Maybe (List ClozeTarget)
+    sourceAsset : Maybe String
+    occlusionRegions : Maybe (List OcclusionRegion)
     presentationProfile : String
-    requiredExtensions optionalExtensions : List String
+    extensions : ExtensionSet
     provenanceIds : List String
+
+record SchedulerObservation : Set where
+  constructor schedulerObservation
+  field
+    family version : String
+    parameterDigest : Maybe String
+    previousIntervalMinutes nextIntervalMinutes : Maybe ℕ
+    dueAt : Maybe String
 
 record Repetition : Set where
   constructor repetition
   field
     repetitionId promptId : String
     promptRevision : ℕ
-    snapshotDigest presentationDigest : String
-    reviewedAt durationMilliseconds : ℕ
-    capturedResponse : String
+    snapshotDigest presentationDigest : Maybe String
+    reviewedAt : String
+    durationMilliseconds : Maybe ℕ
+    capturedResponse : Maybe String
     rating : RepetitionRating
-    scheduler schedulerVersion parameterDigest : String
-    previousIntervalMinutes nextIntervalMinutes : ℕ
-    dueAt : ℕ
+    scheduler : Maybe SchedulerObservation
     provenanceIds : List String
 
 record RepetitionCorrection : Set where
   constructor repetitionCorrection
   field
     correctionId targetRepetitionId : String
-    correctedAt : ℕ
-    reason replacementRating replacementResponse : String
+    correctedAt : String
+    reason : String
+    replacementRating : Maybe RepetitionRating
+    replacementResponse : Maybe String
     provenanceIds : List String
 
 record Relationship : Set where
   constructor relationship
   field
-    relationshipId sourceId targetId : String
+    relationshipId : String
     kind : RelationshipKind
+    source target : EntityReference
 
 record ProvenanceRecord : Set where
   constructor provenanceRecord
   field
     provenanceId : String
     kind : ProvenanceKind
-    recordedAt : ℕ
-    agent citation license note : String
+    recordedAt : String
+    agent citation license note : Maybe String
     sourceProvenanceIds : List String
 
 record ExtensionDeclaration : Set where
@@ -140,14 +184,14 @@ record ExtensionDeclaration : Set where
   field
     extensionId version : String
     requirement : RequirementLevel
-    fallback : String
+    fallback : Maybe String
 
 record MigrationRecord : Set where
   constructor migrationRecord
   field
     migrationId : String
     fromVersion toVersion : ℕ
-    appliedAt : ℕ
+    appliedAt : String
     tool toolVersion : String
 
 record InteroperabilityReport : Set where
@@ -157,9 +201,6 @@ record InteroperabilityReport : Set where
     status : ConversionStatus
     losses : List String
     preservedArtifactIds : List String
-
-data ArchiveEntryRole : Set where
-  corpus asset preserved-original : ArchiveEntryRole
 
 record ArchiveEntry : Set where
   constructor archiveEntry
@@ -584,6 +625,21 @@ v1Rules =
   rule "archive.digest-mismatch" error "Archive entry digest does not match bytes." "Hosts compute and verify SHA-256 over actual bytes." "archive" ∷
   rule "archive.duplicate-path" error "Archive paths are duplicated." "Each normalized entry path occurs once." "archive" ∷ []
 
+basicJSON : String
+basicJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"example-basic\",\"prompts\":[{\"id\":\"capital-of-france\",\"revision\":1,\"kind\":\"basic\",\"challenge\":[\"What is the capital of France?\"],\"withheld\":[\"Paris\"],\"resolution\":[\"What is the capital of France?\",\"Paris\"],\"response\":{\"mode\":\"self-check\",\"capture\":\"none\"}}]}"
+
+clozeJSON : String
+clozeJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"example-cloze\",\"prompts\":[{\"id\":\"france-capital-cloze\",\"revision\":1,\"kind\":\"cloze\",\"challenge\":[\"The capital of France is […].\"],\"withheld\":[\"Paris\"],\"resolution\":[\"The capital of France is Paris.\",\"Paris\"],\"response\":\"text\",\"clozeTargets\":[{\"id\":\"france-capital\",\"answer\":\"Paris\",\"hints\":[\"European capital\"]}]}]}"
+
+imageOcclusionJSON : String
+imageOcclusionJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"example-image-occlusion\",\"assets\":[{\"id\":\"heart-diagram\",\"mediaType\":\"image/png\",\"byteSize\":\"HOST_COMPUTED_BYTE_SIZE_REQUIRED\",\"sha256\":\"HOST_COMPUTED_SHA256_REQUIRED\",\"path\":\"assets/heart-diagram.png\",\"accessibleDescription\":\"Host-provided diagram.\"}],\"prompts\":[{\"id\":\"heart-left-ventricle\",\"revision\":1,\"kind\":\"image-occlusion\",\"challenge\":[\"Name the covered chamber.\"],\"withheld\":[\"Left ventricle\"],\"resolution\":[\"Left ventricle\"],\"response\":{\"mode\":\"self-check\",\"capture\":\"none\"},\"assets\":[\"heart-diagram\"],\"sourceAsset\":\"heart-diagram\",\"occlusionRegions\":[{\"id\":\"left-ventricle\",\"label\":\"Left ventricle\",\"accessibleDescription\":\"Lower-right chamber in anatomical orientation.\",\"geometry\":{\"type\":\"rectangle\",\"x\":0.58,\"y\":0.56,\"width\":0.2,\"height\":0.24}}]}]}"
+
+mediaJSON : String
+mediaJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"example-media\",\"assets\":[{\"id\":\"heart-diagram\",\"mediaType\":\"image/png\",\"byteSize\":\"HOST_COMPUTED_BYTE_SIZE_REQUIRED\",\"sha256\":\"HOST_COMPUTED_SHA256_REQUIRED\",\"path\":\"assets/heart-diagram.png\",\"accessibleDescription\":\"Host-provided diagram.\"}],\"prompts\":[{\"id\":\"heart-media\",\"revision\":1,\"kind\":\"basic\",\"challenge\":[\"Identify the organ in the image.\"],\"withheld\":[\"heart\"],\"resolution\":[\"Heart diagram\",\"heart\"],\"response\":\"text\",\"assets\":[\"heart-diagram\"]}]}"
+
+historyJSON : String
+historyJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"example-history\",\"prompts\":[{\"id\":\"capital-of-france\",\"revision\":1,\"kind\":\"basic\",\"challenge\":[\"What is the capital of France?\"],\"withheld\":[\"Paris\"],\"resolution\":[\"Paris\"],\"response\":\"text\"}],\"repetitions\":[{\"id\":\"review-1\",\"promptId\":\"capital-of-france\",\"promptRevision\":1,\"reviewedAt\":\"2026-08-26T12:00:00Z\",\"assessment\":\"good\"}]}"
+
 v1Description : FormatDescription
 v1Description = format "lineage.corpus" 1
   "Portable, locally complete version-1 Lineage corpus and archive format."
@@ -613,8 +669,17 @@ v1Description = format "lineage.corpus" 1
    object "ArchiveEntry" "ArchiveEntry version-1 wire object." archiveEntryFields ∷
    object "Manifest" "Manifest version-1 wire object." manifestFields ∷ [])
   v1Rules
-  (example "basic.json" "Basic self-check Prompt." "valid" ∷
-   example "cloze.json" "Stable cloze targets." "valid" ∷
-   example "image-occlusion.json" "Normalized stable regions." "host-media-required" ∷
-   example "media.json" "Host-verified media reference." "host-media-required" ∷ [])
+  (example "basic.json" "Basic self-check Prompt." "valid" basicJSON ∷
+   example "cloze.json" "Stable cloze targets." "valid" clozeJSON ∷
+   example "image-occlusion.json" "Normalized stable regions." "host-media-required" imageOcclusionJSON ∷
+   example "media.json" "Host-verified media reference." "host-media-required" mediaJSON ∷ [])
+  (fixture "basic.json" "Canonical minimal valid corpus." basicJSON valid ∷
+   fixture "history.json" "Valid append-oriented review history." historyJSON valid ∷
+   fixture "disclosure-leak.json" "Challenge leaks withheld material." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-leak\",\"prompts\":[{\"id\":\"p\",\"revision\":1,\"challenge\":[\"Paris\"],\"withheld\":[\"Paris\"],\"resolution\":[\"Paris\"],\"response\":\"text\"}]}" (invalid "disclosure.answer-leaked" "/prompts/0/challenge/0") ∷
+   fixture "non-positive-revision.json" "Prompt revision is zero." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-revision\",\"prompts\":[{\"id\":\"p\",\"revision\":0,\"challenge\":[\"Question\"],\"withheld\":[\"Answer\"],\"resolution\":[\"Answer\"],\"response\":\"text\"}]}" (invalid "revision.non-positive" "/prompts/0/revision") ∷
+   fixture "unresolved-asset.json" "Prompt references an absent asset." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-asset\",\"prompts\":[{\"id\":\"p\",\"revision\":1,\"challenge\":[\"Question\"],\"withheld\":[\"Answer\"],\"resolution\":[\"Answer\"],\"response\":\"text\",\"assets\":[\"missing\"]}]}" (invalid "asset.unresolved" "/prompts/0/assets/0") ∷
+   fixture "unresolved-history.json" "History references an absent Prompt." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-history\",\"prompts\":[],\"repetitions\":[{\"id\":\"review-1\",\"promptId\":\"missing\",\"promptRevision\":1,\"reviewedAt\":\"2026-08-26T12:00:00Z\",\"assessment\":\"good\"}]}" (invalid "history.prompt-unresolved" "/repetitions/0/promptId") ∷
+   fixture "invalid-correction.json" "Correction references an absent repetition." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-correction\",\"prompts\":[],\"repetitionCorrections\":[{\"id\":\"correction-1\",\"targetRepetitionId\":\"missing\",\"correctedAt\":\"2026-08-26T12:00:00Z\",\"reason\":\"Incorrect rating\"}]}" (invalid "history.correction-invalid" "/repetitionCorrections/0/targetRepetitionId") ∷
+   fixture "migration-gap.json" "Migration chain is not contiguous." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-migration\",\"prompts\":[],\"migrations\":[{\"id\":\"m1\",\"fromVersion\":1,\"toVersion\":2,\"appliedAt\":\"2026-08-26T12:00:00Z\",\"tool\":\"lineage\",\"toolVersion\":\"1\"},{\"id\":\"m2\",\"fromVersion\":3,\"toVersion\":4,\"appliedAt\":\"2026-08-26T12:01:00Z\",\"tool\":\"lineage\",\"toolVersion\":\"1\"}]}" (invalid "migration.chain-invalid" "/migrations/1/fromVersion") ∷
+   fixture "loss-unreported.json" "Lossy conversion omits its loss report." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-loss\",\"prompts\":[],\"interoperability\":[{\"id\":\"anki-export\",\"sourceFormat\":\"lineage.corpus/1\",\"targetFormat\":\"anki.apkg\",\"status\":\"lossy\",\"losses\":[]}]}" (invalid "interoperability.loss-unreported" "/interoperability/0/losses") ∷ [])
 ```

@@ -1,46 +1,26 @@
 {
-  "assets": [],
-  "corpusId": "example-basic",
-  "extensions": [],
   "format": "lineage.corpus",
   "formatVersion": 1,
-  "interoperability": [],
-  "materials": [],
-  "migrations": [],
+  "corpusId": "example-basic",
   "prompts": [
     {
-      "assets": [],
+      "id": "capital-of-france",
+      "revision": 1,
+      "kind": "basic",
       "challenge": [
         "What is the capital of France?"
       ],
-      "extensions": {
-        "optional": [],
-        "required": []
-      },
-      "id": "capital-of-france",
-      "kind": "basic",
-      "materials": [],
-      "presentationProfile": "lineage.review/1",
-      "provenance": [],
+      "withheld": [
+        "Paris"
+      ],
       "resolution": [
         "What is the capital of France?",
         "Paris"
       ],
       "response": {
-        "capture": "none",
-        "mode": "self-check"
-      },
-      "revision": 1,
-      "sources": [],
-      "status": "active",
-      "withheld": [
-        "Paris"
-      ]
+        "mode": "self-check",
+        "capture": "none"
+      }
     }
-  ],
-  "provenance": [],
-  "relationships": [],
-  "repetitionCorrections": [],
-  "repetitions": [],
-  "sources": []
+  ]
 }

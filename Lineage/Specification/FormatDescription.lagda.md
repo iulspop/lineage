@@ -104,8 +104,23 @@ record ExampleDescription : Set where
     fileName : String
     summary : String
     kind : String
+    documentJSON : String
 
 open ExampleDescription public
+
+data FixtureExpectation : Set where
+  valid : FixtureExpectation
+  invalid : String → String → FixtureExpectation
+
+record FixtureDescription : Set where
+  constructor fixture
+  field
+    fileName : String
+    summary : String
+    documentJSON : String
+    expectation : FixtureExpectation
+
+open FixtureDescription public
 
 record FormatDescription : Set where
   constructor format
@@ -117,6 +132,7 @@ record FormatDescription : Set where
     objects : List ObjectDescription
     rules : List Rule
     examples : List ExampleDescription
+    fixtures : List FixtureDescription
 
 open FormatDescription public
 ```

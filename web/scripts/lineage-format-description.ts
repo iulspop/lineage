@@ -27,12 +27,22 @@ export type RuleDescription = {
   summary: string
 }
 export type ExampleDescription = {
+  document: unknown
   fileName: string
   kind: string
   summary: string
 }
+export type FixtureDescription = {
+  document: unknown
+  expectation:
+    | { kind: "valid" }
+    | { code: string; kind: "invalid"; path: string }
+  fileName: string
+  summary: string
+}
 export type FormatDescription = {
   examples: ExampleDescription[]
+  fixtures: FixtureDescription[]
   formatName: string
   objects: ObjectDescription[]
   roots: string[]
@@ -101,19 +111,52 @@ const decodeField = (value: unknown): Field => {
 }
 
 export const decodeFormatDescription = (value: unknown): FormatDescription => {
-  const [formatName, version, summary, roots, objects, rules, examples] = visit(
-    value,
-    { format: (...args) => args },
-  )
+  const [
+    formatName,
+    version,
+    summary,
+    roots,
+    objects,
+    rules,
+    examples,
+    fixtures,
+  ] = visit(value, { format: (...args) => args })
   return {
     examples: (examples as unknown[]).map((exampleValue) => {
-      const [fileName, exampleSummary, kind] = visit(exampleValue, {
-        example: (...args) => args,
-      })
+      const [fileName, exampleSummary, kind, documentJson] = visit(
+        exampleValue,
+        {
+          example: (...args) => args,
+        },
+      )
       return {
+        document: JSON.parse(documentJson as string) as unknown,
         fileName: fileName as string,
         kind: kind as string,
         summary: exampleSummary as string,
+      }
+    }),
+    fixtures: (fixtures as unknown[]).map((fixtureValue) => {
+      const [fileName, fixtureSummary, documentJson, expectationValue] = visit(
+        fixtureValue,
+        { fixture: (...args) => args },
+      )
+      const expectation = visit<FixtureDescription["expectation"]>(
+        expectationValue,
+        {
+          invalid: (code, diagnosticPath) => ({
+            code: code as string,
+            kind: "invalid" as const,
+            path: diagnosticPath as string,
+          }),
+          valid: () => ({ kind: "valid" as const }),
+        },
+      )
+      return {
+        document: JSON.parse(documentJson as string) as unknown,
+        expectation,
+        fileName: fileName as string,
+        summary: fixtureSummary as string,
       }
     }),
     formatName: formatName as string,

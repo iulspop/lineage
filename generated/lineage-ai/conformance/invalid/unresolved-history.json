@@ -1,57 +1,18 @@
 {
   "document": {
-    "assets": [],
-    "corpusId": "example-basic",
-    "extensions": [],
     "format": "lineage.corpus",
     "formatVersion": 1,
-    "interoperability": [],
-    "materials": [],
-    "migrations": [],
-    "prompts": [
-      {
-        "assets": [],
-        "challenge": [
-          "What is the capital of France?"
-        ],
-        "extensions": {
-          "optional": [],
-          "required": []
-        },
-        "id": "capital-of-france",
-        "kind": "basic",
-        "materials": [],
-        "presentationProfile": "lineage.review/1",
-        "provenance": [],
-        "resolution": [
-          "What is the capital of France?",
-          "Paris"
-        ],
-        "response": {
-          "capture": "none",
-          "mode": "self-check"
-        },
-        "revision": 1,
-        "sources": [],
-        "status": "active",
-        "withheld": [
-          "Paris"
-        ]
-      }
-    ],
-    "provenance": [],
-    "relationships": [],
-    "repetitionCorrections": [],
+    "corpusId": "invalid-history",
+    "prompts": [],
     "repetitions": [
       {
-        "assessment": "good",
         "id": "review-1",
         "promptId": "missing",
         "promptRevision": 1,
-        "reviewedAt": "2026-08-26T12:00:00Z"
+        "reviewedAt": "2026-08-26T12:00:00Z",
+        "assessment": "good"
       }
-    ],
-    "sources": []
+    ]
   },
   "expectedDiagnostic": {
     "code": "history.prompt-unresolved",
