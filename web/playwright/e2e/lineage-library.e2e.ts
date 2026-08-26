@@ -75,6 +75,8 @@ test.describe("Lineage daily workspace", () => {
     await loginAsTestUser(page)
 
     await page.goto("/create/manual")
+    await expect(page.getByRole("heading", { name: "Create a memory" })).toBeVisible()
+    await page.waitForTimeout(250)
     await page.getByLabel("Corpus").fill("calculus")
     await page.getByLabel("Stable memory ID").fill("derivative")
     await page.getByLabel("Challenge").fill("What is a derivative?")
@@ -119,5 +121,10 @@ test.describe("Lineage daily workspace", () => {
 
     expect(getPath(page)).toBe("/review")
     await expect(page.getByText("What is i squared?")).toBeVisible()
+    await page.keyboard.press("Space")
+    await expect(page.getByText("-1", { exact: true })).toBeVisible()
+    await page.keyboard.press("3")
+    await expect(page.getByText("No reviews due")).toBeVisible()
+    await expect(page.getByRole("listitem").getByText("good")).toBeVisible()
   })
 })

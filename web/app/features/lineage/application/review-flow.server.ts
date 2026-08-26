@@ -3,7 +3,11 @@ import { capturesResponse, parseCorpusDocument } from "../domain/corpus"
 import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewCore, ReviewRecordStore } from "../domain/review"
 import { reviewAssessmentSchema } from "../domain/review"
-import { findNextReviewAt, selectNextPrompt } from "./review-queue"
+import {
+  countDuePrompts,
+  findNextReviewAt,
+  selectNextPrompt,
+} from "./review-queue"
 import {
   dueAt,
   isDue,
@@ -44,13 +48,15 @@ export async function loadReview({
     corpusId: corpus.corpusId,
     userId,
   })
-  const queued = selectNextPrompt(corpus.prompts, latestReviews)
   const reviewedAt = new Date()
+  const queued = selectNextPrompt(corpus.prompts, latestReviews, reviewedAt)
+  const dueCount = countDuePrompts(corpus.prompts, latestReviews, reviewedAt)
   if (!queued) {
     return {
       assessmentPreviews: null,
       captureResponse: false as const,
       corpusId: corpus.corpusId,
+      dueCount,
       presentation: [],
       prompt: null,
       queueDueAt: findNextReviewAt(latestReviews)?.toISOString() ?? null,
@@ -63,6 +69,7 @@ export async function loadReview({
     assessmentPreviews: previewReview(queued.latest, reviewedAt),
     captureResponse: capturesResponse(queued.prompt),
     corpusId: corpus.corpusId,
+    dueCount,
     presentation: core.begin(queued.prompt),
     prompt: queued.prompt,
     queueDueAt: queued.dueAt?.toISOString() ?? null,

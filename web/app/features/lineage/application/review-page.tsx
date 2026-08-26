@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { Form, Link } from "react-router"
 
 import * as s from "./review-page.css"
@@ -25,6 +26,7 @@ type ReviewLoaderData = {
   corpusId: string
   due: boolean
   dueAt: string | null
+  dueCount: number
   history: Array<{
     assessment: (typeof assessments)[number]
     attemptedResponse: string | null
@@ -34,6 +36,8 @@ type ReviewLoaderData = {
   }>
   reviewCount: number
   reviewedAt: string
+  sessionCompleted: number
+  sessionLimit: number | null
   snapshotDigest: string
   userEmail: string
 } & (
@@ -64,8 +68,48 @@ export function ReviewPage({
   actionData: ReviewActionData
   loaderData: ReviewLoaderData
 }) {
+  const [showShortcuts, setShowShortcuts] = useState(false)
   const resolved = actionData && "completed" in actionData ? actionData : null
   const presentation = resolved?.presentation ?? loaderData.presentation
+  const sessionFinished =
+    loaderData.sessionLimit !== null &&
+    loaderData.sessionCompleted >= loaderData.sessionLimit
+  const nextCompleted = loaderData.sessionCompleted + 1
+  const continueSearch = new URLSearchParams({
+    completed: String(nextCompleted),
+    corpusId: loaderData.corpusId,
+  })
+  if (loaderData.sessionLimit !== null) {
+    continueSearch.set("limit", String(loaderData.sessionLimit))
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+      if (event.key === "?") {
+        setShowShortcuts((visible) => !visible)
+        return
+      }
+      const shortcut =
+        event.key === " " || event.key === "Enter" ? "reveal" : event.key
+      const control = document.querySelector<HTMLButtonElement>(
+        `[data-review-shortcut="${shortcut}"]`,
+      )
+      if (control && !control.disabled) {
+        event.preventDefault()
+        control.click()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
 
   return (
     <AppShell userEmail={loaderData.userEmail}>
@@ -82,6 +126,11 @@ export function ReviewPage({
           <div className={s.progress}>
             <p>{loaderData.reviewCount} reviews recorded</p>
             <p>
+              {loaderData.sessionLimit
+                ? `${loaderData.sessionCompleted} of ${loaderData.sessionLimit} in this session`
+                : `${loaderData.dueCount} due in this corpus`}
+            </p>
+            <p>
               {loaderData.due
                 ? "Due now"
                 : `Next review ${new Date(loaderData.dueAt ?? "").toLocaleString()}`}
@@ -97,27 +146,88 @@ export function ReviewPage({
           </div>
         </header>
 
-        <Form className={s.corpusPicker} method="get">
-          <FieldLabel className={s.corpusPickerLabel} htmlFor="review-corpus">
-            Corpus
-          </FieldLabel>
-          <select
-            className={s.corpusSelect}
-            defaultValue={loaderData.corpusId}
-            id="review-corpus"
-            name="corpusId"
+        <div className={s.shortcutBar}>
+          <span>Space reveal · 1–4 assess</span>
+          <button
+            aria-expanded={showShortcuts}
+            className={s.shortcutButton}
+            onClick={() => setShowShortcuts((visible) => !visible)}
+            type="button"
           >
-            {loaderData.corpora.map((corpus) => (
-              <option key={corpus.corpusId} value={corpus.corpusId}>
-                {corpus.corpusId} · format {corpus.formatVersion}
-              </option>
-            ))}
-          </select>
-          <Button type="submit">Choose corpus</Button>
+            Keyboard help (?)
+          </button>
+        </div>
+        {showShortcuts && (
+          <section
+            aria-label="Review keyboard shortcuts"
+            className={s.shortcutHelp}
+          >
+            <strong>Keyboard shortcuts</strong>
+            <p>
+              Space or Enter reveals the answer. Use 1–4 for Again, Hard, Good,
+              and Easy.
+            </p>
+          </section>
+        )}
+
+        <Form className={s.corpusPicker} method="get">
+          <div className={s.pickerField}>
+            <FieldLabel htmlFor="review-corpus">Corpus</FieldLabel>
+            <select
+              className={s.corpusSelect}
+              defaultValue={loaderData.corpusId}
+              id="review-corpus"
+              name="corpusId"
+            >
+              {loaderData.corpora.map((corpus) => (
+                <option key={corpus.corpusId} value={corpus.corpusId}>
+                  {corpus.corpusId} · format {corpus.formatVersion}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={s.pickerField}>
+            <FieldLabel htmlFor="review-limit">Session length</FieldLabel>
+            <select
+              className={s.corpusSelect}
+              defaultValue={loaderData.sessionLimit ?? ""}
+              id="review-limit"
+              name="limit"
+            >
+              <option value="">All due</option>
+              <option value="10">10 memories</option>
+              <option value="20">20 memories</option>
+              <option value="50">50 memories</option>
+            </select>
+          </div>
+          <Button type="submit">Start session</Button>
         </Form>
 
         <section aria-live="polite" className={s.card}>
-          {loaderData.prompt ? (
+          {sessionFinished ? (
+            <div className={s.sessionSummary}>
+              <p className={s.eyebrow}>Session complete</p>
+              <h2>{loaderData.sessionCompleted} memories reviewed</h2>
+              <p>
+                {loaderData.dueCount > 0
+                  ? `${loaderData.dueCount} memories remain due. Start another session whenever you are ready.`
+                  : "You cleared the due queue for this corpus."}
+              </p>
+              <div className={s.actions}>
+                <Link className={s.secondaryLink} to="/today">
+                  Return to Today
+                </Link>
+                {loaderData.dueCount > 0 && (
+                  <Link
+                    className={s.continueLink}
+                    to={`/review?corpusId=${encodeURIComponent(loaderData.corpusId)}`}
+                  >
+                    Continue reviewing
+                  </Link>
+                )}
+              </div>
+            </div>
+          ) : loaderData.prompt ? (
             <>
               <div className={s.content}>
                 {presentation.map((item) => (
@@ -164,7 +274,12 @@ export function ReviewPage({
                     </p>
                   )}
                   <div className={s.actions}>
-                    <Button name="intent" type="submit" value="resolve">
+                    <Button
+                      data-review-shortcut="reveal"
+                      name="intent"
+                      type="submit"
+                      value="resolve"
+                    >
                       Show answer
                     </Button>
                   </div>
@@ -176,14 +291,26 @@ export function ReviewPage({
                     Next review in{" "}
                     {formatInterval(resolved.nextIntervalMinutes)}.
                   </p>
-                  <Form action="/review" method="get">
-                    <input
-                      name="corpusId"
-                      type="hidden"
-                      value={loaderData.corpusId}
-                    />
-                    <Button type="submit">Review again</Button>
-                  </Form>
+                  <div className={s.actions}>
+                    {(resolved.assessment === "again" ||
+                      resolved.assessment === "hard") && (
+                      <Link
+                        className={s.secondaryLink}
+                        to={`/library/${encodeURIComponent(loaderData.corpusId)}/memories/${encodeURIComponent(loaderData.prompt.id)}`}
+                      >
+                        Inspect difficult memory
+                      </Link>
+                    )}
+                    <Link
+                      className={s.continueLink}
+                      to={`/review?${continueSearch.toString()}`}
+                    >
+                      {loaderData.sessionLimit !== null &&
+                      nextCompleted >= loaderData.sessionLimit
+                        ? "Finish session"
+                        : "Next memory"}
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className={s.resolution}>
@@ -224,8 +351,9 @@ export function ReviewPage({
                     />
                     <fieldset className={s.assessmentGroup}>
                       <legend>How well did you remember?</legend>
-                      {assessments.map((assessment) => (
+                      {assessments.map((assessment, index) => (
                         <Button
+                          data-review-shortcut={String(index + 1)}
                           key={assessment}
                           name="assessment"
                           type="submit"

@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest"
 
 import type { ReviewContract } from "../domain/corpus"
 import type { ReviewHistoryEntry } from "../domain/review"
-import { selectNextPrompt } from "./review-queue"
+import { countDuePrompts, selectNextPrompt } from "./review-queue"
 
 const prompts: ReviewContract[] = ["first", "second", "third"].map((id) => ({
   challenge: [`Challenge ${id}`],
@@ -81,6 +81,19 @@ describe("selectNextPrompt", () => {
     const expected = null
 
     expect(actual).toEqual(expected)
+  })
+
+  test("counts new and currently due Prompts for session setup", () => {
+    expect(
+      countDuePrompts(
+        prompts,
+        [
+          review("first", "2026-08-26T00:00:00Z", 1),
+          review("second", "2026-08-26T00:00:00Z", 20),
+        ],
+        now,
+      ),
+    ).toBe(2)
   })
 
   test("uses corpus order as the stable tie-break", () => {

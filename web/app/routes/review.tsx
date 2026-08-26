@@ -24,7 +24,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   })
   if (corpora.length === 0) throw redirect("/library")
 
-  const requestedCorpusId = new URL(request.url).searchParams.get("corpusId")
+  const searchParams = new URL(request.url).searchParams
+  const requestedCorpusId = searchParams.get("corpusId")
+  const requestedLimit = Number(searchParams.get("limit"))
+  const sessionLimit = [10, 20, 50].includes(requestedLimit)
+    ? requestedLimit
+    : null
+  const requestedCompleted = Number(searchParams.get("completed"))
+  const sessionCompleted =
+    Number.isInteger(requestedCompleted) && requestedCompleted > 0
+      ? requestedCompleted
+      : 0
   const corpusId = corpora.some(
     (corpus) => corpus.corpusId === requestedCorpusId,
   )
@@ -47,7 +57,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     }),
     retrieveUserFromDatabaseById(userId),
   ])
-  return { ...review, ...progress, corpora, userEmail: user?.email ?? "" }
+  return {
+    ...review,
+    ...progress,
+    corpora,
+    sessionCompleted,
+    sessionLimit,
+    userEmail: user?.email ?? "",
+  }
 }
 
 export async function action({ request }: Route.ActionArgs) {

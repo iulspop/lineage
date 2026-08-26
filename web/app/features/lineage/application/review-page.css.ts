@@ -41,15 +41,51 @@ export const memoryLink = style({
   textDecoration: "none",
 })
 
-export const corpusPicker = style({
-  alignItems: "end",
+export const shortcutBar = style({
+  alignItems: "center",
+  color: theme.color.text.muted,
+  display: "flex",
+  fontSize: theme.font.size.sm,
+  gap: theme.space[3],
+  justifyContent: "space-between",
+  marginBottom: theme.space[3],
+})
+
+export const shortcutButton = style({
+  background: "transparent",
+  border: 0,
+  color: theme.color.intent.primary.background,
+  cursor: "pointer",
+  font: "inherit",
+  fontWeight: theme.font.weight.semibold,
+  padding: theme.space[1],
+})
+
+export const shortcutHelp = style({
+  background: theme.color.background.subtle,
+  border: `1px solid ${theme.color.border.subtle}`,
+  borderRadius: theme.radius.md,
   display: "grid",
   gap: theme.space[2],
-  gridTemplateColumns: "1fr auto",
+  marginBottom: theme.space[4],
+  padding: theme.space[4],
+})
+
+export const corpusPicker = style({
+  "@media": {
+    "screen and (max-width: 40rem)": {
+      alignItems: "stretch",
+      gridTemplateColumns: "1fr",
+    },
+  },
+  alignItems: "end",
+  display: "grid",
+  gap: theme.space[3],
+  gridTemplateColumns: "minmax(0, 1fr) minmax(10rem, 0.55fr) auto",
   marginBottom: theme.space[4],
 })
 
-export const corpusPickerLabel = style({ gridColumn: "1 / -1" })
+export const pickerField = style({ display: "grid", gap: theme.space[2] })
 
 export const corpusSelect = style({
   background: theme.color.background.card,
@@ -97,6 +133,28 @@ export const complete = style({
   display: "flex",
   gap: theme.space[4],
   justifyContent: "space-between",
+})
+
+export const sessionSummary = style({
+  display: "grid",
+  gap: theme.space[4],
+  textAlign: "center",
+})
+
+export const continueLink = style({
+  background: theme.color.intent.primary.background,
+  borderRadius: theme.radius.sm,
+  color: theme.color.intent.primary.foreground,
+  fontWeight: theme.font.weight.semibold,
+  padding: `${theme.space[3]} ${theme.space[4]}`,
+  textDecoration: "none",
+})
+
+export const secondaryLink = style({
+  color: theme.color.text.primary,
+  fontWeight: theme.font.weight.semibold,
+  padding: theme.space[3],
+  textDecoration: "none",
 })
 
 export const history = style({

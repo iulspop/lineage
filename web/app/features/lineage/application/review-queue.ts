@@ -42,6 +42,21 @@ export function selectNextPrompt(
   return queue.find(({ priority }) => priority < 2) ?? null
 }
 
+export function countDuePrompts(
+  prompts: ReviewContract[],
+  latestReviews: ReviewHistoryEntry[],
+  now = new Date(),
+) {
+  const reviewsByPrompt = new Map(
+    latestReviews.map((review) => [review.promptId, review]),
+  )
+  return prompts.filter((prompt) => {
+    const latest = reviewsByPrompt.get(prompt.id) ?? null
+    const promptDueAt = dueAt(latest)
+    return !latest || (promptDueAt !== null && promptDueAt <= now)
+  }).length
+}
+
 export function findNextReviewAt(latestReviews: ReviewHistoryEntry[]) {
   return (
     latestReviews
