@@ -1,6 +1,7 @@
 import { startRegistration } from "@simplewebauthn/browser"
 import {
   IconBell,
+  IconDatabaseExport,
   IconKey,
   IconMessageCircle,
   IconUser,
@@ -81,6 +82,7 @@ export function SettingsPageComponent({
           <a href="#appearance">Appearance</a>
           <a href="#account">Account</a>
           <a href="#passkeys">Passkeys</a>
+          <a href="#data">Data portability</a>
           <a href="#chat">Founder chat</a>
         </nav>
 
@@ -184,6 +186,29 @@ export function SettingsPageComponent({
             {actionData?.success === false && (
               <FieldError className={s.status}>{actionData.error}</FieldError>
             )}
+          </section>
+
+          <section className={s.section} id="data">
+            <div className={s.sectionHeading}>
+              <h2>Data portability</h2>
+              <p>Export or recover your complete durable Lineage history.</p>
+            </div>
+            <div className={s.settingRow}>
+              <IconDatabaseExport
+                aria-hidden="true"
+                className={s.rowIcon}
+                size={17}
+              />
+              <div className={s.settingCopy}>
+                <span className={s.settingTitle}>Complete user data</span>
+                <span className={s.settingDescription}>
+                  Immutable corpus snapshots, review events, and media assets.
+                </span>
+              </div>
+              <Link className={s.rowLink} to="/settings/data">
+                Manage data
+              </Link>
+            </div>
           </section>
 
           <section className={s.section} id="chat">

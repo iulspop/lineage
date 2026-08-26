@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
 import { loginAsTestUser, setupLineageCorpus } from "../auth-utils"
@@ -46,11 +47,37 @@ test.describe("Lineage daily workspace", () => {
     await expect(
       page.getByRole("heading", { name: "powers of i" }),
     ).toBeVisible()
-    const download = page.waitForEvent("download")
-    await page.getByRole("link", { name: "Export" }).click()
-    await expect((await download).suggestedFilename()).toBe(
-      "powers-of-i.lineage.json",
+    const archiveDownload = page.waitForEvent("download")
+    await page.getByRole("link", { name: "Export .lineage" }).click()
+    const archive = await archiveDownload
+    expect(archive.suggestedFilename()).toBe("powers-of-i.lineage")
+    const archivePath = await archive.path()
+    if (!archivePath) throw new Error("Exported archive has no local path")
+
+    await loginAsTestUser(page)
+    await page.goto("/create/archive")
+    await expect(
+      page.getByRole("heading", { name: "Import a portable corpus" }),
+    ).toBeVisible()
+    await page.waitForTimeout(250)
+    const archiveInput = page.getByLabel("Portable corpus archive")
+    await archiveInput.setInputFiles(archivePath)
+    await expect
+      .poll(() =>
+        archiveInput.evaluate((input: HTMLInputElement) => input.files?.length),
+      )
+      .toBe(1)
+    await page.getByLabel("Import this archive after all checks pass.").check()
+    const importResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/create/archive",
     )
+    await page.getByRole("button", { name: "Verify and import" }).click()
+    expect((await importResponse).status()).toBe(200)
+    await expect(
+      page.getByRole("heading", { name: "Corpus imported" }),
+    ).toBeVisible()
 
     await page.goto("/library/powers-of-i?tab=memories&q=squared&status=active")
     await expect(page).toHaveURL(/tab=memories/)
@@ -148,6 +175,43 @@ test.describe("Lineage daily workspace", () => {
     await expect(
       page.getByText("What does a derivative measure?"),
     ).toBeVisible()
+  })
+
+  test("given: durable data, should: show insights and export complete recovery data", async ({
+    page,
+  }) => {
+    const user = await loginAsTestUser(page)
+    await setupLineageCorpus(user.id, `insights-${Date.now()}`)
+
+    await page.goto("/insights")
+    await expect(
+      page.getByRole("heading", { name: "Understand your learning workload" }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Complete review timeline" }),
+    ).toBeVisible()
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+
+    await page.setViewportSize({ height: 844, width: 390 })
+    await page.goto("/settings/data")
+    await expect(
+      page.getByRole("heading", {
+        name: "Export and recover your Lineage data",
+      }),
+    ).toBeVisible()
+    const hasHorizontalOverflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    )
+    expect(hasHorizontalOverflow).toBe(false)
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+
+    const exportDownload = page.waitForEvent("download")
+    await page.getByRole("link", { name: "Download complete export" }).click()
+    const download = await exportDownload
+    await expect(download.suggestedFilename()).toBe("lineage-user-data.lineage")
+    expect(await download.path()).not.toBeNull()
   })
 
   test("given: a due memory, should: start review from Today", async ({

@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto"
 import { generateTOTP } from "@epic-web/totp"
 import type { Page } from "@playwright/test"
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
@@ -44,7 +45,7 @@ export async function getVerificationCode(email: string): Promise<string> {
  */
 export async function setupTestUser(overrides: { email?: string } = {}) {
   const prisma = createPrisma()
-  const email = overrides.email ?? `test-${Date.now()}@example.com`
+  const email = overrides.email ?? `test-${randomUUID()}@example.com`
 
   try {
     const user = await prisma.user.upsert({
@@ -79,12 +80,13 @@ export async function setupLineageCorpus(
     ],
   }
 
+  const canonicalJson = JSON.stringify(document)
   try {
     await prisma.lineageCorpusSnapshot.create({
       data: {
-        canonicalJson: JSON.stringify(document),
+        canonicalJson,
         corpusId,
-        digest: `e2e-${corpusId}-${Date.now()}`,
+        digest: createHash("sha256").update(canonicalJson).digest("hex"),
         formatVersion: 1,
         ownerId,
       },
@@ -137,7 +139,7 @@ export async function loginAsTestUser(
   overrides: { email?: string } = {},
 ) {
   const prisma = createPrisma()
-  const email = overrides.email ?? `login-${Date.now()}@example.com`
+  const email = overrides.email ?? `login-${randomUUID()}@example.com`
 
   try {
     const user = await prisma.user.upsert({

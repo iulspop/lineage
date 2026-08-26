@@ -57,7 +57,7 @@ export function LibraryPage({ corpora, query, userEmail }: LibraryPageProps) {
                 : "Create or import your first corpus to begin building durable memory."}
             </p>
             {!query && (
-              <Link className={s.primaryAction} to="/create/import">
+              <Link className={s.primaryAction} to="/create/archive">
                 Import a corpus
               </Link>
             )}

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto"
+import { unzipSync, zipSync } from "fflate"
 
 import type {
   CorpusDocument,
@@ -20,6 +21,37 @@ export type ValidatedLineageArchive = {
 export type ArchiveValidationResult =
   | { diagnostics: []; valid: true; value: ValidatedLineageArchive }
   | { diagnostics: LineageDiagnostic[]; valid: false }
+
+const MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
+const MAX_EXTRACTED_BYTES = 250 * 1024 * 1024
+const MAX_ENTRY_BYTES = 100 * 1024 * 1024
+const MAX_ENTRY_COUNT = 2000
+
+export function decodeLineageArchive(bytes: Uint8Array): ArchiveFiles {
+  if (bytes.byteLength > MAX_ARCHIVE_BYTES)
+    throw new Error("Archive exceeds 50 MB")
+  const extracted = unzipSync(bytes)
+  const entries = Object.entries(extracted)
+  if (entries.length > MAX_ENTRY_COUNT)
+    throw new Error("Archive has too many entries")
+  let total = 0
+  const files = new Map<string, Uint8Array>()
+  for (const [path, contents] of entries) {
+    if (!isSafeArchivePath(path))
+      throw new Error(`Unsafe archive path: ${path}`)
+    if (contents.byteLength > MAX_ENTRY_BYTES)
+      throw new Error(`Archive entry is too large: ${path}`)
+    total += contents.byteLength
+    if (total > MAX_EXTRACTED_BYTES)
+      throw new Error("Archive expands beyond 250 MB")
+    files.set(path, contents)
+  }
+  return files
+}
+
+export function encodeLineageArchive(files: ArchiveFiles): Uint8Array {
+  return zipSync(Object.fromEntries(files), { level: 6 })
+}
 
 export function validateLineageArchive({
   files,
@@ -227,6 +259,18 @@ export function createLineageManifest({
 function digest(bytes: Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex")
 }
+
+function isSafeArchivePath(path: string) {
+  return (
+    path.length > 0 &&
+    !path.startsWith("/") &&
+    !path.includes("\\") &&
+    path
+      .split("/")
+      .every((segment) => segment !== "" && segment !== "." && segment !== "..")
+  )
+}
+
 function invalid(
   code: string,
   path: string,

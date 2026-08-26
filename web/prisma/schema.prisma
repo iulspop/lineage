@@ -25,6 +25,7 @@ model User {
   chatTypingStates       ChatTypingState[]
   lineageCorpusSnapshots LineageCorpusSnapshot[]
   lineageReviews         LineageReview[]
+  lineageAssets          LineageCorpusAsset[]
 }
 
 model LineageCorpusSnapshot {
@@ -39,6 +40,32 @@ model LineageCorpusSnapshot {
 
   @@unique([ownerId, corpusId, digest])
   @@index([ownerId, corpusId, createdAt])
+}
+
+model LineageAssetBlob {
+  sha256    String               @id
+  bytes     Bytes
+  byteSize  Int
+  mediaType String
+  createdAt DateTime             @default(now())
+  corpora   LineageCorpusAsset[]
+}
+
+model LineageCorpusAsset {
+  id                   Int              @id @default(autoincrement())
+  ownerId              String
+  corpusId             String
+  assetId              String
+  archivePath          String
+  accessibilityDescription String?
+  blobSha256           String
+  createdAt            DateTime         @default(now())
+  owner                User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  blob                 LineageAssetBlob @relation(fields: [blobSha256], references: [sha256], onDelete: Restrict)
+
+  @@unique([ownerId, corpusId, assetId])
+  @@index([ownerId, corpusId])
+  @@index([blobSha256])
 }
 
 model LineageReview {

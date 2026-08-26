@@ -83,9 +83,9 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
               </Link>
               <a
                 className={s.primaryAction}
-                href={`/library/${encodeURIComponent(props.corpus.corpusId)}/export`}
+                href={`/library/${encodeURIComponent(props.corpus.corpusId)}/archive`}
               >
-                <IconDownload aria-hidden="true" /> Export
+                <IconDownload aria-hidden="true" /> Export .lineage
               </a>
             </div>
           }

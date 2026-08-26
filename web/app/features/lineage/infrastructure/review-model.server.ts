@@ -40,6 +40,19 @@ function toHistoryEntry(row: ReviewRow): ReviewHistoryEntry {
   }
 }
 
+export async function listUserReviewHistory(input: {
+  limit?: number
+  userId: string
+}) {
+  const reviews = await prisma.lineageReview.findMany({
+    orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+    select: reviewSelect,
+    take: input.limit,
+    where: { userId: input.userId },
+  })
+  return reviews.map(toHistoryEntry)
+}
+
 export async function listCorpusReviewHistory(input: {
   corpusId: string
   limit?: number

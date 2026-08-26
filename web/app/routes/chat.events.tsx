@@ -7,32 +7,38 @@ export async function loader({ request }: Route.LoaderArgs) {
   const encoder = new TextEncoder()
   let previous = JSON.stringify(await retrieveChatEventSnapshot(userId))
 
+  let interval: ReturnType<typeof setInterval> | undefined
+  let closed = false
+  const stop = (controller?: ReadableStreamDefaultController<Uint8Array>) => {
+    if (closed) return
+    closed = true
+    if (interval) clearInterval(interval)
+    controller?.close()
+  }
+
   const stream = new ReadableStream({
-    cancel() {},
+    cancel() {
+      stop()
+    },
     start(controller) {
       controller.enqueue(
         encoder.encode(`event: snapshot\ndata: ${previous}\n\n`),
       )
-      const interval = setInterval(async () => {
+      interval = setInterval(async () => {
         try {
           const next = JSON.stringify(await retrieveChatEventSnapshot(userId))
+          if (closed) return
           if (next !== previous) {
             previous = next
             controller.enqueue(encoder.encode(`event: chat\ndata: ${next}\n\n`))
           } else controller.enqueue(encoder.encode(": heartbeat\n\n"))
         } catch {
-          clearInterval(interval)
-          controller.close()
+          stop(controller)
         }
       }, 2000)
-      request.signal.addEventListener(
-        "abort",
-        () => {
-          clearInterval(interval)
-          controller.close()
-        },
-        { once: true },
-      )
+      request.signal.addEventListener("abort", () => stop(controller), {
+        once: true,
+      })
     },
   })
 

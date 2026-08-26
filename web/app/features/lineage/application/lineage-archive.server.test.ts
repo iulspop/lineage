@@ -5,6 +5,8 @@ import { parseCorpusDocument, serializeCorpusDocument } from "../domain/corpus"
 import { lineageRuntime } from "../infrastructure/lineage-runtime.server"
 import {
   createLineageManifest,
+  decodeLineageArchive,
+  encodeLineageArchive,
   validateLineageArchive,
 } from "./lineage-archive.server"
 
@@ -67,6 +69,23 @@ describe("Lineage archive validation", () => {
       validator: lineageRuntime,
     })
     expect(result.valid).toBe(true)
+  })
+
+  test("round-trips ZIP bytes and rejects traversal paths", () => {
+    const bytes = encodeLineageArchive(
+      new Map([
+        ["manifest.json", encoder.encode("{}")],
+        ["assets/diagram.png", assetBytes],
+      ]),
+    )
+    expect(decodeLineageArchive(bytes).get("assets/diagram.png")).toEqual(
+      assetBytes,
+    )
+
+    const unsafe = encodeLineageArchive(
+      new Map([["../outside.txt", encoder.encode("unsafe")]]),
+    )
+    expect(() => decodeLineageArchive(unsafe)).toThrow("Unsafe archive path")
   })
 
   test("rejects invented or mismatched media integrity", () => {

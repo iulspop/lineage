@@ -72,7 +72,7 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
                 <IconPlus aria-hidden="true" />
                 Create memories
               </Link>
-              <Link className={s.secondaryAction} to="/create/import">
+              <Link className={s.secondaryAction} to="/create/archive">
                 Import a corpus
               </Link>
             </div>
