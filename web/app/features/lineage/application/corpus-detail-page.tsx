@@ -261,27 +261,46 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
         )}
 
         {activeTab === "sources" && (
-          <section className={s.cardGrid}>
-            {props.sources.length === 0 ? (
-              <p className={s.empty}>This corpus has no sources.</p>
-            ) : (
-              props.sources.map((source) => (
-                <article
-                  className={s.panel}
-                  key={`${source.id}:${source.revision}`}
-                >
-                  <span className={s.eyebrow}>
-                    Source · revision {source.revision}
-                  </span>
-                  <h2>{source.title}</h2>
-                  <p>{source.contentPreview || "No source content preview."}</p>
-                  <small>
-                    {source.memoryCount} linked memories · {source.assetCount}{" "}
-                    assets
-                  </small>
-                </article>
-              ))
-            )}
+          <section className={s.sectionStack}>
+            <div className={s.sectionHeader}>
+              <div>
+                <h2>Sources and materials</h2>
+                <p>
+                  Maintain durable context and link it to the memories it
+                  supports.
+                </p>
+              </div>
+              <Link
+                className={s.secondaryAction}
+                to={`/library/${encodeURIComponent(props.corpus.corpusId)}/knowledge`}
+              >
+                Manage context
+              </Link>
+            </div>
+            <div className={s.cardGrid}>
+              {props.sources.length === 0 ? (
+                <p className={s.empty}>This corpus has no sources.</p>
+              ) : (
+                props.sources.map((source) => (
+                  <article
+                    className={s.panel}
+                    key={`${source.id}:${source.revision}`}
+                  >
+                    <span className={s.eyebrow}>
+                      Source · revision {source.revision}
+                    </span>
+                    <h2>{source.title}</h2>
+                    <p>
+                      {source.contentPreview || "No source content preview."}
+                    </p>
+                    <small>
+                      {source.memoryCount} linked memories · {source.assetCount}{" "}
+                      assets
+                    </small>
+                  </article>
+                ))
+              )}
+            </div>
           </section>
         )}
 

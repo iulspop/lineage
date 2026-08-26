@@ -115,6 +115,105 @@ export const navLinkActive = style({
   color: theme.color.accent.foreground,
 })
 
+export const commandTrigger = style({
+  "@media": {
+    "screen and (max-width: 64rem)": {
+      marginLeft: "auto",
+      paddingInline: theme.space[2],
+    },
+  },
+  alignItems: "center",
+  background: theme.color.background.card,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.secondary,
+  cursor: "pointer",
+  display: "flex",
+  font: "inherit",
+  gap: theme.space[2],
+  marginTop: theme.space[4],
+  minHeight: theme.layout.controlHeightCompact,
+  paddingInline: theme.space[3],
+})
+globalStyle(`${commandTrigger} kbd`, {
+  background: theme.color.background.sunken,
+  borderRadius: theme.radius.sm,
+  fontSize: theme.font.role.metadata,
+  padding: `0 ${theme.space[1]}`,
+})
+globalStyle(`${commandTrigger} svg`, { height: "1rem", width: "1rem" })
+export const commandBackdrop = style({
+  alignItems: "flex-start",
+  background: "rgb(0 0 0 / 0.45)",
+  display: "flex",
+  inset: 0,
+  justifyContent: "center",
+  padding: "15vh 1rem 1rem",
+  position: "fixed",
+  zIndex: 100,
+})
+export const commandPalette = style({
+  background: theme.color.background.elevated,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.lg,
+  boxShadow: theme.shadow.elevated,
+  maxWidth: "34rem",
+  overflow: "hidden",
+  width: "100%",
+})
+globalStyle(`${commandPalette} > label`, {
+  alignItems: "center",
+  borderBottom: `1px solid ${theme.color.border.default}`,
+  display: "flex",
+  gap: theme.space[3],
+  padding: theme.space[4],
+})
+globalStyle(`${commandPalette} input`, {
+  background: "transparent",
+  border: 0,
+  color: theme.color.text.primary,
+  font: "inherit",
+  outline: 0,
+  width: "100%",
+})
+export const commandList = style({
+  display: "grid",
+  maxHeight: "22rem",
+  overflowY: "auto",
+  padding: theme.space[2],
+})
+globalStyle(`${commandList} button`, {
+  alignItems: "center",
+  background: "transparent",
+  border: 0,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  display: "flex",
+  font: "inherit",
+  gap: theme.space[3],
+  padding: `${theme.space[3]} ${theme.space[4]}`,
+  textAlign: "left",
+})
+globalStyle(
+  `${commandList} button:hover, ${commandList} button:focus-visible`,
+  { background: theme.color.background.subtle },
+)
+globalStyle(`${commandList} p`, {
+  color: theme.color.text.secondary,
+  margin: 0,
+  padding: theme.space[4],
+})
+export const visuallyHidden = style({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: "1px",
+  overflow: "hidden",
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: "1px",
+})
+
 export const account = style({
   "@media": { "screen and (max-width: 64rem)": { display: "none" } },
   borderTop: `1px solid ${theme.color.border.default}`,

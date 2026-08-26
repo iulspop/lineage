@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { createRoutesStub } from "react-router"
 import { describe, expect, test } from "vitest"
 
@@ -34,6 +35,34 @@ describe("AppShell", () => {
     expect(screen.getByLabelText("Open account menu")).toBeInTheDocument()
     expect(
       screen.getByRole("heading", { name: "Workspace" }),
+    ).toBeInTheDocument()
+  })
+
+  test("given: the keyboard shortcut, should: open searchable quick actions", async () => {
+    const user = userEvent.setup()
+    const RoutesStub = createRoutesStub([
+      {
+        Component: () => (
+          <AppShell userEmail="user@example.com">
+            <h1>Workspace</h1>
+          </AppShell>
+        ),
+        path: "/",
+      },
+    ])
+
+    render(<RoutesStub initialEntries={["/"]} />)
+    await user.keyboard("{Meta>}k{/Meta}")
+
+    expect(
+      screen.getByRole("dialog", { name: "Quick actions" }),
+    ).toBeInTheDocument()
+    await user.type(
+      screen.getByPlaceholderText("Go to a page or start an action…"),
+      "data",
+    )
+    expect(
+      screen.getByRole("button", { name: "Data portability" }),
     ).toBeInTheDocument()
   })
 

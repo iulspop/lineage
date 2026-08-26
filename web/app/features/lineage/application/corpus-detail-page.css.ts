@@ -239,6 +239,18 @@ export const empty = style({
   textAlign: "center",
 })
 export const muted = style({ color: theme.color.text.secondary })
+export const sectionStack = style({ display: "grid", gap: theme.space[5] })
+export const sectionHeader = style({
+  alignItems: "end",
+  display: "flex",
+  gap: theme.space[4],
+  justifyContent: "space-between",
+})
+globalStyle(`${sectionHeader} h2, ${sectionHeader} p`, { margin: 0 })
+globalStyle(`${sectionHeader} p`, {
+  color: theme.color.text.secondary,
+  marginTop: theme.space[1],
+})
 export const cardGrid = style({
   "@media": { "screen and (max-width: 48rem)": { gridTemplateColumns: "1fr" } },
   display: "grid",

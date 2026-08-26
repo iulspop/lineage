@@ -46,7 +46,11 @@ export function MemoryDetailPage(props: Props) {
               </Link>
               <Link
                 className={s.secondaryAction}
-                to={`/library/${encodeURIComponent(props.corpusId)}/memories/${encodeURIComponent(memory.promptId)}/edit`}
+                to={
+                  memory.kind === "image-occlusion"
+                    ? `/create/image-occlusion?corpusId=${encodeURIComponent(props.corpusId)}&promptId=${encodeURIComponent(memory.promptId)}`
+                    : `/library/${encodeURIComponent(props.corpusId)}/memories/${encodeURIComponent(memory.promptId)}/edit`
+                }
               >
                 <IconEdit aria-hidden="true" /> Revise
               </Link>

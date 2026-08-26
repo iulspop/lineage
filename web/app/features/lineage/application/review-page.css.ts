@@ -114,6 +114,19 @@ export const content = style({
   minHeight: "8rem",
 })
 
+export const reviewImage = style({
+  borderRadius: theme.radius.md,
+  overflow: "hidden",
+  position: "relative",
+})
+
+export const reviewOcclusion = style({
+  background: theme.color.text.primary,
+  border: `2px solid ${theme.color.background.card}`,
+  boxShadow: theme.shadow.sm,
+  position: "absolute",
+})
+
 export const form = style({ display: "grid", gap: theme.space[3] })
 
 export const actions = style({ display: "flex", justifyContent: "flex-end" })

@@ -51,7 +51,24 @@ type ReviewLoaderData = {
       assessmentPreviews: Record<(typeof assessments)[number], number>
       captureResponse: boolean
       presentation: string[]
-      prompt: { id: string; revision: number }
+      prompt: {
+        id: string
+        kind?: string
+        occlusionRegions?: Array<{
+          geometry:
+            | {
+                height: number
+                type: "rectangle"
+                width: number
+                x: number
+                y: number
+              }
+            | { points: Array<{ x: number; y: number }>; type: "polygon" }
+          id: string
+        }>
+        revision: number
+        sourceAsset?: string
+      }
     }
 )
 
@@ -233,6 +250,32 @@ export function ReviewPage({
                 {presentation.map((item) => (
                   <p key={item}>{item}</p>
                 ))}
+                {loaderData.prompt.kind === "image-occlusion" &&
+                loaderData.prompt.sourceAsset ? (
+                  <div className={s.reviewImage}>
+                    <img
+                      alt="Visual with the target region concealed"
+                      src={`/library/${encodeURIComponent(loaderData.corpusId)}/assets/${encodeURIComponent(loaderData.prompt.sourceAsset)}`}
+                    />
+                    {!resolved
+                      ? loaderData.prompt.occlusionRegions?.map((region) =>
+                          region.geometry.type === "rectangle" ? (
+                            <span
+                              aria-hidden="true"
+                              className={s.reviewOcclusion}
+                              key={region.id}
+                              style={{
+                                height: `${region.geometry.height * 100}%`,
+                                left: `${region.geometry.x * 100}%`,
+                                top: `${region.geometry.y * 100}%`,
+                                width: `${region.geometry.width * 100}%`,
+                              }}
+                            />
+                          ) : null,
+                        )
+                      : null}
+                  </div>
+                ) : null}
               </div>
 
               {!resolved ? (

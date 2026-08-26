@@ -7,10 +7,12 @@ import {
   IconLogout,
   IconMenu2,
   IconPlus,
+  IconSearch,
   IconSettings,
 } from "@tabler/icons-react"
 import type { ReactNode } from "react"
-import { Form, NavLink } from "react-router"
+import { useEffect, useRef, useState } from "react"
+import { Form, NavLink, useNavigate } from "react-router"
 
 import * as s from "./app-shell.css"
 import { Badge } from "~/components/ui/badge"
@@ -34,6 +36,93 @@ const navItems = [
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   cx(s.navLink, isActive && s.navLinkActive)
+
+const commands = [
+  ...navItems,
+  { icon: IconPlus, label: "Create memory", to: "/create/manual" },
+  { icon: IconBrain, label: "Generate with AI", to: "/create/ai" },
+  { icon: IconSettings, label: "Data portability", to: "/settings/data" },
+] as const
+
+function CommandPalette() {
+  const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        setOpen((value) => !value)
+      }
+      if (event.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+  const matches = commands.filter(({ label }) =>
+    label.toLowerCase().includes(query.toLowerCase()),
+  )
+  const choose = (to: string) => {
+    setOpen(false)
+    setQuery("")
+    navigate(to)
+  }
+  return (
+    <>
+      <button
+        aria-label="Open command palette"
+        className={s.commandTrigger}
+        onClick={() => setOpen(true)}
+        type="button"
+      >
+        <IconSearch aria-hidden="true" />
+        <span>Quick actions</span>
+        <kbd>⌘K</kbd>
+      </button>
+      {open ? (
+        <div
+          aria-label="Quick actions"
+          aria-modal="true"
+          className={s.commandBackdrop}
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setOpen(false)
+          }}
+          role="dialog"
+        >
+          <div className={s.commandPalette}>
+            <label>
+              <IconSearch aria-hidden="true" />
+              <span className={s.visuallyHidden}>Search actions</span>
+              <input
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Go to a page or start an action…"
+                ref={inputRef}
+                value={query}
+              />
+            </label>
+            <div className={s.commandList}>
+              {matches.map(({ icon: Icon, label, to }) => (
+                <button
+                  key={`${label}:${to}`}
+                  onClick={() => choose(to)}
+                  type="button"
+                >
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
+              {matches.length === 0 ? <p>No matching actions.</p> : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  )
+}
 
 function PrimaryNavigation() {
   return (
@@ -81,6 +170,7 @@ function AppShell({
         <div className={s.desktopNavigation}>
           <PrimaryNavigation />
         </div>
+        <CommandPalette />
         <div className={s.account}>
           <span className={s.accountEmail} title={userEmail}>
             {userEmail}

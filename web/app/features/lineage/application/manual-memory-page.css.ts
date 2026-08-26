@@ -163,6 +163,11 @@ const actionBase = {
   textDecoration: "none",
 } as const
 
+export const headerActions = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: theme.space[2],
+})
 export const secondaryAction = style({
   ...actionBase,
   border: `1px solid ${theme.color.border.strong}`,

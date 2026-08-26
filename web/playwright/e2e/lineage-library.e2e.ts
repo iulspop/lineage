@@ -133,6 +133,87 @@ test.describe("Lineage daily workspace", () => {
     await expect(page.getByText(/revision 3 · suspended/)).toBeVisible()
   })
 
+  test("given: an image, should: create and review an occlusion memory", async ({
+    page,
+  }) => {
+    await loginAsTestUser(page)
+
+    await page.goto("/create/image-occlusion")
+    await expect(page.getByRole("progressbar")).toBeHidden()
+    await page.waitForTimeout(250)
+    await expect(
+      page.getByRole("heading", { name: "Create image occlusion" }),
+    ).toBeVisible()
+    await page.getByLabel("Corpus").fill("anatomy")
+    await page.getByLabel("Stable memory ID").fill("heart-location")
+    await page.locator('input[name="image"]').setInputFiles({
+      buffer: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII=",
+        "base64",
+      ),
+      mimeType: "image/png",
+      name: "heart.png",
+    })
+    await page
+      .getByLabel("Image accessibility description")
+      .fill("A simplified anatomy diagram")
+    await page.getByLabel("Challenge").fill("Which organ is concealed?")
+    await page.getByLabel("Answer").fill("The heart")
+    await page.getByLabel("Region label").fill("Heart")
+    await page
+      .getByLabel("Region accessibility description")
+      .fill("The concealed heart region")
+    await page.getByRole("button", { name: "Validate and preview" }).click()
+    await expect(
+      page.getByRole("img", { name: "A simplified anatomy diagram" }),
+    ).toBeVisible()
+    await page.getByRole("button", { name: "Approve and save" }).click()
+
+    await expect(page).toHaveURL(
+      /\/library\/anatomy\/memories\/heart-location$/,
+    )
+    await expect(page.getByText("image-occlusion")).toBeVisible()
+  })
+
+  test("given: a corpus, should: create and link a durable source", async ({
+    page,
+  }) => {
+    const user = await loginAsTestUser(page)
+    await setupLineageCorpus(user.id)
+
+    await page.goto("/library/powers-of-i/knowledge")
+    await expect(page.getByRole("progressbar")).toBeHidden()
+    await page.waitForTimeout(250)
+    await expect(
+      page.getByRole("heading", { name: "Manage sources and materials" }),
+    ).toBeVisible()
+    await page.getByLabel("Stable source ID").fill("complex-numbers-text")
+    await page.getByLabel("Title").fill("Complex numbers notes")
+    await page
+      .getByLabel("Source text or citation")
+      .fill("The powers of i repeat in a cycle of four.")
+    await page
+      .getByRole("group", { name: "Link memories" })
+      .first()
+      .getByRole("checkbox", { name: "What is i squared?" })
+      .check()
+    await expect(page.getByLabel("Stable source ID")).toHaveValue(
+      "complex-numbers-text",
+    )
+    await expect(page.getByLabel("Title")).toHaveValue("Complex numbers notes")
+    await page.getByRole("button", { name: "Preview source changes" }).click()
+    await expect(
+      page.getByRole("heading", { name: "Approval preview" }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Approve and save" }),
+    ).toBeVisible()
+    await page.getByRole("button", { name: "Approve and save" }).click()
+
+    await expect(page).toHaveURL(/\/library\/powers-of-i\?tab=sources$/)
+    await expect(page.getByText("Complex numbers notes")).toBeVisible()
+  })
+
   test("given: an AI brief, should: generate, edit, select, and accept a memory", async ({
     page,
   }) => {
@@ -230,7 +311,11 @@ test.describe("Lineage daily workspace", () => {
     await expect(page).toHaveURL(/\/review$/)
 
     expect(getPath(page)).toBe("/review")
+    await expect(page.getByRole("progressbar")).toBeHidden()
     await expect(page.getByText("What is i squared?")).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Show answer" }),
+    ).toBeVisible()
     await page.keyboard.press("Space")
     await expect(page.getByText("-1", { exact: true })).toBeVisible()
     await page.keyboard.press("3")
