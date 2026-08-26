@@ -18,6 +18,7 @@ import Lineage.Specification.ReviewSession
 import Lineage.Specification.Prompt
 import Lineage.Specification.Provenance
 import Lineage.Specification.Repetition
+import Lineage.Specification.RepetitionCorrection
 import Lineage.Specification.RepetitionHistory
 import Lineage.Specification.Relationship
 import Lineage.Specification.Scheduling
@@ -38,6 +39,7 @@ import Lineage.Implementation.ReviewSession
 import Lineage.Implementation.Prompt
 import Lineage.Implementation.Provenance
 import Lineage.Implementation.Repetition
+import Lineage.Implementation.RepetitionCorrection
 import Lineage.Implementation.RepetitionHistory
 import Lineage.Implementation.Relationship
 import Lineage.Implementation.Scheduling
@@ -56,6 +58,7 @@ import Lineage.Validation.ReviewContract
 import Lineage.Validation.Prompt
 import Lineage.Validation.Provenance
 import Lineage.Validation.Repetition
+import Lineage.Validation.RepetitionCorrection
 import Lineage.Validation.Relationship
 import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
@@ -74,6 +77,7 @@ import Lineage.Denotation.ReviewSession
 import Lineage.Denotation.Prompt
 import Lineage.Denotation.Provenance
 import Lineage.Denotation.Repetition
+import Lineage.Denotation.RepetitionCorrection
 import Lineage.Denotation.RepetitionHistory
 import Lineage.Denotation.Relationship
 import Lineage.Denotation.Scheduling
@@ -94,6 +98,7 @@ import Lineage.Correctness.ReviewSession
 import Lineage.Correctness.Prompt
 import Lineage.Correctness.Provenance
 import Lineage.Correctness.Repetition
+import Lineage.Correctness.RepetitionCorrection
 import Lineage.Correctness.RepetitionHistory
 import Lineage.Correctness.Relationship
 import Lineage.Correctness.Scheduling
@@ -114,6 +119,7 @@ import Lineage.Examples.ReviewSession
 import Lineage.Examples.Prompt
 import Lineage.Examples.Provenance
 import Lineage.Examples.Repetition
+import Lineage.Examples.RepetitionCorrection
 import Lineage.Examples.RepetitionHistory
 import Lineage.Examples.Relationship
 import Lineage.Examples.Scheduling
