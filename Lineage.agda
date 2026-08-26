@@ -13,6 +13,7 @@ import Lineage.Specification.Prompt
 import Lineage.Specification.Provenance
 import Lineage.Specification.Repetition
 import Lineage.Specification.RepetitionHistory
+import Lineage.Specification.Relationship
 import Lineage.Specification.Scheduling
 import Lineage.Specification.StructuredContent
 import Lineage.Implementation.Asset
@@ -26,6 +27,7 @@ import Lineage.Implementation.Prompt
 import Lineage.Implementation.Provenance
 import Lineage.Implementation.Repetition
 import Lineage.Implementation.RepetitionHistory
+import Lineage.Implementation.Relationship
 import Lineage.Implementation.Scheduling
 import Lineage.Implementation.StructuredContent
 import Lineage.Validation.Asset
@@ -38,6 +40,7 @@ import Lineage.Validation.ReviewContract
 import Lineage.Validation.Prompt
 import Lineage.Validation.Provenance
 import Lineage.Validation.Repetition
+import Lineage.Validation.Relationship
 import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
 import Lineage.Denotation.Capability
@@ -50,6 +53,7 @@ import Lineage.Denotation.Prompt
 import Lineage.Denotation.Provenance
 import Lineage.Denotation.Repetition
 import Lineage.Denotation.RepetitionHistory
+import Lineage.Denotation.Relationship
 import Lineage.Denotation.Scheduling
 import Lineage.Denotation.StructuredContent
 import Lineage.Correctness.Asset
@@ -63,6 +67,7 @@ import Lineage.Correctness.Prompt
 import Lineage.Correctness.Provenance
 import Lineage.Correctness.Repetition
 import Lineage.Correctness.RepetitionHistory
+import Lineage.Correctness.Relationship
 import Lineage.Correctness.Scheduling
 import Lineage.Correctness.StructuredContent
 import Lineage.Examples.Asset
@@ -76,6 +81,7 @@ import Lineage.Examples.Prompt
 import Lineage.Examples.Provenance
 import Lineage.Examples.Repetition
 import Lineage.Examples.RepetitionHistory
+import Lineage.Examples.Relationship
 import Lineage.Examples.Scheduling
 import Lineage.Examples.StructuredContent
 import Lineage.API.Pure
