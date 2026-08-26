@@ -3,7 +3,7 @@ import { capturesResponse, parseCorpusDocument } from "../domain/corpus"
 import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewCore, ReviewRecordStore } from "../domain/review"
 import { reviewAssessmentSchema } from "../domain/review"
-import { selectNextPrompt } from "./review-queue"
+import { findNextReviewAt, selectNextPrompt } from "./review-queue"
 import {
   dueAt,
   isDue,
@@ -45,8 +45,20 @@ export async function loadReview({
     userId,
   })
   const queued = selectNextPrompt(corpus.prompts, latestReviews)
-  if (!queued) throw new Error("The review corpus contains no Prompts")
   const reviewedAt = new Date()
+  if (!queued) {
+    return {
+      assessmentPreviews: null,
+      captureResponse: false as const,
+      corpusId: corpus.corpusId,
+      presentation: [],
+      prompt: null,
+      queueDueAt: findNextReviewAt(latestReviews)?.toISOString() ?? null,
+      queueReviewed: true,
+      reviewedAt: reviewedAt.toISOString(),
+      snapshotDigest: snapshot.digest,
+    }
+  }
   return {
     assessmentPreviews: previewReview(queued.latest, reviewedAt),
     captureResponse: capturesResponse(queued.prompt),
@@ -87,23 +99,27 @@ export async function loadReviewPrompt({
 
 export async function loadReviewProgress({
   corpusId,
+  nextDueAt = null,
   promptId,
   store,
   userId,
 }: {
   corpusId: string
-  promptId: string
+  nextDueAt?: Date | null
+  promptId: string | null
   store: ReviewRecordStore
   userId: string
 }) {
   const [history, latest, reviewCount] = await Promise.all([
     store.recentForUser(userId, 10),
-    store.latestForPrompt({ corpusId, promptId, userId }),
+    promptId
+      ? store.latestForPrompt({ corpusId, promptId, userId })
+      : Promise.resolve(null),
     store.countForUser(userId),
   ])
   return {
-    due: isDue(latest),
-    dueAt: dueAt(latest)?.toISOString() ?? null,
+    due: promptId ? isDue(latest) : false,
+    dueAt: (promptId ? dueAt(latest) : nextDueAt)?.toISOString() ?? null,
     history: history.map((review) => ({
       assessment: review.assessment,
       attemptedResponse: review.attemptedResponse,

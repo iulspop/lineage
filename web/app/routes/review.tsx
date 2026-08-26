@@ -40,7 +40,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [progress, user] = await Promise.all([
     loadReviewProgress({
       corpusId: review.corpusId,
-      promptId: review.prompt.id,
+      nextDueAt: review.queueDueAt ? new Date(review.queueDueAt) : null,
+      promptId: review.prompt?.id ?? null,
       store: reviewRecordStore,
       userId,
     }),

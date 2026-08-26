@@ -21,8 +21,6 @@ type ReviewActionData =
   | undefined
 
 type ReviewLoaderData = {
-  assessmentPreviews: Record<(typeof assessments)[number], number>
-  captureResponse: boolean
   corpora: Array<{ corpusId: string; formatVersion: number }>
   corpusId: string
   due: boolean
@@ -34,13 +32,24 @@ type ReviewLoaderData = {
     promptId: string
     reviewedAt: string
   }>
-  presentation: string[]
-  prompt: { id: string; revision: number }
   reviewCount: number
   reviewedAt: string
   snapshotDigest: string
   userEmail: string
-}
+} & (
+  | {
+      assessmentPreviews: null
+      captureResponse: boolean
+      presentation: string[]
+      prompt: null
+    }
+  | {
+      assessmentPreviews: Record<(typeof assessments)[number], number>
+      captureResponse: boolean
+      presentation: string[]
+      prompt: { id: string; revision: number }
+    }
+)
 
 function formatInterval(minutes: number) {
   if (minutes < 60) return `${minutes} min`
@@ -63,7 +72,11 @@ export function ReviewPage({
       <div className={s.page}>
         <header className={s.header}>
           <div>
-            <p className={s.eyebrow}>Prompt {loaderData.prompt.id}</p>
+            <p className={s.eyebrow}>
+              {loaderData.prompt
+                ? `Prompt ${loaderData.prompt.id}`
+                : "Review queue"}
+            </p>
             <h1 className={s.title}>Review</h1>
           </div>
           <div className={s.progress}>
@@ -96,126 +109,145 @@ export function ReviewPage({
         </Form>
 
         <section aria-live="polite" className={s.card}>
-          <div className={s.content}>
-            {presentation.map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-
-          {!resolved ? (
-            <Form className={s.form} method="post">
-              <input
-                name="corpusId"
-                type="hidden"
-                value={loaderData.corpusId}
-              />
-              <input
-                name="promptId"
-                type="hidden"
-                value={loaderData.prompt.id}
-              />
-              <input
-                name="promptRevision"
-                type="hidden"
-                value={loaderData.prompt.revision}
-              />
-              <input
-                name="snapshotDigest"
-                type="hidden"
-                value={loaderData.snapshotDigest}
-              />
-              {loaderData.captureResponse ? (
-                <>
-                  <FieldLabel htmlFor="review-attempt">Your answer</FieldLabel>
-                  <Input
-                    autoComplete="off"
-                    id="review-attempt"
-                    name="attempt"
-                  />
-                </>
-              ) : (
-                <p>Recall the answer, then reveal it and assess yourself.</p>
-              )}
-              <div className={s.actions}>
-                <Button name="intent" type="submit" value="resolve">
-                  Show answer
-                </Button>
+          {loaderData.prompt ? (
+            <>
+              <div className={s.content}>
+                {presentation.map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
               </div>
-            </Form>
-          ) : resolved.completed ? (
-            <div className={s.complete}>
-              <strong>Review recorded as {resolved.assessment}.</strong>
-              <p>
-                Next review in {formatInterval(resolved.nextIntervalMinutes)}.
-              </p>
-              <Form action="/review" method="get">
-                <input
-                  name="corpusId"
-                  type="hidden"
-                  value={loaderData.corpusId}
-                />
-                <Button type="submit">Review again</Button>
-              </Form>
-            </div>
-          ) : (
-            <div className={s.resolution}>
-              <p>
-                <strong>Your answer:</strong> {resolved.attempt || "No answer"}
-              </p>
-              <Form className={s.form} method="post">
-                <input
-                  name="corpusId"
-                  type="hidden"
-                  value={loaderData.corpusId}
-                />
-                <input
-                  name="promptId"
-                  type="hidden"
-                  value={loaderData.prompt.id}
-                />
-                <input
-                  name="promptRevision"
-                  type="hidden"
-                  value={loaderData.prompt.revision}
-                />
-                <input
-                  name="snapshotDigest"
-                  type="hidden"
-                  value={loaderData.snapshotDigest}
-                />
-                <input
-                  name="attempt"
-                  type="hidden"
-                  value={resolved.attempt ?? ""}
-                />
-                <input
-                  name="reviewedAt"
-                  type="hidden"
-                  value={loaderData.reviewedAt}
-                />
-                <fieldset className={s.assessmentGroup}>
-                  <legend>How well did you remember?</legend>
-                  {assessments.map((assessment) => (
-                    <Button
-                      key={assessment}
-                      name="assessment"
-                      type="submit"
-                      value={assessment}
-                    >
-                      <span>
-                        {assessment[0]?.toUpperCase()}
-                        {assessment.slice(1)}
-                      </span>
-                      <span>
-                        {formatInterval(
-                          loaderData.assessmentPreviews[assessment],
-                        )}
-                      </span>
+
+              {!resolved ? (
+                <Form className={s.form} method="post">
+                  <input
+                    name="corpusId"
+                    type="hidden"
+                    value={loaderData.corpusId}
+                  />
+                  <input
+                    name="promptId"
+                    type="hidden"
+                    value={loaderData.prompt.id}
+                  />
+                  <input
+                    name="promptRevision"
+                    type="hidden"
+                    value={loaderData.prompt.revision}
+                  />
+                  <input
+                    name="snapshotDigest"
+                    type="hidden"
+                    value={loaderData.snapshotDigest}
+                  />
+                  {loaderData.captureResponse ? (
+                    <>
+                      <FieldLabel htmlFor="review-attempt">
+                        Your answer
+                      </FieldLabel>
+                      <Input
+                        autoComplete="off"
+                        id="review-attempt"
+                        name="attempt"
+                      />
+                    </>
+                  ) : (
+                    <p>
+                      Recall the answer, then reveal it and assess yourself.
+                    </p>
+                  )}
+                  <div className={s.actions}>
+                    <Button name="intent" type="submit" value="resolve">
+                      Show answer
                     </Button>
-                  ))}
-                </fieldset>
-                <input name="intent" type="hidden" value="assess" />
-              </Form>
+                  </div>
+                </Form>
+              ) : resolved.completed ? (
+                <div className={s.complete}>
+                  <strong>Review recorded as {resolved.assessment}.</strong>
+                  <p>
+                    Next review in{" "}
+                    {formatInterval(resolved.nextIntervalMinutes)}.
+                  </p>
+                  <Form action="/review" method="get">
+                    <input
+                      name="corpusId"
+                      type="hidden"
+                      value={loaderData.corpusId}
+                    />
+                    <Button type="submit">Review again</Button>
+                  </Form>
+                </div>
+              ) : (
+                <div className={s.resolution}>
+                  <p>
+                    <strong>Your answer:</strong>{" "}
+                    {resolved.attempt || "No answer"}
+                  </p>
+                  <Form className={s.form} method="post">
+                    <input
+                      name="corpusId"
+                      type="hidden"
+                      value={loaderData.corpusId}
+                    />
+                    <input
+                      name="promptId"
+                      type="hidden"
+                      value={loaderData.prompt.id}
+                    />
+                    <input
+                      name="promptRevision"
+                      type="hidden"
+                      value={loaderData.prompt.revision}
+                    />
+                    <input
+                      name="snapshotDigest"
+                      type="hidden"
+                      value={loaderData.snapshotDigest}
+                    />
+                    <input
+                      name="attempt"
+                      type="hidden"
+                      value={resolved.attempt ?? ""}
+                    />
+                    <input
+                      name="reviewedAt"
+                      type="hidden"
+                      value={loaderData.reviewedAt}
+                    />
+                    <fieldset className={s.assessmentGroup}>
+                      <legend>How well did you remember?</legend>
+                      {assessments.map((assessment) => (
+                        <Button
+                          key={assessment}
+                          name="assessment"
+                          type="submit"
+                          value={assessment}
+                        >
+                          <span>
+                            {assessment[0]?.toUpperCase()}
+                            {assessment.slice(1)}
+                          </span>
+                          <span>
+                            {formatInterval(
+                              loaderData.assessmentPreviews[assessment],
+                            )}
+                          </span>
+                        </Button>
+                      ))}
+                    </fieldset>
+                    <input name="intent" type="hidden" value="assess" />
+                  </Form>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={s.complete}>
+              <strong>No reviews due</strong>
+              <p>
+                {loaderData.dueAt
+                  ? `Next review ${new Date(loaderData.dueAt).toLocaleString()}.`
+                  : "This corpus has no scheduled reviews."}
+              </p>
             </div>
           )}
         </section>

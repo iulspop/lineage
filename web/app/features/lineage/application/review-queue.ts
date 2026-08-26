@@ -39,5 +39,14 @@ export function selectNextPrompt(
     }
     return left.corpusOrder - right.corpusOrder
   })
-  return queue[0] ?? null
+  return queue.find(({ priority }) => priority < 2) ?? null
+}
+
+export function findNextReviewAt(latestReviews: ReviewHistoryEntry[]) {
+  return (
+    latestReviews
+      .map(dueAt)
+      .filter((date): date is Date => date !== null)
+      .sort((left, right) => left.getTime() - right.getTime())[0] ?? null
+  )
 }

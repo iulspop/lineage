@@ -119,6 +119,8 @@ describe("review flow", () => {
 
     expect(review.presentation).toEqual(["What is the capital of France?"])
     expect(review.presentation).not.toContain("Paris")
+    expect(review.prompt).not.toBeNull()
+    if (!review.prompt) throw new Error("Expected a queued Prompt")
 
     const resolution = resolveReview({
       attempt: "Paris",
@@ -199,6 +201,8 @@ describe("review flow", () => {
       snapshotStore: store,
       userId: "user-1",
     })
+    expect(first.prompt).not.toBeNull()
+    if (!first.prompt) throw new Error("Expected the first queued Prompt")
     const reviewedFirst = {
       assessment: "good" as const,
       attemptedResponse: "Paris",
@@ -235,6 +239,8 @@ describe("review flow", () => {
       userId: "user-1",
     })
 
+    expect(next.prompt).not.toBeNull()
+    if (!next.prompt) throw new Error("Expected the next queued Prompt")
     expect(next.prompt.id).toBe("red-planet")
     expect(next.presentation).toEqual([
       "Which planet is known as the Red Planet?",
@@ -313,6 +319,8 @@ describe("review flow", () => {
       snapshotStore: memorySnapshotStore(),
       userId: "user-1",
     })
+    expect(review.prompt).not.toBeNull()
+    if (!review.prompt) throw new Error("Expected a queued Prompt")
     const records: Parameters<ReviewRecordStore["append"]>[0][] = []
 
     const completed = await completeReview({

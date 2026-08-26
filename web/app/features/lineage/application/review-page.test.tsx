@@ -76,6 +76,35 @@ describe("ReviewPage", () => {
     ).toBeInTheDocument()
   })
 
+  test("given: every Prompt is scheduled for the future, should: show no review card", () => {
+    const Router = createRoutesStub([
+      {
+        Component: () => (
+          <ReviewPage
+            actionData={undefined}
+            loaderData={{
+              ...loaderData,
+              assessmentPreviews: null,
+              captureResponse: false,
+              due: false,
+              dueAt: "2026-08-29T12:00:00.000Z",
+              presentation: [],
+              prompt: null,
+            }}
+          />
+        ),
+        path: "/review",
+      },
+    ])
+    render(<Router initialEntries={["/review"]} />)
+
+    const noReviewsDue = screen.getByText("No reviews due")
+
+    expect(noReviewsDue).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Show answer" })).toBeNull()
+    expect(noReviewsDue.parentElement).toHaveTextContent("Next review")
+  })
+
   test("shows the resolution and assessment controls after an attempt", () => {
     const Router = createRoutesStub([
       {

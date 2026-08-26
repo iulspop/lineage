@@ -69,6 +69,20 @@ describe("selectNextPrompt", () => {
     expect(selected?.prompt.id).toBe("second")
   })
 
+  test("given: every reviewed Prompt is scheduled for the future, should: select no Prompt", () => {
+    const actual = selectNextPrompt(
+      prompts.slice(0, 2),
+      [
+        review("first", "2026-08-26T00:00:00Z", 10),
+        review("second", "2026-08-26T00:00:00Z", 20),
+      ],
+      now,
+    )
+    const expected = null
+
+    expect(actual).toEqual(expected)
+  })
+
   test("uses corpus order as the stable tie-break", () => {
     const selected = selectNextPrompt(
       prompts.slice(0, 2),
