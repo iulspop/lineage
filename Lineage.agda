@@ -5,6 +5,7 @@ module Lineage where
 import Lineage.Specification.Asset
 import Lineage.Specification.Capability
 import Lineage.Specification.Cloze
+import Lineage.Specification.Codec
 import Lineage.Specification.Corpus
 import Lineage.Specification.DependencyClosure
 import Lineage.Specification.HistoricalScheduling
@@ -27,6 +28,7 @@ import Lineage.Specification.StructuredContent
 import Lineage.Implementation.Asset
 import Lineage.Implementation.Capability
 import Lineage.Implementation.Cloze
+import Lineage.Implementation.Codec
 import Lineage.Implementation.Corpus
 import Lineage.Implementation.DependencyClosure
 import Lineage.Implementation.HistoricalScheduling
@@ -49,6 +51,7 @@ import Lineage.Implementation.StructuredContent
 import Lineage.Validation.Asset
 import Lineage.Validation.Capability
 import Lineage.Validation.Cloze
+import Lineage.Validation.Codec
 import Lineage.Validation.Corpus
 import Lineage.Validation.DependencyClosure
 import Lineage.Validation.HistoricalScheduling
@@ -67,6 +70,7 @@ import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
 import Lineage.Denotation.Capability
 import Lineage.Denotation.Cloze
+import Lineage.Denotation.Codec
 import Lineage.Denotation.Corpus
 import Lineage.Denotation.ImageOcclusion
 import Lineage.Denotation.Interoperability
@@ -89,6 +93,7 @@ import Lineage.Denotation.StructuredContent
 import Lineage.Correctness.Asset
 import Lineage.Correctness.Capability
 import Lineage.Correctness.Cloze
+import Lineage.Correctness.Codec
 import Lineage.Correctness.Corpus
 import Lineage.Correctness.DependencyClosure
 import Lineage.Correctness.HistoricalScheduling
@@ -111,6 +116,7 @@ import Lineage.Correctness.StructuredContent
 import Lineage.Examples.Asset
 import Lineage.Examples.Capability
 import Lineage.Examples.Cloze
+import Lineage.Examples.Codec
 import Lineage.Examples.Corpus
 import Lineage.Examples.DependencyClosure
 import Lineage.Examples.HistoricalScheduling
