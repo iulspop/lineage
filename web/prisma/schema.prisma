@@ -34,6 +34,18 @@ model Todo {
   updatedAt   DateTime @updatedAt
 }
 
+model LineageCorpusSnapshot {
+  id            Int      @id @default(autoincrement())
+  corpusId      String
+  formatVersion Int
+  canonicalJson String
+  digest        String
+  createdAt     DateTime @default(now())
+
+  @@unique([corpusId, digest])
+  @@index([corpusId, createdAt])
+}
+
 model Session {
   id             String   @id @default(cuid())
   userId         String

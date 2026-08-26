@@ -4,6 +4,10 @@ import path from "node:path"
 import test from "node:test"
 import { pathToFileURL } from "node:url"
 
+import { importCorpus } from "../app/features/lineage/application/import-corpus.server"
+import type { CorpusSnapshotStore } from "../app/features/lineage/domain/corpus-ports"
+import { createCompiledCoreValidator } from "../app/features/lineage/infrastructure/compiled-core"
+
 type Eliminator<T> = (visitor: {
   just: (value: T) => T
   nothing: () => null
@@ -90,4 +94,48 @@ test("compiled Lineage API validates contracts and runs a review", () => {
   console.log(
     `Lineage JavaScript API smoke check passed (${pathToFileURL(outputDirectory).href})`,
   )
+})
+
+test("compiled Lineage validation guards the corpus persistence boundary", async () => {
+  const outputDirectory = process.argv[2]
+  assert.ok(outputDirectory, "Expected the Agda JavaScript output directory")
+
+  const require = createRequire(import.meta.url)
+  const api = require(
+    path.join(outputDirectory, "jAgda.Lineage.API.JavaScript.js"),
+  ) as LineageApi
+  const state: {
+    persisted: Parameters<CorpusSnapshotStore["append"]>[0] | null
+  } = { persisted: null }
+  const store: CorpusSnapshotStore = {
+    async append(snapshot) {
+      state.persisted = snapshot
+    },
+    async latest() {
+      return state.persisted
+    },
+  }
+
+  const result = await importCorpus({
+    input: {
+      corpusId: "corpus-france",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [
+        {
+          challenge: ["What is the capital of France?"],
+          id: "capital-of-france",
+          resolution: ["What is the capital of France?", "Paris"],
+          response: "text",
+          revision: 1,
+          withheld: ["Paris"],
+        },
+      ],
+    },
+    store,
+    validator: createCompiledCoreValidator(api),
+  })
+
+  assert.equal(result.digest.length, 64)
+  assert.equal(state.persisted?.corpusId, "corpus-france")
 })
