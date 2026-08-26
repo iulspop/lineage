@@ -1,4 +1,5 @@
 import {
+  IconBrain,
   IconChecklist,
   IconLogout,
   IconMenu2,
@@ -34,6 +35,10 @@ function PrimaryNavigation({
       <NavLink className={navClassName} end to="/">
         <IconChecklist aria-hidden="true" />
         <span>Todos</span>
+      </NavLink>
+      <NavLink className={navClassName} to="/review">
+        <IconBrain aria-hidden="true" />
+        <span>Review</span>
       </NavLink>
       <NavLink className={navClassName} to={isOwner ? "/owner/chats" : "/chat"}>
         <IconMessageCircle aria-hidden="true" />
