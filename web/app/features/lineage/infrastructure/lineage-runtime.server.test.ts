@@ -85,6 +85,217 @@ describe("generated Lineage runtime", () => {
     })
   })
 
+  test("given: embedded case-varied disclosure, should: enforce normalized containment", () => {
+    const leaked = lineageRuntime.validateCorpus?.({
+      corpusId: "corpus-france",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [{ ...contract, challenge: ["The answer is PARIS."] }],
+    })
+    const disclosed = lineageRuntime.validateCorpus?.({
+      corpusId: "corpus-france",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [{ ...contract, resolution: ["The answer is Paris."] }],
+    })
+
+    expect(leaked?.valid).toBe(false)
+    expect(leaked?.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "disclosure.answer-leaked",
+        path: "/prompts/0/challenge/0",
+      }),
+    )
+    expect(disclosed?.valid).toBe(true)
+  })
+
+  test("given: duplicated durable identities and unresolved graph links, should: report them", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      assets: [
+        {
+          byteSize: 1,
+          id: "asset-1",
+          mediaType: "image/png",
+          path: "assets/one.png",
+          sha256: "0".repeat(64),
+        },
+        {
+          byteSize: 1,
+          id: "asset-1",
+          mediaType: "image/png",
+          path: "assets/two.png",
+          sha256: "1".repeat(64),
+        },
+      ],
+      corpusId: "corpus-graph",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [contract],
+      provenance: [
+        {
+          id: "provenance-1",
+          kind: "authored",
+          recordedAt: "2026-08-26T12:00:00Z",
+          sources: ["missing-provenance"],
+        },
+      ],
+      relationships: [
+        {
+          id: "relationship-1",
+          kind: "related",
+          source: { id: "capital-of-france", revision: 1 },
+          target: { id: "missing", revision: 1 },
+        },
+      ],
+    })
+
+    expect(result?.valid).toBe(false)
+    expect(result?.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "identity.duplicate" }),
+        expect.objectContaining({
+          code: "reference.unresolved",
+          path: "/relationships/0/target",
+        }),
+        expect.objectContaining({
+          code: "reference.unresolved",
+          path: "/provenance/0/sources/0",
+        }),
+      ]),
+    )
+  })
+
+  test("given: every canonical field family, should: map the complete host document into Agda", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      assets: [
+        {
+          accessibleDescription: "A diagram with no concealed answer.",
+          byteSize: 1,
+          id: "asset-1",
+          mediaType: "image/png",
+          path: "assets/one.png",
+          sha256: "0".repeat(64),
+        },
+      ],
+      corpusId: "corpus-complete",
+      extensions: [
+        {
+          fallback: "Portable fallback",
+          id: "extension-1",
+          requirement: "optional",
+          version: "1",
+        },
+      ],
+      format: "lineage.corpus",
+      formatVersion: 1,
+      interoperability: [
+        {
+          id: "interop-1",
+          losses: [],
+          preservedArtifacts: ["asset-1"],
+          sourceFormat: "lineage.corpus/1",
+          status: "exact",
+          targetFormat: "lineage.corpus/1",
+        },
+      ],
+      materials: [
+        {
+          assets: ["asset-1"],
+          content: ["Supporting material"],
+          id: "material-1",
+          provenance: ["provenance-1"],
+          revision: 1,
+          sources: ["source-1"],
+        },
+      ],
+      migrations: [
+        {
+          appliedAt: "2026-08-26T12:00:00Z",
+          fromVersion: 0,
+          id: "migration-1",
+          tool: "lineage",
+          toolVersion: "1",
+          toVersion: 1,
+        },
+      ],
+      prompts: [
+        {
+          ...contract,
+          assets: ["asset-1"],
+          extensions: { optional: ["extension-1"], required: [] },
+          materials: ["material-1"],
+          provenance: ["provenance-1"],
+          sources: ["source-1"],
+        },
+      ],
+      provenance: [
+        {
+          agent: "author",
+          citation: "citation",
+          id: "provenance-1",
+          kind: "authored",
+          license: "CC0",
+          note: "note",
+          recordedAt: "2026-08-26T12:00:00Z",
+          sources: [],
+        },
+      ],
+      relationships: [
+        {
+          id: "relationship-1",
+          kind: "derived-from",
+          source: { id: "capital-of-france", revision: 1 },
+          target: { id: "source-1", revision: 1 },
+        },
+      ],
+      repetitionCorrections: [
+        {
+          correctedAt: "2026-08-26T12:02:00Z",
+          id: "correction-1",
+          provenance: ["provenance-1"],
+          reason: "Corrected rating",
+          replacementAssessment: "easy",
+          replacementResponse: "Paris",
+          targetRepetitionId: "review-1",
+        },
+      ],
+      repetitions: [
+        {
+          assessment: "good",
+          capturedResponse: "Paris",
+          durationMilliseconds: 1000,
+          id: "review-1",
+          presentationDigest: "1".repeat(64),
+          promptId: "capital-of-france",
+          promptRevision: 1,
+          provenance: ["provenance-1"],
+          reviewedAt: "2026-08-26T12:01:00Z",
+          scheduler: {
+            dueAt: "2026-08-27T12:01:00Z",
+            family: "fsrs",
+            nextIntervalMinutes: 1440,
+            parameterDigest: "2".repeat(64),
+            previousIntervalMinutes: 10,
+            version: "6",
+          },
+          snapshotDigest: "3".repeat(64),
+        },
+      ],
+      sources: [
+        {
+          assets: ["asset-1"],
+          content: "Source content",
+          id: "source-1",
+          provenance: ["provenance-1"],
+          revision: 1,
+          title: "Source",
+        },
+      ],
+    })
+
+    expect(result?.valid).toBe(true)
+  })
+
   test("given: an image-occlusion candidate without media, should: report dependency diagnostics", () => {
     const result = lineageRuntime.validateCorpus?.({
       corpusId: "corpus-image",

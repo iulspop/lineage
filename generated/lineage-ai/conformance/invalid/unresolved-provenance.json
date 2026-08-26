@@ -1,0 +1,22 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-provenance",
+    "prompts": [],
+    "provenance": [
+      {
+        "id": "provenance-1",
+        "kind": "authored",
+        "recordedAt": "2026-08-26T12:00:00Z",
+        "sources": [
+          "missing"
+        ]
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "reference.unresolved",
+    "path": "/provenance/0/sources/0"
+  }
+}

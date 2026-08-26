@@ -1,0 +1,12 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "",
+    "prompts": []
+  },
+  "expectedDiagnostic": {
+    "code": "identity.empty",
+    "path": "/corpusId"
+  }
+}

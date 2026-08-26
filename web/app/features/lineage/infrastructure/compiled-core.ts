@@ -99,6 +99,10 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
   const maybe = (value: unknown) =>
     value === undefined ? api.none(undefined) : api.some(undefined)(value)
   const strings = (values: string[]) => values
+  const normalizedDisclosureText = (value: string) =>
+    value.normalize("NFKC").toLocaleLowerCase("en-US")
+  const normalizedDisclosureTexts = (values: string[]) =>
+    values.map(normalizedDisclosureText)
   const reference = (value: { id: string; revision?: number }) =>
     apply(
       api.entityReference,
@@ -141,9 +145,9 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
       natural(value.revision),
       api.lifecycle(value.status),
       api.promptKind(value.kind),
-      value.challenge,
-      value.withheld,
-      value.resolution,
+      normalizedDisclosureTexts(value.challenge),
+      normalizedDisclosureTexts(value.withheld),
+      normalizedDisclosureTexts(value.resolution),
       api.responseInteraction(
         typeof value.response === "string"
           ? value.response
@@ -154,7 +158,12 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
       value.assets,
       maybe(
         value.clozeTargets?.map((target) =>
-          apply(api.clozeTarget, target.id, target.answer, maybe(target.hints)),
+          apply(
+            api.clozeTarget,
+            target.id,
+            normalizedDisclosureText(target.answer),
+            maybe(target.hints?.map(normalizedDisclosureText)),
+          ),
         ),
       ),
       maybe(value.sourceAsset),
@@ -165,7 +174,7 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
             region.id,
             region.label,
             geometry(region.geometry),
-            region.accessibleDescription,
+            normalizedDisclosureText(region.accessibleDescription),
           ),
         ),
       ),
@@ -204,7 +213,11 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
       value.sha256,
       natural(value.byteSize),
       value.path,
-      maybe(value.accessibleDescription),
+      maybe(
+        value.accessibleDescription
+          ? normalizedDisclosureText(value.accessibleDescription)
+          : undefined,
+      ),
     ),
   )
   const relationships = document.relationships.map((value) =>
@@ -347,13 +360,21 @@ function visitAgda<T>(value: AgdaValue, visitor: AgdaVisitor<T>): T {
 
 function decodeDiagnostic(value: AgdaValue): LineageDiagnostic {
   return visitAgda(value, {
-    diagnostic: (code, _severity, path, message, relatedPath) => ({
+    diagnostic: (code, severity, path, message, relatedPath) => ({
       code,
       message,
       path,
       relatedPath: decodeMaybeString(relatedPath),
-      severity: "error",
+      severity: decodeSeverity(severity),
     }),
+  })
+}
+
+function decodeSeverity(value: AgdaValue): LineageDiagnostic["severity"] {
+  return visitAgda(value, {
+    error: () => "error",
+    information: () => "information",
+    warning: () => "warning",
   })
 }
 

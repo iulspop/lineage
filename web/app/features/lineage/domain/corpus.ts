@@ -259,17 +259,22 @@ function sortJson(value: unknown): unknown {
 export function structuralDiagnostics(error: z.ZodError): LineageDiagnostic[] {
   return error.issues.map((issue) => {
     const finalSegment = issue.path.at(-1)
+    const identityField =
+      finalSegment === "id" ||
+      (typeof finalSegment === "string" && finalSegment.endsWith("Id"))
     return {
       code:
         finalSegment === "formatVersion"
           ? "format.unsupported-version"
-          : finalSegment === "revision" && issue.code === "too_small"
-            ? "revision.non-positive"
-            : finalSegment === "sha256"
-              ? "asset.integrity-host-required"
-              : finalSegment === "path"
-                ? "asset.path-unsafe"
-                : "structure.invalid",
+          : identityField && issue.code === "too_small"
+            ? "identity.empty"
+            : finalSegment === "revision" && issue.code === "too_small"
+              ? "revision.non-positive"
+              : finalSegment === "sha256"
+                ? "asset.integrity-host-required"
+                : finalSegment === "path"
+                  ? "asset.path-unsafe"
+                  : "structure.invalid",
       message: issue.message,
       path: `/${issue.path.map(escapePointerSegment).join("/")}`,
       severity: "error",

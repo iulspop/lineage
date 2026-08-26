@@ -1,0 +1,28 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-duplicate-asset",
+    "prompts": [],
+    "assets": [
+      {
+        "id": "asset-1",
+        "mediaType": "image/png",
+        "byteSize": 1,
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "path": "assets/one.png"
+      },
+      {
+        "id": "asset-1",
+        "mediaType": "image/png",
+        "byteSize": 1,
+        "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "path": "assets/two.png"
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "identity.duplicate",
+    "path": "/assets/1"
+  }
+}

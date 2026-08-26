@@ -436,6 +436,151 @@
       },
       "fileName": "loss-unreported.json",
       "summary": "Lossy conversion omits its loss report."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-embedded-leak",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 1,
+            "challenge": [
+              "The answer is PARIS."
+            ],
+            "withheld": [
+              "Paris"
+            ],
+            "resolution": [
+              "The answer is Paris."
+            ],
+            "response": "text"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "disclosure.answer-leaked",
+        "kind": "invalid",
+        "path": "/prompts/0/challenge/0"
+      },
+      "fileName": "embedded-disclosure-leak.json",
+      "summary": "Challenge embeds a case-varied withheld answer."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-duplicate-asset",
+        "prompts": [],
+        "assets": [
+          {
+            "id": "asset-1",
+            "mediaType": "image/png",
+            "byteSize": 1,
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "path": "assets/one.png"
+          },
+          {
+            "id": "asset-1",
+            "mediaType": "image/png",
+            "byteSize": 1,
+            "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "path": "assets/two.png"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "identity.duplicate",
+        "kind": "invalid",
+        "path": "/assets/1"
+      },
+      "fileName": "duplicate-asset.json",
+      "summary": "Asset identity is duplicated."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-relationship",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 1,
+            "challenge": [
+              "Question"
+            ],
+            "withheld": [
+              "Answer"
+            ],
+            "resolution": [
+              "Answer"
+            ],
+            "response": "text"
+          }
+        ],
+        "relationships": [
+          {
+            "id": "r",
+            "kind": "related",
+            "source": {
+              "id": "p",
+              "revision": 1
+            },
+            "target": {
+              "id": "missing",
+              "revision": 1
+            }
+          }
+        ]
+      },
+      "expectation": {
+        "code": "reference.unresolved",
+        "kind": "invalid",
+        "path": "/relationships/0/target"
+      },
+      "fileName": "unresolved-relationship.json",
+      "summary": "Relationship endpoint does not resolve."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-provenance",
+        "prompts": [],
+        "provenance": [
+          {
+            "id": "provenance-1",
+            "kind": "authored",
+            "recordedAt": "2026-08-26T12:00:00Z",
+            "sources": [
+              "missing"
+            ]
+          }
+        ]
+      },
+      "expectation": {
+        "code": "reference.unresolved",
+        "kind": "invalid",
+        "path": "/provenance/0/sources/0"
+      },
+      "fileName": "unresolved-provenance.json",
+      "summary": "Provenance record references absent provenance."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "",
+        "prompts": []
+      },
+      "expectation": {
+        "code": "identity.empty",
+        "kind": "invalid",
+        "path": "/corpusId"
+      },
+      "fileName": "empty-corpus-identity.json",
+      "summary": "Corpus identity is empty."
     }
   ],
   "formatName": "lineage.corpus",

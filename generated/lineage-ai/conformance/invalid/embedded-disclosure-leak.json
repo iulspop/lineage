@@ -1,0 +1,27 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-embedded-leak",
+    "prompts": [
+      {
+        "id": "p",
+        "revision": 1,
+        "challenge": [
+          "The answer is PARIS."
+        ],
+        "withheld": [
+          "Paris"
+        ],
+        "resolution": [
+          "The answer is Paris."
+        ],
+        "response": "text"
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "disclosure.answer-leaked",
+    "path": "/prompts/0/challenge/0"
+  }
+}

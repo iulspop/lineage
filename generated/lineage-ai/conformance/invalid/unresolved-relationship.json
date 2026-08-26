@@ -1,0 +1,41 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-relationship",
+    "prompts": [
+      {
+        "id": "p",
+        "revision": 1,
+        "challenge": [
+          "Question"
+        ],
+        "withheld": [
+          "Answer"
+        ],
+        "resolution": [
+          "Answer"
+        ],
+        "response": "text"
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r",
+        "kind": "related",
+        "source": {
+          "id": "p",
+          "revision": 1
+        },
+        "target": {
+          "id": "missing",
+          "revision": 1
+        }
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "reference.unresolved",
+    "path": "/relationships/0/target"
+  }
+}
