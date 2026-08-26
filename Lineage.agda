@@ -7,6 +7,7 @@ import Lineage.Specification.Capability
 import Lineage.Specification.Cloze
 import Lineage.Specification.Corpus
 import Lineage.Specification.DependencyClosure
+import Lineage.Specification.HistoricalScheduling
 import Lineage.Specification.ImageOcclusion
 import Lineage.Specification.Manifest
 import Lineage.Specification.MaterialSource
@@ -26,6 +27,7 @@ import Lineage.Implementation.Capability
 import Lineage.Implementation.Cloze
 import Lineage.Implementation.Corpus
 import Lineage.Implementation.DependencyClosure
+import Lineage.Implementation.HistoricalScheduling
 import Lineage.Implementation.ImageOcclusion
 import Lineage.Implementation.Manifest
 import Lineage.Implementation.MaterialSource
@@ -45,6 +47,7 @@ import Lineage.Validation.Capability
 import Lineage.Validation.Cloze
 import Lineage.Validation.Corpus
 import Lineage.Validation.DependencyClosure
+import Lineage.Validation.HistoricalScheduling
 import Lineage.Validation.ImageOcclusion
 import Lineage.Validation.Manifest
 import Lineage.Validation.MaterialSource
@@ -64,6 +67,7 @@ import Lineage.Denotation.Manifest
 import Lineage.Denotation.MaterialSource
 import Lineage.Denotation.Migration
 import Lineage.Denotation.DependencyClosure
+import Lineage.Denotation.HistoricalScheduling
 import Lineage.Denotation.ReviewContract
 import Lineage.Denotation.ReviewOutcome
 import Lineage.Denotation.ReviewSession
@@ -79,6 +83,7 @@ import Lineage.Correctness.Capability
 import Lineage.Correctness.Cloze
 import Lineage.Correctness.Corpus
 import Lineage.Correctness.DependencyClosure
+import Lineage.Correctness.HistoricalScheduling
 import Lineage.Correctness.ImageOcclusion
 import Lineage.Correctness.Manifest
 import Lineage.Correctness.MaterialSource
@@ -98,6 +103,7 @@ import Lineage.Examples.Capability
 import Lineage.Examples.Cloze
 import Lineage.Examples.Corpus
 import Lineage.Examples.DependencyClosure
+import Lineage.Examples.HistoricalScheduling
 import Lineage.Examples.ImageOcclusion
 import Lineage.Examples.Manifest
 import Lineage.Examples.MaterialSource
