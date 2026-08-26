@@ -1,32 +1,57 @@
 {
   "assets": [
     {
-      "byteSize": 4321,
-      "id": "bird-call",
-      "mediaType": "audio/ogg",
-      "path": "assets/bird-call.ogg",
-      "sha256": "HOST_COMPUTED_SHA256_REQUIRED00000000000000000000000000000000000"
+      "accessibleDescription": "Host-provided diagram.",
+      "byteSize": "HOST_COMPUTED_BYTE_SIZE_REQUIRED",
+      "id": "heart-diagram",
+      "mediaType": "image/png",
+      "path": "assets/heart-diagram.png",
+      "sha256": "HOST_COMPUTED_SHA256_REQUIRED"
     }
   ],
   "corpusId": "example-media",
+  "extensions": [],
   "format": "lineage.corpus",
   "formatVersion": 1,
+  "interoperability": [],
+  "materials": [],
+  "migrations": [],
   "prompts": [
     {
+      "assets": [
+        "heart-diagram"
+      ],
       "challenge": [
-        "Listen to asset bird-call. Which bird is calling?"
+        "What is the capital of France?"
       ],
-      "id": "identify-bird-call",
+      "extensions": {
+        "optional": [],
+        "required": []
+      },
+      "id": "heart-media",
       "kind": "basic",
+      "materials": [],
+      "presentationProfile": "lineage.review/1",
+      "provenance": [],
       "resolution": [
-        "The recording is a common loon call."
+        "Heart diagram",
+        "heart"
       ],
-      "response": "text",
+      "response": {
+        "capture": "none",
+        "mode": "self-check"
+      },
       "revision": 1,
-      "sourceAsset": "bird-call",
+      "sources": [],
+      "status": "active",
       "withheld": [
-        "common loon"
+        "heart"
       ]
     }
-  ]
+  ],
+  "provenance": [],
+  "relationships": [],
+  "repetitionCorrections": [],
+  "repetitions": [],
+  "sources": []
 }

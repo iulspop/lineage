@@ -1,39 +1,39 @@
 {
   "assets": [
     {
-      "byteSize": 1234,
+      "accessibleDescription": "Host-provided diagram.",
+      "byteSize": "HOST_COMPUTED_BYTE_SIZE_REQUIRED",
       "id": "heart-diagram",
       "mediaType": "image/png",
       "path": "assets/heart-diagram.png",
-      "sha256": "HOST_COMPUTED_SHA256_REQUIRED00000000000000000000000000000000000"
+      "sha256": "HOST_COMPUTED_SHA256_REQUIRED"
     }
   ],
   "corpusId": "example-image-occlusion",
+  "extensions": [],
   "format": "lineage.corpus",
   "formatVersion": 1,
+  "interoperability": [],
+  "materials": [],
+  "migrations": [],
   "prompts": [
     {
+      "assets": [
+        "heart-diagram"
+      ],
       "challenge": [
         "Name the covered chamber."
       ],
+      "extensions": {
+        "optional": [],
+        "required": []
+      },
       "id": "heart-left-ventricle",
       "kind": "image-occlusion",
-      "occlusionRegions": [
-        {
-          "accessibleDescription": "Lower-right chamber in the displayed anatomical orientation.",
-          "geometry": {
-            "height": 0.24,
-            "type": "rectangle",
-            "width": 0.2,
-            "x": 0.58,
-            "y": 0.56
-          },
-          "id": "left-ventricle-region",
-          "label": "Left ventricle"
-        }
-      ],
+      "materials": [],
+      "presentationProfile": "lineage.review/1",
+      "provenance": [],
       "resolution": [
-        "The covered chamber is the left ventricle.",
         "Left ventricle"
       ],
       "response": {
@@ -41,10 +41,31 @@
         "mode": "self-check"
       },
       "revision": 1,
-      "sourceAsset": "heart-diagram",
+      "sources": [],
+      "status": "active",
       "withheld": [
         "Left ventricle"
-      ]
+      ],
+      "occlusionRegions": [
+        {
+          "accessibleDescription": "Lower-right chamber in anatomical orientation.",
+          "geometry": {
+            "height": 0.24,
+            "type": "rectangle",
+            "width": 0.2,
+            "x": 0.58,
+            "y": 0.56
+          },
+          "id": "left-ventricle",
+          "label": "Left ventricle"
+        }
+      ],
+      "sourceAsset": "heart-diagram"
     }
-  ]
+  ],
+  "provenance": [],
+  "relationships": [],
+  "repetitionCorrections": [],
+  "repetitions": [],
+  "sources": []
 }

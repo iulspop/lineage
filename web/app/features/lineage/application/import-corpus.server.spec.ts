@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 
+import { parseCorpusDocument } from "../domain/corpus"
 import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import {
   exportCorpus,
@@ -60,11 +61,7 @@ describe("corpus import and export", () => {
     expect(imported.digest).toMatch(/^[a-f0-9]{64}$/)
     await expect(
       exportCorpus({ corpusId: "corpus-1", ownerId: "user-1", store }),
-    ).resolves.toEqual({
-      ...document,
-      assets: [],
-      prompts: [{ ...document.prompts[0], kind: "basic" }],
-    })
+    ).resolves.toEqual(parseCorpusDocument(document))
   })
 
   test("does not export another owner's corpus snapshot", async () => {

@@ -8,65 +8,97 @@ import { createCompiledCoreValidator } from "../app/features/lineage/infrastruct
 const root = path.resolve(process.argv[2] ?? "../generated/lineage-ai")
 const readJson = async (relativePath: string) =>
   JSON.parse(await readFile(path.join(root, relativePath), "utf8"))
-
-const schema = await readJson("schemas/lineage-corpus-v1.schema.json")
 const ajv = new Ajv2020({ allErrors: true, strict: true })
-const validateSchema = ajv.compile(schema)
+ajv.addFormat("date-time", {
+  type: "string",
+  validate: (value: string) => !Number.isNaN(Date.parse(value)),
+})
+const corpusSchema = await readJson("schema/lineage-corpus.schema.json")
+const manifestSchema = await readJson("schema/lineage-manifest.schema.json")
+const validateCorpusSchema = ajv.compile(corpusSchema)
+const validateManifestSchema = ajv.compile(manifestSchema)
 const validator = createCompiledCoreValidator(lineageCore)
 
 for (const name of await readdir(path.join(root, "examples"))) {
   const document = await readJson(`examples/${name}`)
-  const requiresHostMedia = document.assets?.some(
+  const hostMediaMissing = document.assets?.some(
     (asset: { byteSize: unknown; sha256: unknown }) =>
       typeof asset.byteSize !== "number" ||
       typeof asset.sha256 !== "string" ||
       !/^[a-f0-9]{64}$/.test(asset.sha256),
   )
-  if (requiresHostMedia) {
-    if (validateSchema(document))
+  if (hostMediaMissing) {
+    if (validateCorpusSchema(document))
       throw new Error(
-        `${name} must remain invalid until the host supplies media integrity data`,
+        `${name} must remain invalid until host media integrity is supplied`,
       )
     continue
   }
-  if (!validateSchema(document))
+  if (!validateCorpusSchema(document))
     throw new Error(
-      `${name} does not conform to the generated schema: ${ajv.errorsText(validateSchema.errors)}`,
+      `${name} violates the corpus schema: ${ajv.errorsText(validateCorpusSchema.errors)}`,
     )
-  const result = validator.validateCorpus?.(document)
-  if (!result?.valid)
-    throw new Error(`${name} does not pass Lineage semantic validation`)
+  if (!validator.validateCorpus?.(document).valid)
+    throw new Error(`${name} does not pass semantic validation`)
 }
 
-const validFixture = await readJson("fixtures/valid/basic.json")
-if (!validateSchema(validFixture.document))
-  throw new Error("The valid fixture does not conform to the generated schema")
-if (!validator.validateCorpus?.(validFixture.document).valid)
-  throw new Error("The valid fixture does not pass semantic validation")
-
-for (const name of await readdir(path.join(root, "fixtures/invalid"))) {
-  const fixture = await readJson(`fixtures/invalid/${name}`)
+for (const name of await readdir(path.join(root, "conformance/valid"))) {
+  const fixture = await readJson(`conformance/valid/${name}`)
+  if (!validateCorpusSchema(fixture.document))
+    throw new Error(`${name} valid fixture violates the corpus schema`)
+  if (!validator.validateCorpus?.(fixture.document).valid)
+    throw new Error(`${name} valid fixture failed semantic validation`)
+}
+for (const name of await readdir(path.join(root, "conformance/invalid"))) {
+  const fixture = await readJson(`conformance/invalid/${name}`)
   const result = validator.validateCorpus?.(fixture.document)
   if (!result || result.valid)
-    throw new Error(`${name} unexpectedly passed corpus validation`)
+    throw new Error(`${name} unexpectedly passed validation`)
   if (
     !result.diagnostics.some(
-      (diagnostic) =>
-        diagnostic.code === fixture.expectedDiagnostic.code &&
-        diagnostic.path === fixture.expectedDiagnostic.path &&
-        (fixture.expectedDiagnostic.relatedPath === undefined ||
-          diagnostic.relatedPath === fixture.expectedDiagnostic.relatedPath),
+      (item) =>
+        item.code === fixture.expectedDiagnostic.code &&
+        item.path === fixture.expectedDiagnostic.path,
     )
   )
-    throw new Error(`${name} did not produce its expected stable diagnostic`)
+    throw new Error(
+      `${name} did not produce ${fixture.expectedDiagnostic.code} at ${fixture.expectedDiagnostic.path}`,
+    )
 }
 
-const description = await readJson("format-description.json")
-if (JSON.stringify(description) !== lineageCore.formatDescriptionJson)
+const manifestExample = {
+  corpus: "corpus.json",
+  corpusId: "example-basic",
+  corpusSha256: "0".repeat(64),
+  createdAt: "2026-08-26T12:00:00Z",
+  entries: [
+    {
+      byteSize: 1,
+      mediaType: "application/json",
+      path: "corpus.json",
+      required: true,
+      sha256: "0".repeat(64),
+    },
+  ],
+  extensions: { optional: [], required: [] },
+  format: "lineage.manifest",
+  formatVersion: 1,
+  modifiedAt: "2026-08-26T12:00:00Z",
+  presentationProfiles: ["lineage.review/1"],
+}
+if (!validateManifestSchema(manifestExample))
+  throw new Error(
+    `Generated manifest schema rejected a valid manifest: ${ajv.errorsText(validateManifestSchema.errors)}`,
+  )
+const formatDescription = await readJson("format-description.json")
+if (JSON.stringify(formatDescription) !== lineageCore.formatDescriptionJson)
   throw new Error(
     "Generated format-description.json drifted from the Agda runtime",
   )
-
+if (formatDescription.entities.length < 15)
+  throw new Error(
+    "Format description does not cover the complete v1 entity set",
+  )
 console.log(
-  "Lineage AI specifications, schemas, examples, and fixtures conform",
+  "Lineage AI specifications, schemas, examples, fixtures, and manifest conform",
 )

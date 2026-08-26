@@ -1,0 +1,8 @@
+// Generated from Lineage.Specification.CorpusWireV1. Do not edit.
+export type LineageResponse = "text" | { mode: "self-check"; capture: "none" }
+export type LineagePromptKind = "basic" | "cloze" | "image-occlusion"
+export type EntityReference = { id: string; revision?: number }
+export type Asset = { id: string; mediaType: string; byteSize: number; sha256: string; path: string; accessibleDescription?: string }
+export type Prompt = { id: string; revision: number; status?: "active" | "suspended" | "retired"; kind: LineagePromptKind; challenge: string[]; withheld: string[]; resolution: string[]; response: LineageResponse; materials?: string[]; sources?: string[]; assets?: string[]; provenance?: string[]; presentationProfile?: string; extensions?: { required?: string[]; optional?: string[] }; clozeTargets?: { id: string; answer: string; hints?: string[] }[]; sourceAsset?: string; occlusionRegions?: unknown[] }
+export type CorpusDocument = { format: "lineage.corpus"; formatVersion: 1; corpusId: string; prompts: Prompt[]; sources?: unknown[]; materials?: unknown[]; assets?: Asset[]; relationships?: unknown[]; repetitions?: unknown[]; repetitionCorrections?: unknown[]; provenance?: unknown[]; extensions?: unknown[]; migrations?: unknown[]; interoperability?: unknown[] }
+export type LineageManifest = { format: "lineage.manifest"; formatVersion: 1; corpusId: string; corpus: "corpus.json"; corpusSha256: string; createdAt: string; modifiedAt: string; entries: { path: string; mediaType: string; byteSize: number; sha256: string; required?: boolean }[]; presentationProfiles?: string[]; extensions?: { required?: string[]; optional?: string[] } }

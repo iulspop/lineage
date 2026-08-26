@@ -10,6 +10,7 @@ import Lineage.Specification.Corpus
 import Lineage.Specification.CorpusWireV1
 import Lineage.Specification.DependencyClosure
 import Lineage.Specification.FormatDescription
+import Lineage.Specification.FormatInterpretation
 import Lineage.Specification.HistoricalScheduling
 import Lineage.Specification.ImageOcclusion
 import Lineage.Specification.Interoperability

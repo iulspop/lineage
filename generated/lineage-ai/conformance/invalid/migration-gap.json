@@ -1,0 +1,69 @@
+{
+  "document": {
+    "assets": [],
+    "corpusId": "example-basic",
+    "extensions": [],
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "interoperability": [],
+    "materials": [],
+    "migrations": [
+      {
+        "appliedAt": "2026-08-26T12:00:00Z",
+        "fromVersion": 1,
+        "id": "m1",
+        "tool": "lineage",
+        "toolVersion": "1",
+        "toVersion": 2
+      },
+      {
+        "appliedAt": "2026-08-26T12:01:00Z",
+        "fromVersion": 3,
+        "id": "m2",
+        "tool": "lineage",
+        "toolVersion": "1",
+        "toVersion": 4
+      }
+    ],
+    "prompts": [
+      {
+        "assets": [],
+        "challenge": [
+          "What is the capital of France?"
+        ],
+        "extensions": {
+          "optional": [],
+          "required": []
+        },
+        "id": "capital-of-france",
+        "kind": "basic",
+        "materials": [],
+        "presentationProfile": "lineage.review/1",
+        "provenance": [],
+        "resolution": [
+          "What is the capital of France?",
+          "Paris"
+        ],
+        "response": {
+          "capture": "none",
+          "mode": "self-check"
+        },
+        "revision": 1,
+        "sources": [],
+        "status": "active",
+        "withheld": [
+          "Paris"
+        ]
+      }
+    ],
+    "provenance": [],
+    "relationships": [],
+    "repetitionCorrections": [],
+    "repetitions": [],
+    "sources": []
+  },
+  "expectedDiagnostic": {
+    "code": "migration.chain-invalid",
+    "path": "/migrations/1/fromVersion"
+  }
+}
