@@ -101,11 +101,40 @@ charEq : Char → Char → Bool
 charEq left right = primStringEquality
   (primStringFromList (left ∷ [])) (primStringFromList (right ∷ []))
 
+lowerAscii : Char → Char
+lowerAscii 'A' = 'a'
+lowerAscii 'B' = 'b'
+lowerAscii 'C' = 'c'
+lowerAscii 'D' = 'd'
+lowerAscii 'E' = 'e'
+lowerAscii 'F' = 'f'
+lowerAscii 'G' = 'g'
+lowerAscii 'H' = 'h'
+lowerAscii 'I' = 'i'
+lowerAscii 'J' = 'j'
+lowerAscii 'K' = 'k'
+lowerAscii 'L' = 'l'
+lowerAscii 'M' = 'm'
+lowerAscii 'N' = 'n'
+lowerAscii 'O' = 'o'
+lowerAscii 'P' = 'p'
+lowerAscii 'Q' = 'q'
+lowerAscii 'R' = 'r'
+lowerAscii 'S' = 's'
+lowerAscii 'T' = 't'
+lowerAscii 'U' = 'u'
+lowerAscii 'V' = 'v'
+lowerAscii 'W' = 'w'
+lowerAscii 'X' = 'x'
+lowerAscii 'Y' = 'y'
+lowerAscii 'Z' = 'z'
+lowerAscii value = value
+
 startsWithNormalized : List Char → List Char → Bool
 startsWithNormalized [] content = true
 startsWithNormalized (wanted ∷ wantedRest) [] = false
 startsWithNormalized (wanted ∷ wantedRest) (value ∷ values) =
-  charEq wanted value && startsWithNormalized wantedRest values
+  charEq (lowerAscii wanted) (lowerAscii value) && startsWithNormalized wantedRest values
 
 containsCharsNormalized : List Char → List Char → Bool
 containsCharsNormalized [] content = false

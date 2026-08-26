@@ -24,6 +24,7 @@ type LineageApi = {
   provenanceKind: AgdaConstructor
   conversionStatus: AgdaConstructor
   responseInteraction: AgdaConstructor
+  disclosureContains: (wanted: string) => (content: string) => boolean
   entityReference: AgdaConstructor
   extensionSet: AgdaConstructor
   normalizedPoint: AgdaConstructor

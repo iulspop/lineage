@@ -99,10 +99,9 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
   const maybe = (value: unknown) =>
     value === undefined ? api.none(undefined) : api.some(undefined)(value)
   const strings = (values: string[]) => values
-  const normalizedDisclosureText = (value: string) =>
-    value.normalize("NFKC").toLocaleLowerCase("en-US")
-  const normalizedDisclosureTexts = (values: string[]) =>
-    values.map(normalizedDisclosureText)
+  const canonicalDisclosureText = (value: string) => value.normalize("NFKC")
+  const canonicalDisclosureTexts = (values: string[]) =>
+    values.map(canonicalDisclosureText)
   const reference = (value: { id: string; revision?: number }) =>
     apply(
       api.entityReference,
@@ -145,9 +144,9 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
       natural(value.revision),
       api.lifecycle(value.status),
       api.promptKind(value.kind),
-      normalizedDisclosureTexts(value.challenge),
-      normalizedDisclosureTexts(value.withheld),
-      normalizedDisclosureTexts(value.resolution),
+      canonicalDisclosureTexts(value.challenge),
+      canonicalDisclosureTexts(value.withheld),
+      canonicalDisclosureTexts(value.resolution),
       api.responseInteraction(
         typeof value.response === "string"
           ? value.response
@@ -161,8 +160,8 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
           apply(
             api.clozeTarget,
             target.id,
-            normalizedDisclosureText(target.answer),
-            maybe(target.hints?.map(normalizedDisclosureText)),
+            canonicalDisclosureText(target.answer),
+            maybe(target.hints?.map(canonicalDisclosureText)),
           ),
         ),
       ),
@@ -174,7 +173,7 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
             region.id,
             region.label,
             geometry(region.geometry),
-            normalizedDisclosureText(region.accessibleDescription),
+            canonicalDisclosureText(region.accessibleDescription),
           ),
         ),
       ),
@@ -215,7 +214,7 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
       value.path,
       maybe(
         value.accessibleDescription
-          ? normalizedDisclosureText(value.accessibleDescription)
+          ? canonicalDisclosureText(value.accessibleDescription)
           : undefined,
       ),
     ),

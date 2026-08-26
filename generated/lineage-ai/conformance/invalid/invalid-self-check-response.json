@@ -1,0 +1,30 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-self-check",
+    "prompts": [
+      {
+        "id": "p",
+        "revision": 1,
+        "challenge": [
+          "Question"
+        ],
+        "withheld": [
+          "Answer"
+        ],
+        "resolution": [
+          "Answer"
+        ],
+        "response": {
+          "mode": "self-check",
+          "capture": "text"
+        }
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "response.invalid-self-check",
+    "path": "/prompts/0/response/capture"
+  }
+}

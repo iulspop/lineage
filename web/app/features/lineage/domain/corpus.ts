@@ -266,17 +266,26 @@ export function structuralDiagnostics(error: z.ZodError): LineageDiagnostic[] {
       code:
         finalSegment === "formatVersion"
           ? "format.unsupported-version"
-          : identityField && issue.code === "too_small"
-            ? "identity.empty"
-            : finalSegment === "revision" && issue.code === "too_small"
-              ? "revision.non-positive"
-              : finalSegment === "sha256"
-                ? "asset.integrity-host-required"
-                : finalSegment === "path"
-                  ? "asset.path-unsafe"
-                  : "structure.invalid",
+          : finalSegment === "response" && issue.code === "invalid_union"
+            ? "response.invalid-self-check"
+            : identityField && issue.code === "too_small"
+              ? "identity.empty"
+              : finalSegment === "revision" && issue.code === "too_small"
+                ? "revision.non-positive"
+                : finalSegment === "sha256"
+                  ? "asset.integrity-host-required"
+                  : finalSegment === "path"
+                    ? "asset.path-unsafe"
+                    : "structure.invalid",
       message: issue.message,
-      path: `/${issue.path.map(escapePointerSegment).join("/")}`,
+      path: `/${[
+        ...issue.path,
+        ...(finalSegment === "response" && issue.code === "invalid_union"
+          ? ["capture"]
+          : []),
+      ]
+        .map(escapePointerSegment)
+        .join("/")}`,
       severity: "error",
     }
   })

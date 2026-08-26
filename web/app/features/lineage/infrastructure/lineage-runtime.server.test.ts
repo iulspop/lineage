@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 
+import lineageCore from "../generated/lineage-core.mjs"
 import { lineageRuntime } from "./lineage-runtime.server"
 
 const contract = {
@@ -12,6 +13,12 @@ const contract = {
 }
 
 describe("generated Lineage runtime", () => {
+  test("given: differently cased disclosure text, should: match inside the compiled Agda core", () => {
+    expect(
+      lineageCore.disclosureContains("Paris")("The answer is PARIS."),
+    ).toBe(true)
+  })
+
   test("given: a disclosure-safe contract, should: validate it through the packaged Agda core", () => {
     expect(lineageRuntime.isValid(contract)).toBe(true)
   })
@@ -23,6 +30,31 @@ describe("generated Lineage runtime", () => {
         challenge: contract.resolution,
       }),
     ).toBe(false)
+  })
+
+  test("given: malformed self-check capture, should: return the declared stable diagnostic", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      corpusId: "invalid-self-check",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [
+        {
+          ...contract,
+          response: { capture: "text", mode: "self-check" },
+        },
+      ],
+    })
+    if (!result) throw new Error("Structured validation is unavailable")
+    expect(result).toMatchObject({
+      diagnostics: [
+        {
+          code: "response.invalid-self-check",
+          path: "/prompts/0/response/capture",
+          severity: "error",
+        },
+      ],
+      valid: false,
+    })
   })
 
   test("given: an unsafe corpus candidate, should: return stable localized diagnostics", () => {

@@ -130,6 +130,9 @@ responseInteraction : String → ResponseInteraction
 responseInteraction "self-check" = Wire.selfCheckResponse
 responseInteraction _ = Wire.textResponse
 
+disclosureContains : String → String → Bool
+disclosureContains = CorpusValidation.containsNormalizedText
+
 entityReference : String → Maybe ℕ → EntityReference
 entityReference = Wire.entityReference
 

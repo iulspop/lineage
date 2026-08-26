@@ -581,6 +581,39 @@
       },
       "fileName": "empty-corpus-identity.json",
       "summary": "Corpus identity is empty."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-self-check",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 1,
+            "challenge": [
+              "Question"
+            ],
+            "withheld": [
+              "Answer"
+            ],
+            "resolution": [
+              "Answer"
+            ],
+            "response": {
+              "mode": "self-check",
+              "capture": "text"
+            }
+          }
+        ]
+      },
+      "expectation": {
+        "code": "response.invalid-self-check",
+        "kind": "invalid",
+        "path": "/prompts/0/response/capture"
+      },
+      "fileName": "invalid-self-check-response.json",
+      "summary": "Self-check response capture must be none."
     }
   ],
   "formatName": "lineage.corpus",
