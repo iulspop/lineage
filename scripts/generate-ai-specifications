@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+output="${1:-$root/generated/lineage-ai}"
+
+"$root/scripts/generate-javascript-api"
+cd "$root/web"
+pnpm exec tsx scripts/generate-lineage-ai-specifications.ts "$output"

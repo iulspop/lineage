@@ -7,7 +7,9 @@ import Lineage.Specification.Capability
 import Lineage.Specification.Cloze
 import Lineage.Specification.Codec
 import Lineage.Specification.Corpus
+import Lineage.Specification.CorpusWireV1
 import Lineage.Specification.DependencyClosure
+import Lineage.Specification.FormatDescription
 import Lineage.Specification.HistoricalScheduling
 import Lineage.Specification.ImageOcclusion
 import Lineage.Specification.Interoperability
@@ -54,6 +56,7 @@ import Lineage.Validation.Cloze
 import Lineage.Validation.Codec
 import Lineage.Validation.Corpus
 import Lineage.Validation.DependencyClosure
+import Lineage.Validation.Diagnostic
 import Lineage.Validation.HistoricalScheduling
 import Lineage.Validation.ImageOcclusion
 import Lineage.Validation.Interoperability

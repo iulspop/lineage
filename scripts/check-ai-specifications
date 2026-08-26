@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+temporary="$(mktemp -d)"
+trap 'rm -rf "$temporary"' EXIT
+
+cd "$root/web"
+pnpm exec tsx scripts/generate-lineage-ai-specifications.ts "$temporary"
+diff -ru "$root/generated/lineage-ai" "$temporary"
+pnpm exec tsx scripts/check-lineage-ai-specifications.ts "$root/generated/lineage-ai"

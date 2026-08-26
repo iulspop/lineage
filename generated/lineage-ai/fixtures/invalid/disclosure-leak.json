@@ -1,0 +1,33 @@
+{
+  "document": {
+    "corpusId": "example-basic",
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "prompts": [
+      {
+        "challenge": [
+          "Paris is the capital of France."
+        ],
+        "id": "capital-of-france",
+        "kind": "basic",
+        "resolution": [
+          "What is the capital of France?",
+          "Paris"
+        ],
+        "response": {
+          "capture": "none",
+          "mode": "self-check"
+        },
+        "revision": 1,
+        "withheld": [
+          "Paris"
+        ]
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "disclosure.answer-leaked",
+    "path": "/prompts/0/challenge/0",
+    "relatedPath": "/prompts/0/withheld/0"
+  }
+}

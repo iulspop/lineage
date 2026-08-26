@@ -1,0 +1,35 @@
+{
+  "corpusId": "example-cloze",
+  "format": "lineage.corpus",
+  "formatVersion": 1,
+  "prompts": [
+    {
+      "challenge": [
+        "The capital of France is […]."
+      ],
+      "clozeTargets": [
+        {
+          "answer": "Paris",
+          "hints": [
+            "European capital"
+          ],
+          "id": "france-capital"
+        }
+      ],
+      "id": "france-capital-cloze",
+      "kind": "cloze",
+      "resolution": [
+        "The capital of France is Paris.",
+        "Paris"
+      ],
+      "response": {
+        "capture": "none",
+        "mode": "self-check"
+      },
+      "revision": 1,
+      "withheld": [
+        "Paris"
+      ]
+    }
+  ]
+}

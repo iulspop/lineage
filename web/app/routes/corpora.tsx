@@ -2,9 +2,11 @@ import { data } from "react-router"
 
 import type { Route } from "./+types/corpora"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { validateCorpusCandidate } from "~/features/lineage/application/author-corpus.server"
 import { CorpusPage } from "~/features/lineage/application/corpus-page"
 import {
   exportCorpus,
+  InvalidCorpusError,
   importCorpus,
 } from "~/features/lineage/application/import-corpus.server"
 import { corpusSnapshotStore } from "~/features/lineage/infrastructure/corpus-model.server"
@@ -23,9 +25,23 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData()
   const intent = formData.get("intent")
 
-  if (intent === "import") {
+  if (intent === "validate-candidate") {
+    const candidate = validateCorpusCandidate({
+      candidateJson: String(formData.get("candidateJson") ?? ""),
+      validator: lineageRuntime,
+    })
+    return data(candidate, { status: candidate.valid ? 200 : 400 })
+  }
+
+  if (intent === "import" || intent === "accept-candidate") {
     try {
-      const input = JSON.parse(String(formData.get("corpusJson") ?? ""))
+      const input = JSON.parse(
+        String(
+          formData.get(
+            intent === "accept-candidate" ? "candidateJson" : "corpusJson",
+          ) ?? "",
+        ),
+      )
       const imported = await importCorpus({
         input,
         ownerId,
@@ -39,7 +55,12 @@ export async function action({ request }: Route.ActionArgs) {
         promptCount: imported.document.prompts.length,
       })
     } catch (error) {
-      return data({ error: getErrorMessage(error) }, { status: 400 })
+      return data(
+        error instanceof InvalidCorpusError
+          ? { diagnostics: error.diagnostics, error: error.message }
+          : { error: getErrorMessage(error) },
+        { status: 400 },
+      )
     }
   }
 

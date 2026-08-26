@@ -64,7 +64,12 @@ capturedResolutionAttempt = Pure.capturedResolutionAttempt
 capturedCompletedAttempt : CompletedSession → Maybe String
 capturedCompletedAttempt = Pure.capturedCompletedAttempt
 
+formatDescriptionJson : String
+formatDescriptionJson = "{\"formatName\":\"lineage.corpus\",\"version\":1,\"promptKinds\":[\"basic\",\"cloze\",\"image-occlusion\"],\"responseModes\":[\"text\",\"self-check\"],\"diagnosticCodes\":[\"structure.invalid\",\"format.unsupported-version\",\"identity.empty\",\"identity.duplicate-prompt-revision\",\"revision.non-positive\",\"disclosure.withheld-empty\",\"disclosure.answer-leaked\",\"disclosure.answer-missing\",\"response.invalid-self-check\",\"cloze.targets-required\",\"occlusion.source-required\",\"occlusion.regions-required\",\"asset.unresolved\",\"asset.integrity-host-required\"],\"examples\":[\"basic.json\",\"cloze.json\",\"image-occlusion.json\",\"media.json\"]}"
+
 {-# COMPILE JS isValidReviewContract = raw => raw.record({ record: (challenge, resolution, response, withheld) => withheld.every(item => !challenge.includes(item) && resolution.includes(item)) }) #-}
 
 {-# COMPILE JS validateReviewContract = raw => raw.record({ record: (challenge, resolution, response, withheld) => { const valid = withheld.every(item => !challenge.includes(item) && resolution.includes(item)); if (!valid) return visitor => visitor.nothing(); const contract = { record: visitor => visitor.record(challenge, resolution, response, withheld, null, null) }; return visitor => visitor.just(contract); } }) #-}
+
+{-# COMPILE JS formatDescriptionJson = "{\"formatName\":\"lineage.corpus\",\"version\":1,\"promptKinds\":[\"basic\",\"cloze\",\"image-occlusion\"],\"responseModes\":[\"text\",\"self-check\"],\"diagnosticCodes\":[\"structure.invalid\",\"format.unsupported-version\",\"identity.empty\",\"identity.duplicate-prompt-revision\",\"revision.non-positive\",\"disclosure.withheld-empty\",\"disclosure.answer-leaked\",\"disclosure.answer-missing\",\"response.invalid-self-check\",\"cloze.targets-required\",\"occlusion.source-required\",\"occlusion.regions-required\",\"asset.unresolved\",\"asset.integrity-host-required\"],\"examples\":[\"basic.json\",\"cloze.json\",\"image-occlusion.json\",\"media.json\"]}" #-}
 ```

@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css"
+import { globalStyle, style } from "@vanilla-extract/css"
 
 import { theme } from "~/design-system/theme.css"
 
@@ -56,4 +56,31 @@ export const success = style({
   borderRadius: theme.radius.md,
   overflowWrap: "anywhere",
   padding: theme.space[4],
+})
+
+export const diagnostics = style({
+  background: theme.color.intent.danger.subtle,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.danger,
+  display: "grid",
+  gap: theme.space[2],
+  padding: theme.space[4],
+})
+
+export const preview = style({
+  background: theme.color.background.subtle,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  display: "grid",
+  gap: theme.space[3],
+  padding: theme.space[4],
+})
+
+globalStyle(`${preview} pre`, {
+  background: theme.color.background.canvas,
+  borderRadius: theme.radius.sm,
+  maxHeight: "24rem",
+  overflow: "auto",
+  padding: theme.space[3],
+  whiteSpace: "pre-wrap",
 })

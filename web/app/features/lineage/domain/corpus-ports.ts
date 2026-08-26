@@ -1,7 +1,12 @@
-import type { CorpusDocument, ReviewContract } from "./corpus"
+import type {
+  CorpusDocument,
+  CorpusValidationResult,
+  ReviewContract,
+} from "./corpus"
 
 export type ReviewContractValidator = {
   isValid(contract: ReviewContract): boolean
+  validateCorpus?(input: unknown): CorpusValidationResult
 }
 
 export type CorpusSnapshot = {

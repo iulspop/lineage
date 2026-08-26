@@ -60,7 +60,11 @@ describe("corpus import and export", () => {
     expect(imported.digest).toMatch(/^[a-f0-9]{64}$/)
     await expect(
       exportCorpus({ corpusId: "corpus-1", ownerId: "user-1", store }),
-    ).resolves.toEqual(document)
+    ).resolves.toEqual({
+      ...document,
+      assets: [],
+      prompts: [{ ...document.prompts[0], kind: "basic" }],
+    })
   })
 
   test("does not export another owner's corpus snapshot", async () => {

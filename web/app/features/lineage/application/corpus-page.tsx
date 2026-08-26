@@ -1,5 +1,6 @@
 import { Form } from "react-router"
 
+import type { LineageDiagnostic } from "../domain/corpus"
 import * as s from "./corpus-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
 import { Button } from "~/components/ui/button"
@@ -9,7 +10,21 @@ import { Textarea } from "~/components/ui/textarea"
 
 type CorpusActionData =
   | { corpusId: string; digest: string; imported: true; promptCount: number }
-  | { error: string }
+  | {
+      valid: true
+      preview: {
+        canonicalJson: string
+        diagnostics: LineageDiagnostic[]
+        document: { corpusId: string; prompts: unknown[] }
+        repairCount: number
+      }
+    }
+  | {
+      valid: false
+      candidateJson: string
+      diagnostics: LineageDiagnostic[]
+    }
+  | { error: string; diagnostics?: LineageDiagnostic[] }
   | undefined
 
 export function CorpusPage({
@@ -44,6 +59,82 @@ export function CorpusPage({
             . Digest: <code>{actionData.digest}</code>
           </p>
         ) : null}
+        {actionData &&
+        "diagnostics" in actionData &&
+        actionData.diagnostics &&
+        actionData.diagnostics.length > 0 ? (
+          <section
+            aria-labelledby="diagnostics-title"
+            className={s.diagnostics}
+          >
+            <h2 id="diagnostics-title">Validation diagnostics</h2>
+            <ul>
+              {actionData.diagnostics.map((diagnostic) => (
+                <li key={`${diagnostic.code}:${diagnostic.path}`}>
+                  <code>{diagnostic.code}</code> at{" "}
+                  <code>{diagnostic.path}</code>
+                  {": "}
+                  {diagnostic.message}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        <section className={s.card}>
+          <h2>AI corpus candidate</h2>
+          <p>
+            Paste a candidate generated from the Lineage AI authoring
+            specification. It remains untrusted until structural and semantic
+            validation succeeds, any bounded localized repair is previewed, and
+            you explicitly accept it.
+          </p>
+          <Form className={s.form} method="post">
+            <FieldLabel htmlFor="candidate-json">
+              Candidate corpus JSON
+            </FieldLabel>
+            <Textarea
+              defaultValue={
+                actionData && "candidateJson" in actionData
+                  ? actionData.candidateJson
+                  : undefined
+              }
+              id="candidate-json"
+              name="candidateJson"
+              placeholder='{"format":"lineage.corpus","formatVersion":1,...}'
+              required
+              rows={12}
+            />
+            <Button name="intent" type="submit" value="validate-candidate">
+              Validate and preview candidate
+            </Button>
+          </Form>
+
+          {actionData && "valid" in actionData && actionData.valid ? (
+            <div className={s.preview}>
+              <h3>Human approval preview</h3>
+              <p>
+                {actionData.preview.document.prompts.length} prompt
+                {actionData.preview.document.prompts.length === 1 ? "" : "s"} in{" "}
+                <strong>{actionData.preview.document.corpusId}</strong>.
+                {actionData.preview.repairCount > 0
+                  ? ` Applied ${actionData.preview.repairCount} localized repair pass.`
+                  : " No repairs were needed."}
+              </p>
+              <pre>{actionData.preview.canonicalJson}</pre>
+              <Form method="post">
+                <input
+                  name="candidateJson"
+                  type="hidden"
+                  value={actionData.preview.canonicalJson}
+                />
+                <Button name="intent" type="submit" value="accept-candidate">
+                  Accept and persist canonical corpus
+                </Button>
+              </Form>
+            </div>
+          ) : null}
+        </section>
 
         <div className={s.grid}>
           <section className={s.card}>

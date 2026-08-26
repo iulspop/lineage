@@ -1,0 +1,32 @@
+{
+  "document": {
+    "corpusId": "example-basic",
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "prompts": [
+      {
+        "challenge": [
+          "What is the capital of France?"
+        ],
+        "id": "capital-of-france",
+        "kind": "basic",
+        "resolution": [
+          "What is the capital of France?",
+          "Paris"
+        ],
+        "response": {
+          "capture": "none",
+          "mode": "self-check"
+        },
+        "revision": 0,
+        "withheld": [
+          "Paris"
+        ]
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "revision.non-positive",
+    "path": "/prompts/0/revision"
+  }
+}

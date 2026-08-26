@@ -24,4 +24,56 @@ describe("generated Lineage runtime", () => {
       }),
     ).toBe(false)
   })
+
+  test("given: an unsafe corpus candidate, should: return stable localized diagnostics", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      corpusId: "corpus-france",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [{ ...contract, challenge: ["Paris"] }],
+    })
+    if (!result) throw new Error("Structured validation is unavailable")
+
+    expect(result).toEqual({
+      diagnostics: [
+        {
+          code: "disclosure.answer-leaked",
+          message: "Challenge content contains a withheld answer.",
+          path: "/prompts/0/challenge/0",
+          relatedPath: "/prompts/0/withheld/0",
+          severity: "error",
+        },
+      ],
+      valid: false,
+    })
+  })
+
+  test("given: an image-occlusion candidate without media, should: report dependency diagnostics", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      corpusId: "corpus-image",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [
+        {
+          ...contract,
+          id: "heart-region",
+          kind: "image-occlusion",
+          sourceAsset: "heart-image",
+        },
+      ],
+    })
+    if (!result) throw new Error("Structured validation is unavailable")
+
+    expect(result.valid).toBe(false)
+    if (result.valid) throw new Error("Expected invalid corpus")
+    expect(
+      result.diagnostics.map(({ code, path }) => ({ code, path })),
+    ).toEqual([
+      {
+        code: "occlusion.regions-required",
+        path: "/prompts/0/occlusionRegions",
+      },
+      { code: "asset.unresolved", path: "/prompts/0/sourceAsset" },
+    ])
+  })
 })
