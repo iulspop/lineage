@@ -14,6 +14,7 @@ export type CorpusSnapshot = {
 export type CorpusSnapshotStore = {
   append(ownerId: string, snapshot: CorpusSnapshot): Promise<void>
   latest(ownerId: string, corpusId: string): Promise<CorpusSnapshot | null>
+  listLatest(ownerId: string): Promise<CorpusSnapshot[]>
 }
 
 export type ImportedCorpus = {

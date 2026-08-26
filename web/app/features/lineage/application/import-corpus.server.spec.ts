@@ -19,6 +19,11 @@ function memoryStore(): CorpusSnapshotStore {
     async latest(ownerId, corpusId) {
       return snapshots.get(`${ownerId}:${corpusId}`) ?? null
     },
+    async listLatest(ownerId) {
+      return [...snapshots.entries()]
+        .filter(([key]) => key.startsWith(`${ownerId}:`))
+        .map(([, snapshot]) => snapshot)
+    },
   }
 }
 

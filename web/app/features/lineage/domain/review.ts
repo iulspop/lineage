@@ -56,14 +56,3 @@ export type ReviewRecordStore = {
   }): Promise<ReviewHistoryEntry | null>
   recentForUser(userId: string, limit: number): Promise<ReviewHistoryEntry[]>
 }
-
-export const REVIEW_CORPUS_ID = "lineage-demo"
-
-export const demoReviewContract: ReviewContract = {
-  challenge: ["What is the capital of France?"],
-  id: "capital-of-france",
-  resolution: ["What is the capital of France?", "Paris"],
-  response: "text",
-  revision: 1,
-  withheld: ["Paris"],
-}

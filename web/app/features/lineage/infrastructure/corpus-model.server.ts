@@ -31,4 +31,21 @@ export const corpusSnapshotStore: CorpusSnapshotStore = {
       where: { corpusId, ownerId },
     })
   },
+
+  async listLatest(ownerId): Promise<CorpusSnapshot[]> {
+    const snapshots = await prisma.lineageCorpusSnapshot.findMany({
+      orderBy: [{ corpusId: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+      select: {
+        canonicalJson: true,
+        corpusId: true,
+        digest: true,
+        formatVersion: true,
+      },
+      where: { ownerId },
+    })
+    return snapshots.filter(
+      (snapshot, index) =>
+        index === 0 || snapshots[index - 1]?.corpusId !== snapshot.corpusId,
+    )
+  },
 }

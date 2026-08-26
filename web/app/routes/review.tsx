@@ -1,28 +1,40 @@
-import { data } from "react-router"
+import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/review"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
 import {
   completeReview,
+  listReviewCorpora,
   loadReview,
   loadReviewProgress,
   resolveReview,
 } from "~/features/lineage/application/review-flow.server"
 import { ReviewPage } from "~/features/lineage/application/review-page"
 import { corpusSnapshotStore } from "~/features/lineage/infrastructure/corpus-model.server"
-import { lineageRuntime } from "~/features/lineage/infrastructure/lineage-runtime.server"
 import { reviewCore } from "~/features/lineage/infrastructure/review-core.server"
 import { reviewRecordStore } from "~/features/lineage/infrastructure/review-model.server"
 import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/users-model.server"
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
+  const corpora = await listReviewCorpora({
+    snapshotStore: corpusSnapshotStore,
+    userId,
+  })
+  if (corpora.length === 0) throw redirect("/corpora")
+
+  const requestedCorpusId = new URL(request.url).searchParams.get("corpusId")
+  const corpusId = corpora.some(
+    (corpus) => corpus.corpusId === requestedCorpusId,
+  )
+    ? (requestedCorpusId as string)
+    : corpora[0].corpusId
   const review = await loadReview({
     core: reviewCore,
+    corpusId,
     reviewStore: reviewRecordStore,
     snapshotStore: corpusSnapshotStore,
     userId,
-    validator: lineageRuntime,
   })
   const [progress, user] = await Promise.all([
     loadReviewProgress({
@@ -33,19 +45,23 @@ export async function loader({ request }: Route.LoaderArgs) {
     }),
     retrieveUserFromDatabaseById(userId),
   ])
-  return { ...review, ...progress, userEmail: user?.email ?? "" }
+  return { ...review, ...progress, corpora, userEmail: user?.email ?? "" }
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const userId = await requireUserId(request)
   const formData = await request.formData()
   const intent = formData.get("intent")
+  const corpusId = formData.get("corpusId")
+  if (typeof corpusId !== "string" || !corpusId) {
+    return data({ error: "A review corpus is required" }, { status: 400 })
+  }
   const review = await loadReview({
     core: reviewCore,
+    corpusId,
     reviewStore: reviewRecordStore,
     snapshotStore: corpusSnapshotStore,
     userId,
-    validator: lineageRuntime,
   })
   const attempt =
     typeof formData.get("attempt") === "string"

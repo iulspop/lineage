@@ -20,6 +20,8 @@ type ReviewActionData =
   | undefined
 
 type ReviewLoaderData = {
+  corpora: Array<{ corpusId: string; formatVersion: number }>
+  corpusId: string
   due: boolean
   dueAt: string | null
   history: Array<{
@@ -69,6 +71,25 @@ export function ReviewPage({
           </div>
         </header>
 
+        <Form className={s.corpusPicker} method="get">
+          <FieldLabel className={s.corpusPickerLabel} htmlFor="review-corpus">
+            Corpus
+          </FieldLabel>
+          <select
+            className={s.corpusSelect}
+            defaultValue={loaderData.corpusId}
+            id="review-corpus"
+            name="corpusId"
+          >
+            {loaderData.corpora.map((corpus) => (
+              <option key={corpus.corpusId} value={corpus.corpusId}>
+                {corpus.corpusId} · format {corpus.formatVersion}
+              </option>
+            ))}
+          </select>
+          <Button type="submit">Choose corpus</Button>
+        </Form>
+
         <section aria-live="polite" className={s.card}>
           <div className={s.content}>
             {presentation.map((item) => (
@@ -78,6 +99,11 @@ export function ReviewPage({
 
           {!resolved ? (
             <Form className={s.form} method="post">
+              <input
+                name="corpusId"
+                type="hidden"
+                value={loaderData.corpusId}
+              />
               <FieldLabel htmlFor="review-attempt">Your answer</FieldLabel>
               <Input autoComplete="off" id="review-attempt" name="attempt" />
               <div className={s.actions}>
@@ -90,6 +116,11 @@ export function ReviewPage({
             <div className={s.complete}>
               <strong>Review recorded as {resolved.assessment}.</strong>
               <Form action="/review" method="get">
+                <input
+                  name="corpusId"
+                  type="hidden"
+                  value={loaderData.corpusId}
+                />
                 <Button type="submit">Review again</Button>
               </Form>
             </div>
@@ -99,6 +130,11 @@ export function ReviewPage({
                 <strong>Your answer:</strong> {resolved.attempt || "No answer"}
               </p>
               <Form className={s.form} method="post">
+                <input
+                  name="corpusId"
+                  type="hidden"
+                  value={loaderData.corpusId}
+                />
                 <input
                   name="attempt"
                   type="hidden"

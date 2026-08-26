@@ -1,63 +1,43 @@
 import type { ReviewContract } from "../domain/corpus"
-import type {
-  CorpusSnapshotStore,
-  ReviewContractValidator,
-} from "../domain/corpus-ports"
+import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewCore, ReviewRecordStore } from "../domain/review"
-import {
-  demoReviewContract,
-  REVIEW_CORPUS_ID,
-  reviewAssessmentSchema,
-} from "../domain/review"
-import { exportCorpus, importCorpus } from "./import-corpus.server"
+import { reviewAssessmentSchema } from "../domain/review"
+import { exportCorpus } from "./import-corpus.server"
 import { selectNextPrompt } from "./review-queue"
 import { dueAt, isDue, scheduleReview } from "./review-scheduling"
 
-const demoCorpus = {
-  corpusId: REVIEW_CORPUS_ID,
-  format: "lineage.corpus" as const,
-  formatVersion: 1 as const,
-  prompts: [
-    demoReviewContract,
-    {
-      challenge: ["Which planet is known as the Red Planet?"],
-      id: "red-planet",
-      resolution: ["Which planet is known as the Red Planet?", "Mars"],
-      response: "text",
-      revision: 1,
-      withheld: ["Mars"],
-    },
-  ],
+export async function listReviewCorpora({
+  snapshotStore,
+  userId,
+}: {
+  snapshotStore: CorpusSnapshotStore
+  userId: string
+}) {
+  return (await snapshotStore.listLatest(userId)).map((snapshot) => ({
+    corpusId: snapshot.corpusId,
+    formatVersion: snapshot.formatVersion,
+  }))
 }
 
 export async function loadReview({
   core,
+  corpusId,
   reviewStore,
   snapshotStore,
   userId,
-  validator,
 }: {
   core: ReviewCore
+  corpusId: string
   reviewStore: ReviewRecordStore
   snapshotStore: CorpusSnapshotStore
   userId: string
-  validator: ReviewContractValidator
 }) {
-  let corpus = await exportCorpus({
-    corpusId: REVIEW_CORPUS_ID,
+  const corpus = await exportCorpus({
+    corpusId,
     ownerId: userId,
     store: snapshotStore,
   })
-  if (!corpus) {
-    corpus = (
-      await importCorpus({
-        input: demoCorpus,
-        ownerId: userId,
-        store: snapshotStore,
-        validator,
-      })
-    ).document
-  }
+  if (!corpus) throw new Error("The selected review corpus was not found")
   const latestReviews = await reviewStore.latestForCorpus({
     corpusId: corpus.corpusId,
     userId,

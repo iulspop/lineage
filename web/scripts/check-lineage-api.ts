@@ -116,6 +116,11 @@ test("compiled Lineage validation guards the corpus persistence boundary", async
     async latest(ownerId) {
       return ownerId === state.ownerId ? state.persisted : null
     },
+    async listLatest(ownerId) {
+      return ownerId === state.ownerId && state.persisted
+        ? [state.persisted]
+        : []
+    },
   }
 
   const result = await importCorpus({

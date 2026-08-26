@@ -35,6 +35,25 @@ export const progress = style({
   textAlign: "right",
 })
 
+export const corpusPicker = style({
+  alignItems: "end",
+  display: "grid",
+  gap: theme.space[2],
+  gridTemplateColumns: "1fr auto",
+  marginBottom: theme.space[4],
+})
+
+export const corpusPickerLabel = style({ gridColumn: "1 / -1" })
+
+export const corpusSelect = style({
+  background: theme.color.background.card,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.sm,
+  color: theme.color.text.primary,
+  minHeight: "2.5rem",
+  paddingInline: theme.space[3],
+})
+
 export const card = style({
   background: theme.color.background.subtle,
   border: `1px solid ${theme.color.border.default}`,

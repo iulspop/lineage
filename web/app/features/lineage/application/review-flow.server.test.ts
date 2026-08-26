@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest"
 
 import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewRecordStore } from "../domain/review"
-import { lineageRuntime } from "../infrastructure/lineage-runtime.server"
 import { reviewCore } from "../infrastructure/review-core.server"
 import {
   completeReview,
@@ -11,11 +10,42 @@ import {
   resolveReview,
 } from "./review-flow.server"
 
-function memorySnapshotStore(): CorpusSnapshotStore {
+const demoCorpus = {
+  corpusId: "lineage-demo",
+  format: "lineage.corpus" as const,
+  formatVersion: 1 as const,
+  prompts: [
+    {
+      challenge: ["What is the capital of France?"],
+      id: "capital-of-france",
+      resolution: ["What is the capital of France?", "Paris"],
+      response: "text" as const,
+      revision: 1,
+      withheld: ["Paris"],
+    },
+    {
+      challenge: ["Which planet is known as the Red Planet?"],
+      id: "red-planet",
+      resolution: ["Which planet is known as the Red Planet?", "Mars"],
+      response: "text" as const,
+      revision: 1,
+      withheld: ["Mars"],
+    },
+  ],
+}
+
+function memorySnapshotStore(seedDemo = true): CorpusSnapshotStore {
   const snapshots = new Map<
     string,
     Awaited<ReturnType<CorpusSnapshotStore["latest"]>>
   >()
+  const snapshot = {
+    canonicalJson: JSON.stringify(demoCorpus),
+    corpusId: demoCorpus.corpusId,
+    digest: "demo-digest",
+    formatVersion: demoCorpus.formatVersion,
+  }
+  if (seedDemo) snapshots.set(`user-1:${snapshot.corpusId}`, snapshot)
   return {
     async append(ownerId, value) {
       snapshots.set(`${ownerId}:${value.corpusId}`, value)
@@ -23,13 +53,46 @@ function memorySnapshotStore(): CorpusSnapshotStore {
     async latest(ownerId, corpusId) {
       return snapshots.get(`${ownerId}:${corpusId}`) ?? null
     },
+    async listLatest(ownerId) {
+      return [...snapshots.entries()]
+        .filter(([key]) => key.startsWith(`${ownerId}:`))
+        .map(([, value]) => value)
+        .filter((value) => value !== null)
+    },
   }
 }
 
 describe("review flow", () => {
+  test("requires an explicitly imported owner corpus", async () => {
+    await expect(
+      loadReview({
+        core: reviewCore,
+        corpusId: demoCorpus.corpusId,
+        reviewStore: {
+          async append() {},
+          async countForUser() {
+            return 0
+          },
+          async latestForCorpus() {
+            return []
+          },
+          async latestForPrompt() {
+            return null
+          },
+          async recentForUser() {
+            return []
+          },
+        },
+        snapshotStore: memorySnapshotStore(false),
+        userId: "user-1",
+      }),
+    ).rejects.toThrow("The selected review corpus was not found")
+  })
+
   test("loads a validated Prompt and preserves the disclosure boundary", async () => {
     const review = await loadReview({
       core: reviewCore,
+      corpusId: demoCorpus.corpusId,
       reviewStore: {
         async append() {},
         async countForUser() {
@@ -47,7 +110,6 @@ describe("review flow", () => {
       },
       snapshotStore: memorySnapshotStore(),
       userId: "user-1",
-      validator: lineageRuntime,
     })
 
     expect(review.presentation).toEqual(["What is the capital of France?"])
@@ -68,6 +130,7 @@ describe("review flow", () => {
     const store = memorySnapshotStore()
     const first = await loadReview({
       core: reviewCore,
+      corpusId: demoCorpus.corpusId,
       reviewStore: {
         async append() {},
         async countForUser() {
@@ -85,7 +148,6 @@ describe("review flow", () => {
       },
       snapshotStore: store,
       userId: "user-1",
-      validator: lineageRuntime,
     })
     const reviewedFirst = {
       assessment: "good" as const,
@@ -103,6 +165,7 @@ describe("review flow", () => {
     }
     const next = await loadReview({
       core: reviewCore,
+      corpusId: demoCorpus.corpusId,
       reviewStore: {
         async append() {},
         async countForUser() {
@@ -120,7 +183,6 @@ describe("review flow", () => {
       },
       snapshotStore: store,
       userId: "user-1",
-      validator: lineageRuntime,
     })
 
     expect(next.prompt.id).toBe("red-planet")
@@ -182,6 +244,7 @@ describe("review flow", () => {
   test("records a completed review as a durable event", async () => {
     const review = await loadReview({
       core: reviewCore,
+      corpusId: demoCorpus.corpusId,
       reviewStore: {
         async append() {},
         async countForUser() {
@@ -199,7 +262,6 @@ describe("review flow", () => {
       },
       snapshotStore: memorySnapshotStore(),
       userId: "user-1",
-      validator: lineageRuntime,
     })
     const records: Parameters<ReviewRecordStore["append"]>[0][] = []
 

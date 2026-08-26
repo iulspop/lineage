@@ -46,6 +46,49 @@ describe("corpusSnapshotStore", () => {
     })
   })
 
+  test("lists one latest snapshot per corpus in stable corpus order", async () => {
+    await corpusSnapshotStore.append(owner1, {
+      canonicalJson: '{"revision":1}',
+      corpusId: "corpus-b",
+      digest: "digest-b1",
+      formatVersion: 1,
+    })
+    await corpusSnapshotStore.append(owner1, {
+      canonicalJson: '{"revision":1}',
+      corpusId: "corpus-a",
+      digest: "digest-a1",
+      formatVersion: 1,
+    })
+    await new Promise((resolve) => setTimeout(resolve, 2))
+    await corpusSnapshotStore.append(owner1, {
+      canonicalJson: '{"revision":2}',
+      corpusId: "corpus-b",
+      digest: "digest-b2",
+      formatVersion: 1,
+    })
+    await corpusSnapshotStore.append(owner2, {
+      canonicalJson: "{}",
+      corpusId: "corpus-c",
+      digest: "digest-c1",
+      formatVersion: 1,
+    })
+
+    await expect(corpusSnapshotStore.listLatest(owner1)).resolves.toEqual([
+      {
+        canonicalJson: '{"revision":1}',
+        corpusId: "corpus-a",
+        digest: "digest-a1",
+        formatVersion: 1,
+      },
+      {
+        canonicalJson: '{"revision":2}',
+        corpusId: "corpus-b",
+        digest: "digest-b2",
+        formatVersion: 1,
+      },
+    ])
+  })
+
   test("deduplicates a repeated canonical snapshot per owner", async () => {
     const snapshot = {
       canonicalJson: "{}",

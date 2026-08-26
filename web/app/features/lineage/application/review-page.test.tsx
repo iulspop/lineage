@@ -5,6 +5,8 @@ import { ReviewPage } from "./review-page"
 import { render, screen } from "~/test/react-test-utils"
 
 const loaderData = {
+  corpora: [{ corpusId: "lineage-demo", formatVersion: 1 }],
+  corpusId: "lineage-demo",
   due: true,
   dueAt: null,
   history: [],
@@ -33,6 +35,7 @@ describe("ReviewPage", () => {
     expect(
       screen.getByRole("button", { name: "Show answer" }),
     ).toBeInTheDocument()
+    expect(screen.getByLabelText("Corpus")).toHaveValue("lineage-demo")
   })
 
   test("shows the resolution and assessment controls after an attempt", () => {
