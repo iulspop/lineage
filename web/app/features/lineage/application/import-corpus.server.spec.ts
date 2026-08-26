@@ -10,14 +10,14 @@ import {
 function memoryStore(): CorpusSnapshotStore {
   const snapshots = new Map<
     string,
-    Parameters<CorpusSnapshotStore["append"]>[0]
+    Parameters<CorpusSnapshotStore["append"]>[1]
   >()
   return {
-    async append(snapshot) {
-      snapshots.set(snapshot.corpusId, snapshot)
+    async append(ownerId, snapshot) {
+      snapshots.set(`${ownerId}:${snapshot.corpusId}`, snapshot)
     },
-    async latest(corpusId) {
-      return snapshots.get(corpusId) ?? null
+    async latest(ownerId, corpusId) {
+      return snapshots.get(`${ownerId}:${corpusId}`) ?? null
     },
   }
 }
@@ -43,20 +43,36 @@ describe("corpus import and export", () => {
     const store = memoryStore()
     const imported = await importCorpus({
       input: document,
+      ownerId: "user-1",
       store,
       validator: { isValid: () => true },
     })
 
     expect(imported.digest).toMatch(/^[a-f0-9]{64}$/)
     await expect(
-      exportCorpus({ corpusId: "corpus-1", store }),
+      exportCorpus({ corpusId: "corpus-1", ownerId: "user-1", store }),
     ).resolves.toEqual(document)
+  })
+
+  test("does not export another owner's corpus snapshot", async () => {
+    const store = memoryStore()
+    await importCorpus({
+      input: document,
+      ownerId: "user-1",
+      store,
+      validator: { isValid: () => true },
+    })
+
+    await expect(
+      exportCorpus({ corpusId: "corpus-1", ownerId: "user-2", store }),
+    ).resolves.toBeNull()
   })
 
   test("rejects disclosure-unsafe prompts before persistence", async () => {
     await expect(
       importCorpus({
         input: document,
+        ownerId: "user-1",
         store: memoryStore(),
         validator: { isValid: () => false },
       }),

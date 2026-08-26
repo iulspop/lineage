@@ -16,10 +16,12 @@ export class InvalidReviewContractError extends Error {
 
 export async function importCorpus({
   input,
+  ownerId,
   store,
   validator,
 }: {
   input: unknown
+  ownerId: string
   store: CorpusSnapshotStore
   validator: ReviewContractValidator
 }): Promise<ImportedCorpus> {
@@ -31,7 +33,7 @@ export async function importCorpus({
 
   const canonicalJson = serializeCorpusDocument(document)
   const digest = createHash("sha256").update(canonicalJson).digest("hex")
-  await store.append({
+  await store.append(ownerId, {
     canonicalJson,
     corpusId: document.corpusId,
     digest,
@@ -42,12 +44,14 @@ export async function importCorpus({
 
 export async function exportCorpus({
   corpusId,
+  ownerId,
   store,
 }: {
   corpusId: string
+  ownerId: string
   store: CorpusSnapshotStore
 }): Promise<CorpusDocument | null> {
-  const snapshot = await store.latest(corpusId)
+  const snapshot = await store.latest(ownerId, corpusId)
   return snapshot
     ? parseCorpusDocument(JSON.parse(snapshot.canonicalJson))
     : null

@@ -45,11 +45,17 @@ export async function loadReview({
 }) {
   let corpus = await exportCorpus({
     corpusId: REVIEW_CORPUS_ID,
+    ownerId: userId,
     store: snapshotStore,
   })
   if (!corpus) {
     corpus = (
-      await importCorpus({ input: demoCorpus, store: snapshotStore, validator })
+      await importCorpus({
+        input: demoCorpus,
+        ownerId: userId,
+        store: snapshotStore,
+        validator,
+      })
     ).document
   }
   const latestReviews = await reviewStore.latestForCorpus({

@@ -22,8 +22,9 @@ model User {
   chatConversation      ChatConversation?  @relation("ConversationUser")
   sentChatMessages      ChatMessage[]      @relation("MessageSender")
   receivedNotifications ChatNotification[] @relation("NotificationRecipient")
-  chatTypingStates      ChatTypingState[]
-  lineageReviews        LineageReview[]
+  chatTypingStates       ChatTypingState[]
+  lineageCorpusSnapshots LineageCorpusSnapshot[]
+  lineageReviews         LineageReview[]
 }
 
 model Todo {
@@ -37,14 +38,16 @@ model Todo {
 
 model LineageCorpusSnapshot {
   id            Int      @id @default(autoincrement())
+  ownerId       String?
   corpusId      String
   formatVersion Int
   canonicalJson String
   digest        String
   createdAt     DateTime @default(now())
+  owner         User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  @@unique([corpusId, digest])
-  @@index([corpusId, createdAt])
+  @@unique([ownerId, corpusId, digest])
+  @@index([ownerId, corpusId, createdAt])
 }
 
 model LineageReview {

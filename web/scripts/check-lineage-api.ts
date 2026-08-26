@@ -105,14 +105,16 @@ test("compiled Lineage validation guards the corpus persistence boundary", async
     path.join(outputDirectory, "jAgda.Lineage.API.JavaScript.js"),
   ) as LineageApi
   const state: {
-    persisted: Parameters<CorpusSnapshotStore["append"]>[0] | null
-  } = { persisted: null }
+    ownerId: string | null
+    persisted: Parameters<CorpusSnapshotStore["append"]>[1] | null
+  } = { ownerId: null, persisted: null }
   const store: CorpusSnapshotStore = {
-    async append(snapshot) {
+    async append(ownerId, snapshot) {
+      state.ownerId = ownerId
       state.persisted = snapshot
     },
-    async latest() {
-      return state.persisted
+    async latest(ownerId) {
+      return ownerId === state.ownerId ? state.persisted : null
     },
   }
 
@@ -132,6 +134,7 @@ test("compiled Lineage validation guards the corpus persistence boundary", async
         },
       ],
     },
+    ownerId: "user-1",
     store,
     validator: createCompiledCoreValidator(api),
   })

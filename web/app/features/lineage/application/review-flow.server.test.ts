@@ -12,13 +12,16 @@ import {
 } from "./review-flow.server"
 
 function memorySnapshotStore(): CorpusSnapshotStore {
-  let snapshot: Awaited<ReturnType<CorpusSnapshotStore["latest"]>> = null
+  const snapshots = new Map<
+    string,
+    Awaited<ReturnType<CorpusSnapshotStore["latest"]>>
+  >()
   return {
-    async append(value) {
-      snapshot = value
+    async append(ownerId, value) {
+      snapshots.set(`${ownerId}:${value.corpusId}`, value)
     },
-    async latest() {
-      return snapshot
+    async latest(ownerId, corpusId) {
+      return snapshots.get(`${ownerId}:${corpusId}`) ?? null
     },
   }
 }
