@@ -2,154 +2,440 @@
 
 ## 1. Scope and authority
 
-This generated reference describes the canonical version-1 corpus and archive boundary. JSON Schema proves shape only; authoritative semantic validation remains mandatory.
+Portable, locally complete version-1 Lineage corpus and archive format.
 
-## 2. Entities
+JSON Schema enforces structural constraints. Authoritative semantic validation remains mandatory.
 
-### 2.1 ArchiveEntry
+## 2. Wire entities
 
-Safe path, byte count, media type, and host-computed digest.
+### 2.1 ResponseInteraction
 
-### 2.2 Asset
+ResponseInteraction version-1 wire object.
 
-Content-addressed local media declaration verified from bytes.
+- `mode` (required; alternatives): Review response interaction. Use text capture or explicit self-check/no-capture.
 
-### 2.3 ClozeTarget
+### 2.2 SelfCheckResponse
 
-Stable cloze identity independent of marker number or position.
+SelfCheckResponse version-1 wire object.
 
-### 2.4 CorpusDocument
+- `mode` (required; literal): Self-check discriminator. Requires capture none.
+- `capture` (required; literal): No response capture. The learner reveals and rates without typed capture.
 
-Top-level canonical corpus; ownership and current due state are excluded.
+### 2.3 EntityReference
 
-### 2.5 Extension
+EntityReference version-1 wire object.
 
-Versioned required or optional capability with portable fallback.
+- `id` (required; scalar; nonEmpty): Referenced stable identity. Must resolve in the referenced namespace.
+- `revision` (optional; scalar): Optional exact revision. When present it must be positive and resolve exactly.
 
-### 2.6 InteroperabilityReport
+### 2.4 ClozeTarget
 
-Exactness or named losses for conversion.
+ClozeTarget version-1 wire object.
 
-### 2.7 Manifest
+- `id` (required; scalar; nonEmpty): Stable cloze-target identity. Independent of marker order and wording.
+- `answer` (required; scalar): Withheld target answer. Must be disclosed after reveal.
+- `hints` (optional; array): Optional hints. Hints must not leak the answer.
 
-Archive root binding corpus and entry digests.
+### 2.5 NormalizedPoint
 
-### 2.8 Material
+NormalizedPoint version-1 wire object.
 
-Reusable immutable content fragment revision.
+- `x` (required; scalar; maximum): Normalized horizontal coordinate. Inclusive range zero through one.
+- `y` (required; scalar; maximum): Normalized vertical coordinate. Inclusive range zero through one.
 
-### 2.9 Migration
+### 2.6 RectangleGeometry
 
-Explicit forward format migration.
+RectangleGeometry version-1 wire object.
 
-### 2.10 OcclusionRegion
+- `type` (required; literal): Geometry discriminator. Selects normalized rectangle fields.
+- `x` (required; scalar; maximum): Left coordinate. Inclusive range zero through one.
+- `y` (required; scalar; maximum): Top coordinate. Inclusive range zero through one.
+- `width` (required; scalar; minimum, maximum): Normalized width. Greater than zero and at most one.
+- `height` (required; scalar; minimum, maximum): Normalized height. Greater than zero and at most one.
 
-Stable region identity with normalized geometry and accessible description.
+### 2.7 PolygonGeometry
 
-### 2.11 Prompt
+PolygonGeometry version-1 wire object.
 
-Stable independently scheduled review contract revision.
+- `type` (required; literal): Geometry discriminator. Selects polygon points.
+- `points` (required; array): Normalized polygon vertices. At least three points.
 
-### 2.12 Provenance
+### 2.8 OcclusionRegion
 
-Auditable origin, citation, license, and derivation record.
+OcclusionRegion version-1 wire object.
 
-### 2.13 Relationship
+- `id` (required; scalar; nonEmpty): Stable region identity. Geometry changes do not change identity.
+- `label` (required; scalar): Human-readable region label. Must be non-empty.
+- `accessibleDescription` (required; scalar): Accessible equivalent. Must describe the concealed region without leaking its answer.
+- `geometry` (required; taggedChoice): Normalized geometry. Rectangle or polygon with coordinates from zero through one.
 
-Typed identity-neutral edge.
+### 2.9 Source
 
-### 2.14 Repetition
+Source version-1 wire object.
 
-Append-only review event tied to an exact Prompt revision.
+- `id` (required; scalar; nonEmpty): Stable Source identity. Pairs with revision.
+- `revision` (required; scalar; minimum): Positive immutable revision. Starts at one.
+- `title` (required; scalar): Source title. Must be non-empty.
+- `content` (required; scalar): Source content. Portable non-executable text.
+- `assets` (optional; array): Referenced assets. All references resolve locally.
+- `provenance` (optional; array): Origin records. All references resolve locally.
 
-### 2.15 RepetitionCorrection
+### 2.10 Material
 
-Append-only correction; never overwrites its target.
+Material version-1 wire object.
 
-### 2.16 ResponseInteraction
+- `id` (required; scalar; nonEmpty): Stable Material identity. Pairs with revision.
+- `revision` (required; scalar; minimum): Positive immutable revision. Starts at one.
+- `content` (required; array): Structured portable content. Ordered content blocks.
+- `sources` (optional; array): Source references. All references resolve.
+- `assets` (optional; array): Asset references. All references resolve.
+- `provenance` (optional; array): Origin records. All references resolve.
 
-Typed response capture or reveal-and-self-check.
+### 2.11 Asset
 
-### 2.17 Source
+Asset version-1 wire object.
 
-Shared immutable authored/imported source revision.
+- `id` (required; scalar; nonEmpty): Stable asset identity. Referenced by Prompts, Sources, and Materials.
+- `mediaType` (required; scalar): IANA media type. Must be non-empty.
+- `byteSize` (required; scalar): Exact byte count. Computed by the host from actual bytes.
+- `sha256` (required; scalar; regexPattern): Lowercase SHA-256 digest. Exactly 64 hexadecimal characters, host-computed.
+- `path` (required; scalar): Safe archive-relative path. Must begin assets/ and cannot traverse.
+- `accessibleDescription` (optional; scalar): Accessible media equivalent. Required when media conveys review meaning.
 
-## 3. Invariants
+### 2.12 ExtensionSet
 
-### 3.1 identity
+ExtensionSet version-1 wire object.
 
-Stable IDs identify durable entities; Prompt identity means continuity of one review stream. Revisions are positive and immutable.
+- `required` (optional; array): Required extensions. Renderer support is mandatory.
+- `optional` (optional; array): Optional extensions. Portable fallback is mandatory.
 
-### 3.2 disclosure
+### 2.13 Prompt
 
-Challenge, accessible descriptions, fallbacks, and labels visible before reveal must not leak withheld answers; resolution must disclose all answers.
+Prompt version-1 wire object.
 
-### 3.3 references
+- `id` (required; scalar; nonEmpty): Stable Prompt identity. One independently scheduled recall stream.
+- `revision` (required; scalar; minimum): Positive immutable revision. Repetitions bind to this exact revision.
+- `status` (optional; enumeration): Lifecycle status. Defaults to active.
+- `kind` (optional; enumeration): Prompt kind. Defaults to basic.
+- `challenge` (required; array): Pre-disclosure content. Must not reveal withheld material.
+- `withheld` (required; array): Concealed answer material. Non-empty and fully disclosed by resolution.
+- `resolution` (required; array): Post-disclosure content. Contains every withheld item.
+- `response` (required; alternatives): Response policy. Typed capture or self-check/no-capture.
+- `materials` (optional; array): Material references. All resolve locally.
+- `sources` (optional; array): Source references. All resolve locally.
+- `assets` (optional; array): Asset references. All resolve to archive bytes when exporting.
+- `clozeTargets` (optional; array): Stable cloze targets. Required for cloze Prompts.
+- `sourceAsset` (optional; reference): Occlusion source image. Required for image occlusion.
+- `occlusionRegions` (optional; array): Stable occlusion regions. Required and non-empty for image occlusion.
+- `presentationProfile` (optional; scalar): Presentation contract version. Defaults to lineage.review/1.
+- `extensions` (optional; objectRef): Prompt extension requirements. Required and optional capabilities are explicit.
+- `provenance` (optional; array): Origin records. All references resolve.
 
-Every Prompt/source/material/provenance/asset reference resolves in the same locally complete corpus or archive.
+### 2.14 Relationship
 
-### 3.4 history
+Relationship version-1 wire object.
 
-Repetitions and corrections are append-only; repetitions resolve to exact Prompt revisions; corrections target distinct existing events.
+- `id` (required; scalar; nonEmpty): Stable relationship identity. Unique among relationships.
+- `kind` (required; enumeration): Relationship kind. Does not merge endpoint identities.
+- `source` (required; objectRef): Source endpoint. Must resolve.
+- `target` (required; objectRef): Target endpoint. Must resolve.
 
-### 3.5 migrations
+### 2.15 SchedulerObservation
 
-Migration history is ordered, contiguous, forward-only, and meaning-preserving.
+SchedulerObservation version-1 wire object.
 
-### 3.6 extensions
+- `family` (required; scalar): Scheduler family. For example fsrs.
+- `version` (required; scalar): Scheduler/model version. Must be explicit.
+- `parameterDigest` (optional; scalar; regexPattern): Parameter-set SHA-256. Fingerprints exact parameters.
+- `previousIntervalMinutes` (optional; scalar): Previous interval. Historical observation.
+- `nextIntervalMinutes` (optional; scalar): Resulting interval. Historical observation.
+- `dueAt` (optional; scalar; semanticFormat): Resulting due timestamp. Derived state captured for audit.
 
-Required extensions require support. Optional extensions require canonical portable fallbacks.
+### 2.16 Repetition
 
-### 3.7 interoperability
+Repetition version-1 wire object.
 
-Exact conversions report no losses; lossy conversions enumerate each loss and preserve original artifacts where possible.
+- `id` (required; scalar; nonEmpty): Stable event identity. Append-only and unique.
+- `promptId` (required; reference): Served Prompt identity. Must resolve with promptRevision.
+- `promptRevision` (required; scalar; minimum): Served Prompt revision. Positive and exact.
+- `snapshotDigest` (optional; scalar; regexPattern): Served corpus snapshot digest. SHA-256 when present.
+- `presentationDigest` (optional; scalar; regexPattern): Served presentation digest. SHA-256 when present.
+- `reviewedAt` (required; scalar; semanticFormat): Review timestamp. RFC 3339 date-time.
+- `durationMilliseconds` (optional; scalar): Review duration. Non-negative.
+- `capturedResponse` (optional; scalar): Captured learner response. Absent for self-check/no-capture.
+- `assessment` (required; enumeration): Learner assessment. One of four scheduler-neutral ratings.
+- `scheduler` (optional; objectRef): Historical scheduler observation. Replaceable current state is not corpus meaning.
+- `provenance` (optional; array): Origin records. All references resolve.
 
-### 3.8 archive
+### 2.17 RepetitionCorrection
 
-Paths are normalized relative paths; entries are unique; sizes and SHA-256 digests are computed from actual bytes; undeclared and missing required entries are rejected.
+RepetitionCorrection version-1 wire object.
 
-### 3.9 canonicalization
+- `id` (required; scalar; nonEmpty): Stable correction identity. Distinct from target.
+- `targetRepetitionId` (required; reference): Corrected event. Must resolve and cannot self-target.
+- `correctedAt` (required; scalar; semanticFormat): Correction timestamp. RFC 3339 date-time.
+- `reason` (required; scalar): Correction reason. Must be non-empty.
+- `replacementAssessment` (optional; enumeration): Replacement assessment. Original event remains unchanged.
+- `replacementResponse` (optional; scalar): Replacement response. Original event remains unchanged.
+- `provenance` (optional; array): Origin records. All references resolve.
 
-Canonical JSON recursively sorts object keys, preserves array order, materializes defaults, and is idempotent.
+### 2.18 Provenance
 
-## 4. Compatibility
+Provenance version-1 wire object.
 
-Readers reject unknown required format versions and required extensions. Unknown optional extensions remain reviewable through fallbacks. Migrations preserve denotation and remain recorded. Import/export reports exactness or explicit losses. Original Anki or other source artifacts may be preserved as archive entries without becoming the canonical representation.
+- `id` (required; scalar; nonEmpty): Stable provenance identity. Unique among provenance records.
+- `kind` (required; enumeration): Origin kind. Does not imply truth or trust.
+- `recordedAt` (required; scalar; semanticFormat): Record timestamp. RFC 3339 date-time.
+- `agent` (optional; scalar): Human or software agent. Optional attribution.
+- `citation` (optional; scalar): Citation. Portable source citation.
+- `license` (optional; scalar): License expression. Optional rights information.
+- `note` (optional; scalar): Origin note. Optional explanatory text.
+- `sources` (optional; array): Prior provenance records. Forms append-only derivation chains.
 
-## 5. Decoder and validation pipeline
+### 2.19 Extension
 
-Parse JSON; validate against the generated schema; decode tagged alternatives and materialize defaults; run semantic validation; verify references and history; for archives verify paths, sizes, digests, and dependency closure; canonicalize; preview; explicitly accept; persist atomically.
+Extension version-1 wire object.
 
-## 6. Stable diagnostics
+- `id` (required; scalar; nonEmpty): Stable extension identity. Names a capability.
+- `version` (required; scalar): Extension version. Must be non-empty.
+- `requirement` (required; enumeration): Requirement level. Required extensions need support.
+- `fallback` (optional; scalar): Portable fallback. Required for optional extensions.
 
-- `structure.invalid`
-- `format.unsupported-version`
-- `identity.empty`
-- `identity.duplicate`
-- `identity.duplicate-prompt-revision`
-- `revision.non-positive`
-- `reference.unresolved`
-- `disclosure.withheld-empty`
-- `disclosure.answer-leaked`
-- `disclosure.answer-missing`
-- `response.invalid-self-check`
-- `cloze.targets-required`
-- `occlusion.source-required`
-- `occlusion.regions-required`
-- `asset.unresolved`
-- `asset.integrity-host-required`
-- `asset.path-unsafe`
-- `history.prompt-unresolved`
-- `history.correction-invalid`
-- `migration.chain-invalid`
-- `extension.required-unsupported`
-- `extension.optional-fallback-missing`
-- `interoperability.loss-unreported`
-- `manifest.corpus-mismatch`
-- `archive.entry-missing`
-- `archive.digest-mismatch`
-- `archive.duplicate-path`
+### 2.20 Migration
 
-## 7. Canonical round trips
+Migration version-1 wire object.
 
-For valid corpus `c`: decoding `encode(c)` succeeds with the same denotation; canonicalization is idempotent; generated schema accepts canonical encodings; migrations and import/export marked exact preserve denotation.
+- `id` (required; scalar; nonEmpty): Stable migration identity. Unique among migrations.
+- `fromVersion` (required; scalar): Source version. Non-negative.
+- `toVersion` (required; scalar): Target version. Positive and greater than source.
+- `appliedAt` (required; scalar; semanticFormat): Application timestamp. RFC 3339 date-time.
+- `tool` (required; scalar): Migration tool. Must be non-empty.
+- `toolVersion` (required; scalar): Tool version. Must be non-empty.
+
+### 2.21 InteroperabilityReport
+
+InteroperabilityReport version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable report identity. Unique among reports.
+- `sourceFormat` (required; scalar): Source format. Must be non-empty.
+- `targetFormat` (required; scalar): Target format. Must be non-empty.
+- `status` (required; enumeration): Conversion status. Lossy requires declared losses.
+- `losses` (optional; array): Declared losses. Non-empty when status is lossy.
+- `preservedArtifacts` (optional; array): Preserved original artifact IDs. Supports faithful round trips.
+
+### 2.22 CorpusDocument
+
+CorpusDocument version-1 wire object.
+
+- `format` (required; literal): Format discriminator. Exactly lineage.corpus.
+- `formatVersion` (required; literal; minimum): Wire version. Exactly numeric version one.
+- `corpusId` (required; scalar): Stable corpus identity. Application ownership is external.
+- `prompts` (required; array): Prompt revisions. Identity/revision keys are unique.
+- `sources` (optional; array): Source revisions. Defaults to empty.
+- `materials` (optional; array): Material revisions. Defaults to empty.
+- `assets` (optional; array): Asset declarations. Defaults to empty.
+- `relationships` (optional; array): Typed relationships. Defaults to empty.
+- `repetitions` (optional; array): Review history. Append-oriented.
+- `repetitionCorrections` (optional; array): Correction history. Append-oriented.
+- `provenance` (optional; array): Origin records. Defaults to empty.
+- `extensions` (optional; array): Capability declarations. Defaults to empty.
+- `migrations` (optional; array): Forward migration history. Defaults to empty.
+- `interoperability` (optional; array): Conversion reports. Defaults to empty.
+
+### 2.23 ArchiveEntry
+
+ArchiveEntry version-1 wire object.
+
+- `path` (required; scalar): Safe relative archive path. No absolute paths or traversal.
+- `byteSize` (required; scalar): Exact byte count. Computed from actual bytes.
+- `sha256` (required; scalar; regexPattern): Lowercase SHA-256 digest. Computed from actual bytes.
+- `mediaType` (required; scalar): Entry media type. Must be non-empty.
+- `role` (required; enumeration): Entry role. Determines closure requirements.
+- `required` (required; scalar): Dependency requirement. Required entries must be present.
+
+### 2.24 Manifest
+
+Manifest version-1 wire object.
+
+- `format` (required; literal): Manifest discriminator. Exactly lineage.manifest.
+- `formatVersion` (required; literal; minimum): Manifest version. Exactly numeric version one.
+- `corpusId` (required; scalar): Enclosed corpus identity. Must equal corpus document identity.
+- `corpus` (required; scalar): Corpus entry path. Safe relative path, normally corpus.json.
+- `corpusSha256` (required; scalar; regexPattern): Canonical corpus digest. Host-computed SHA-256.
+- `createdAt` (required; scalar; semanticFormat): Archive creation timestamp. RFC 3339 date-time.
+- `modifiedAt` (required; scalar; semanticFormat): Archive modification timestamp. RFC 3339 date-time.
+- `requiredProfiles` (optional; array): Required presentation profiles. All must be supported.
+- `requiredExtensions` (optional; array): Required archive extensions. All must be supported.
+- `optionalExtensions` (optional; array): Optional archive extensions. Fallbacks preserve portability.
+- `entries` (required; array): Integrity table. Paths are unique and every required dependency is present.
+
+## 3. Semantic diagnostics and invariants
+
+### 3.1 `structure.invalid`
+
+**Severity:** error. **Applies to:** corpus.
+
+Document does not match the version-1 wire shape. Required fields, tags, or value constraints are invalid.
+
+### 3.2 `format.unsupported-version`
+
+**Severity:** error. **Applies to:** corpus.
+
+The format version is unsupported. Only version 1 is accepted.
+
+### 3.3 `identity.empty`
+
+**Severity:** error. **Applies to:** identity.
+
+A stable identity is empty. All durable entity identities are non-empty.
+
+### 3.4 `identity.duplicate`
+
+**Severity:** error. **Applies to:** identity.
+
+A stable entity identity is duplicated. Identity/revision keys and event identities are unique in their namespaces.
+
+### 3.5 `identity.duplicate-prompt-revision`
+
+**Severity:** error. **Applies to:** prompt.
+
+A Prompt identity and revision are duplicated. Each immutable Prompt revision key occurs once.
+
+### 3.6 `revision.non-positive`
+
+**Severity:** error. **Applies to:** revision.
+
+A revision is not positive. Version-1 revisions begin at one.
+
+### 3.7 `reference.unresolved`
+
+**Severity:** error. **Applies to:** reference.
+
+A referenced entity is absent. All references resolve inside the local dependency closure.
+
+### 3.8 `disclosure.withheld-empty`
+
+**Severity:** error. **Applies to:** prompt.
+
+A Prompt has no withheld material. Every active-recall Prompt conceals at least one answer.
+
+### 3.9 `disclosure.answer-leaked`
+
+**Severity:** error. **Applies to:** prompt.
+
+Challenge content contains withheld material. No withheld answer may appear in challenge or accessible fallback content.
+
+### 3.10 `disclosure.answer-missing`
+
+**Severity:** error. **Applies to:** prompt.
+
+Resolution omits withheld material. Every withheld item appears in the resolution.
+
+### 3.11 `response.invalid-self-check`
+
+**Severity:** error. **Applies to:** prompt.
+
+Self-check response configuration is invalid. Self-check mode uses capture none.
+
+### 3.12 `cloze.targets-required`
+
+**Severity:** error. **Applies to:** prompt.
+
+A cloze Prompt has no targets. Cloze Prompts require stable targets.
+
+### 3.13 `occlusion.source-required`
+
+**Severity:** error. **Applies to:** prompt.
+
+Image occlusion has no source asset. Image occlusion requires a declared image asset.
+
+### 3.14 `occlusion.regions-required`
+
+**Severity:** error. **Applies to:** prompt.
+
+Image occlusion has no regions. At least one stable normalized region is required.
+
+### 3.15 `asset.unresolved`
+
+**Severity:** error. **Applies to:** asset.
+
+A Prompt references an undeclared asset. Asset references resolve in the corpus.
+
+### 3.16 `asset.integrity-host-required`
+
+**Severity:** error. **Applies to:** asset.
+
+Media integrity is not host-established. AI must not invent bytes, sizes, or digests.
+
+### 3.17 `asset.path-unsafe`
+
+**Severity:** error. **Applies to:** asset.
+
+An asset path is unsafe. Paths are relative, normalized, unique, and cannot traverse.
+
+### 3.18 `history.prompt-unresolved`
+
+**Severity:** error. **Applies to:** repetition.
+
+A repetition references an absent Prompt revision. History resolves to exact served Prompt revisions.
+
+### 3.19 `history.correction-invalid`
+
+**Severity:** error. **Applies to:** correction.
+
+A correction target is missing or self-referential. Corrections are distinct append-only events.
+
+### 3.20 `migration.chain-invalid`
+
+**Severity:** error. **Applies to:** migration.
+
+Migration history is not forward and contiguous. Each step starts at the preceding version and advances.
+
+### 3.21 `extension.required-unsupported`
+
+**Severity:** error. **Applies to:** extension.
+
+A required extension is unsupported. Required capabilities must be understood by the renderer.
+
+### 3.22 `extension.optional-fallback-missing`
+
+**Severity:** error. **Applies to:** extension.
+
+An optional extension lacks a fallback. Portable fallback content keeps the Prompt reviewable.
+
+### 3.23 `interoperability.loss-unreported`
+
+**Severity:** error. **Applies to:** interoperability.
+
+A lossy conversion has no loss report. Losses must be explicit and inspectable.
+
+### 3.24 `manifest.corpus-mismatch`
+
+**Severity:** error. **Applies to:** manifest.
+
+Manifest and corpus identities differ. The archive manifest names the enclosed corpus.
+
+### 3.25 `archive.entry-missing`
+
+**Severity:** error. **Applies to:** archive.
+
+A declared archive entry is missing. All manifest entries must have actual bytes.
+
+### 3.26 `archive.digest-mismatch`
+
+**Severity:** error. **Applies to:** archive.
+
+Archive entry digest does not match bytes. Hosts compute and verify SHA-256 over actual bytes.
+
+### 3.27 `archive.duplicate-path`
+
+**Severity:** error. **Applies to:** archive.
+
+Archive paths are duplicated. Each normalized entry path occurs once.
+
+## 4. Generated examples
+
+- `basic.json`: Basic self-check Prompt. (valid)
+- `cloze.json`: Stable cloze targets. (valid)
+- `image-occlusion.json`: Normalized stable regions. (host-media-required)
+- `media.json`: Host-verified media reference. (host-media-required)

@@ -183,6 +183,7 @@ export function createLineageManifest({
     mediaType: string
     path: string
     required?: boolean
+    role?: "asset" | "preserved-original"
   }[]
   timestamp: string
 }): LineageManifest {
@@ -200,6 +201,7 @@ export function createLineageManifest({
             mediaType: "application/json",
             path: "corpus.json",
             required: true,
+            role: "corpus",
             sha256: digest(corpusBytes),
           },
           ...entries.map((entry) => ({
@@ -207,6 +209,7 @@ export function createLineageManifest({
             mediaType: entry.mediaType,
             path: entry.path,
             required: entry.required ?? true,
+            role: entry.role ?? "asset",
             sha256: digest(entry.bytes),
           })),
         ],

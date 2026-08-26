@@ -10,7 +10,7 @@ type ResolutionSession = unknown
 type CompletedSession = unknown
 
 type LineageApi = {
-  formatDescriptionJson: string
+  formatDescription: unknown
   rawReviewContract: (
     challenge: string[],
   ) => (

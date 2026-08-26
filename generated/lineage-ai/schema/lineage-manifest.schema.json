@@ -1,107 +1,1177 @@
 {
-  "$id": "https://lineage.dev/schema/lineage-manifest.schema.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "additionalProperties": false,
-  "properties": {
-    "corpus": {
-      "const": "corpus.json"
-    },
-    "corpusId": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "corpusSha256": {
-      "pattern": "^[a-f0-9]{64}$",
-      "type": "string"
-    },
-    "createdAt": {
-      "format": "date-time",
-      "type": "string"
-    },
-    "entries": {
-      "items": {
-        "additionalProperties": false,
-        "properties": {
-          "byteSize": {
-            "minimum": 0,
-            "type": "integer"
-          },
-          "mediaType": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "path": {
-            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$",
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "sha256": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          }
-        },
-        "required": [
-          "path",
-          "mediaType",
-          "byteSize",
-          "sha256"
-        ],
-        "type": "object"
-      },
-      "minItems": 1,
-      "type": "array"
-    },
-    "extensions": {
+  "$defs": {
+    "ResponseInteraction": {
       "additionalProperties": false,
+      "description": "ResponseInteraction version-1 wire object.",
       "properties": {
-        "optional": {
+        "mode": {
+          "oneOf": [
+            {
+              "const": "text",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/SelfCheckResponse"
+            }
+          ],
+          "description": "Review response interaction. Use text capture or explicit self-check/no-capture."
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "type": "object"
+    },
+    "SelfCheckResponse": {
+      "additionalProperties": false,
+      "description": "SelfCheckResponse version-1 wire object.",
+      "properties": {
+        "mode": {
+          "const": "self-check",
+          "type": "string",
+          "description": "Self-check discriminator. Requires capture none."
+        },
+        "capture": {
+          "const": "none",
+          "type": "string",
+          "description": "No response capture. The learner reveals and rates without typed capture."
+        }
+      },
+      "required": [
+        "mode",
+        "capture"
+      ],
+      "type": "object"
+    },
+    "EntityReference": {
+      "additionalProperties": false,
+      "description": "EntityReference version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Referenced stable identity. Must resolve in the referenced namespace."
+        },
+        "revision": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Optional exact revision. When present it must be positive and resolve exactly."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "ClozeTarget": {
+      "additionalProperties": false,
+      "description": "ClozeTarget version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable cloze-target identity. Independent of marker order and wording."
+        },
+        "answer": {
+          "type": "string",
+          "description": "Withheld target answer. Must be disclosed after reveal."
+        },
+        "hints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Optional hints. Hints must not leak the answer.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "answer"
+      ],
+      "type": "object"
+    },
+    "NormalizedPoint": {
+      "additionalProperties": false,
+      "description": "NormalizedPoint version-1 wire object.",
+      "properties": {
+        "x": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number",
+          "description": "Normalized horizontal coordinate. Inclusive range zero through one."
+        },
+        "y": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number",
+          "description": "Normalized vertical coordinate. Inclusive range zero through one."
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "type": "object"
+    },
+    "RectangleGeometry": {
+      "additionalProperties": false,
+      "description": "RectangleGeometry version-1 wire object.",
+      "properties": {
+        "type": {
+          "const": "rectangle",
+          "type": "string",
+          "description": "Geometry discriminator. Selects normalized rectangle fields."
+        },
+        "x": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number",
+          "description": "Left coordinate. Inclusive range zero through one."
+        },
+        "y": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number",
+          "description": "Top coordinate. Inclusive range zero through one."
+        },
+        "width": {
+          "maximum": 1,
+          "minimum": 1,
+          "type": "number",
+          "description": "Normalized width. Greater than zero and at most one."
+        },
+        "height": {
+          "maximum": 1,
+          "minimum": 1,
+          "type": "number",
+          "description": "Normalized height. Greater than zero and at most one."
+        }
+      },
+      "required": [
+        "type",
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "type": "object"
+    },
+    "PolygonGeometry": {
+      "additionalProperties": false,
+      "description": "PolygonGeometry version-1 wire object.",
+      "properties": {
+        "type": {
+          "const": "polygon",
+          "type": "string",
+          "description": "Geometry discriminator. Selects polygon points."
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/NormalizedPoint"
+          },
+          "type": "array",
+          "description": "Normalized polygon vertices. At least three points."
+        }
+      },
+      "required": [
+        "type",
+        "points"
+      ],
+      "type": "object"
+    },
+    "OcclusionRegion": {
+      "additionalProperties": false,
+      "description": "OcclusionRegion version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable region identity. Geometry changes do not change identity."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable region label. Must be non-empty."
+        },
+        "accessibleDescription": {
+          "type": "string",
+          "description": "Accessible equivalent. Must describe the concealed region without leaking its answer."
+        },
+        "geometry": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/RectangleGeometry"
+            },
+            {
+              "$ref": "#/$defs/PolygonGeometry"
+            }
+          ],
+          "x-lineage-discriminator": "type",
+          "description": "Normalized geometry. Rectangle or polygon with coordinates from zero through one."
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "accessibleDescription",
+        "geometry"
+      ],
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "description": "Source version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable Source identity. Pairs with revision."
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer",
+          "description": "Positive immutable revision. Starts at one."
+        },
+        "title": {
+          "type": "string",
+          "description": "Source title. Must be non-empty."
+        },
+        "content": {
+          "type": "string",
+          "description": "Source content. Portable non-executable text."
+        },
+        "assets": {
           "items": {
             "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Asset"
+          },
+          "type": "array",
+          "description": "Referenced assets. All references resolve locally.",
+          "default": []
+        },
+        "provenance": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. All references resolve locally.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "title",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Material": {
+      "additionalProperties": false,
+      "description": "Material version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable Material identity. Pairs with revision."
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer",
+          "description": "Positive immutable revision. Starts at one."
+        },
+        "content": {
+          "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Structured portable content. Ordered content blocks."
         },
+        "sources": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Source"
+          },
+          "type": "array",
+          "description": "Source references. All references resolve.",
+          "default": []
+        },
+        "assets": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Asset"
+          },
+          "type": "array",
+          "description": "Asset references. All references resolve.",
+          "default": []
+        },
+        "provenance": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. All references resolve.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Asset": {
+      "additionalProperties": false,
+      "description": "Asset version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable asset identity. Referenced by Prompts, Sources, and Materials."
+        },
+        "mediaType": {
+          "type": "string",
+          "description": "IANA media type. Must be non-empty."
+        },
+        "byteSize": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Exact byte count. Computed by the host from actual bytes."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase SHA-256 digest. Exactly 64 hexadecimal characters, host-computed."
+        },
+        "path": {
+          "type": "string",
+          "description": "Safe archive-relative path. Must begin assets/ and cannot traverse."
+        },
+        "accessibleDescription": {
+          "type": "string",
+          "description": "Accessible media equivalent. Required when media conveys review meaning."
+        }
+      },
+      "required": [
+        "id",
+        "mediaType",
+        "byteSize",
+        "sha256",
+        "path"
+      ],
+      "type": "object"
+    },
+    "ExtensionSet": {
+      "additionalProperties": false,
+      "description": "ExtensionSet version-1 wire object.",
+      "properties": {
         "required": {
           "items": {
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "x-lineage-reference": "Extension"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Required extensions. Renderer support is mandatory."
+        },
+        "optional": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Extension"
+          },
+          "type": "array",
+          "description": "Optional extensions. Portable fallback is mandatory."
         }
       },
       "required": [],
       "type": "object"
     },
-    "format": {
-      "const": "lineage.manifest"
-    },
-    "formatVersion": {
-      "const": 1
-    },
-    "modifiedAt": {
-      "format": "date-time",
-      "type": "string"
-    },
-    "presentationProfiles": {
-      "items": {
-        "minLength": 1,
-        "type": "string"
+    "Prompt": {
+      "additionalProperties": false,
+      "description": "Prompt version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable Prompt identity. One independently scheduled recall stream."
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer",
+          "description": "Positive immutable revision. Repetitions bind to this exact revision."
+        },
+        "status": {
+          "enum": [
+            "active",
+            "suspended",
+            "retired"
+          ],
+          "description": "Lifecycle status. Defaults to active."
+        },
+        "kind": {
+          "enum": [
+            "basic",
+            "cloze",
+            "image-occlusion"
+          ],
+          "description": "Prompt kind. Defaults to basic."
+        },
+        "challenge": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Pre-disclosure content. Must not reveal withheld material."
+        },
+        "withheld": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Concealed answer material. Non-empty and fully disclosed by resolution."
+        },
+        "resolution": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Post-disclosure content. Contains every withheld item."
+        },
+        "response": {
+          "oneOf": [
+            {
+              "const": "text",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/SelfCheckResponse"
+            }
+          ],
+          "description": "Response policy. Typed capture or self-check/no-capture."
+        },
+        "materials": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Material"
+          },
+          "type": "array",
+          "description": "Material references. All resolve locally.",
+          "default": []
+        },
+        "sources": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Source"
+          },
+          "type": "array",
+          "description": "Source references. All resolve locally.",
+          "default": []
+        },
+        "assets": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Asset"
+          },
+          "type": "array",
+          "description": "Asset references. All resolve to archive bytes when exporting.",
+          "default": []
+        },
+        "clozeTargets": {
+          "items": {
+            "$ref": "#/$defs/ClozeTarget"
+          },
+          "type": "array",
+          "description": "Stable cloze targets. Required for cloze Prompts."
+        },
+        "sourceAsset": {
+          "minLength": 1,
+          "type": "string",
+          "x-lineage-reference": "Asset",
+          "description": "Occlusion source image. Required for image occlusion."
+        },
+        "occlusionRegions": {
+          "items": {
+            "$ref": "#/$defs/OcclusionRegion"
+          },
+          "type": "array",
+          "description": "Stable occlusion regions. Required and non-empty for image occlusion."
+        },
+        "presentationProfile": {
+          "type": "string",
+          "description": "Presentation contract version. Defaults to lineage.review/1."
+        },
+        "extensions": {
+          "$ref": "#/$defs/ExtensionSet",
+          "description": "Prompt extension requirements. Required and optional capabilities are explicit."
+        },
+        "provenance": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. All references resolve.",
+          "default": []
+        }
       },
-      "type": "array"
+      "required": [
+        "id",
+        "revision",
+        "challenge",
+        "withheld",
+        "resolution",
+        "response"
+      ],
+      "type": "object"
+    },
+    "Relationship": {
+      "additionalProperties": false,
+      "description": "Relationship version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable relationship identity. Unique among relationships."
+        },
+        "kind": {
+          "enum": [
+            "prerequisite",
+            "related",
+            "derived-from",
+            "sibling",
+            "duplicate-of"
+          ],
+          "description": "Relationship kind. Does not merge endpoint identities."
+        },
+        "source": {
+          "$ref": "#/$defs/EntityReference",
+          "description": "Source endpoint. Must resolve."
+        },
+        "target": {
+          "$ref": "#/$defs/EntityReference",
+          "description": "Target endpoint. Must resolve."
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "source",
+        "target"
+      ],
+      "type": "object"
+    },
+    "SchedulerObservation": {
+      "additionalProperties": false,
+      "description": "SchedulerObservation version-1 wire object.",
+      "properties": {
+        "family": {
+          "type": "string",
+          "description": "Scheduler family. For example fsrs."
+        },
+        "version": {
+          "type": "string",
+          "description": "Scheduler/model version. Must be explicit."
+        },
+        "parameterDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Parameter-set SHA-256. Fingerprints exact parameters."
+        },
+        "previousIntervalMinutes": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Previous interval. Historical observation."
+        },
+        "nextIntervalMinutes": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Resulting interval. Historical observation."
+        },
+        "dueAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Resulting due timestamp. Derived state captured for audit."
+        }
+      },
+      "required": [
+        "family",
+        "version"
+      ],
+      "type": "object"
+    },
+    "Repetition": {
+      "additionalProperties": false,
+      "description": "Repetition version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable event identity. Append-only and unique."
+        },
+        "promptId": {
+          "minLength": 1,
+          "type": "string",
+          "x-lineage-reference": "Prompt",
+          "description": "Served Prompt identity. Must resolve with promptRevision."
+        },
+        "promptRevision": {
+          "minimum": 1,
+          "type": "integer",
+          "description": "Served Prompt revision. Positive and exact."
+        },
+        "snapshotDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Served corpus snapshot digest. SHA-256 when present."
+        },
+        "presentationDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Served presentation digest. SHA-256 when present."
+        },
+        "reviewedAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Review timestamp. RFC 3339 date-time."
+        },
+        "durationMilliseconds": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Review duration. Non-negative."
+        },
+        "capturedResponse": {
+          "type": "string",
+          "description": "Captured learner response. Absent for self-check/no-capture."
+        },
+        "assessment": {
+          "enum": [
+            "again",
+            "hard",
+            "good",
+            "easy"
+          ],
+          "description": "Learner assessment. One of four scheduler-neutral ratings."
+        },
+        "scheduler": {
+          "$ref": "#/$defs/SchedulerObservation",
+          "description": "Historical scheduler observation. Replaceable current state is not corpus meaning."
+        },
+        "provenance": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. All references resolve.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "promptId",
+        "promptRevision",
+        "reviewedAt",
+        "assessment"
+      ],
+      "type": "object"
+    },
+    "RepetitionCorrection": {
+      "additionalProperties": false,
+      "description": "RepetitionCorrection version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable correction identity. Distinct from target."
+        },
+        "targetRepetitionId": {
+          "minLength": 1,
+          "type": "string",
+          "x-lineage-reference": "Repetition",
+          "description": "Corrected event. Must resolve and cannot self-target."
+        },
+        "correctedAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Correction timestamp. RFC 3339 date-time."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Correction reason. Must be non-empty."
+        },
+        "replacementAssessment": {
+          "enum": [
+            "again",
+            "hard",
+            "good",
+            "easy"
+          ],
+          "description": "Replacement assessment. Original event remains unchanged."
+        },
+        "replacementResponse": {
+          "type": "string",
+          "description": "Replacement response. Original event remains unchanged."
+        },
+        "provenance": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. All references resolve.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "targetRepetitionId",
+        "correctedAt",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Provenance version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable provenance identity. Unique among provenance records."
+        },
+        "kind": {
+          "enum": [
+            "authored",
+            "imported",
+            "cited",
+            "derived",
+            "corrected"
+          ],
+          "description": "Origin kind. Does not imply truth or trust."
+        },
+        "recordedAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Record timestamp. RFC 3339 date-time."
+        },
+        "agent": {
+          "type": "string",
+          "description": "Human or software agent. Optional attribution."
+        },
+        "citation": {
+          "type": "string",
+          "description": "Citation. Portable source citation."
+        },
+        "license": {
+          "type": "string",
+          "description": "License expression. Optional rights information."
+        },
+        "note": {
+          "type": "string",
+          "description": "Origin note. Optional explanatory text."
+        },
+        "sources": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Prior provenance records. Forms append-only derivation chains.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "recordedAt"
+      ],
+      "type": "object"
+    },
+    "Extension": {
+      "additionalProperties": false,
+      "description": "Extension version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable extension identity. Names a capability."
+        },
+        "version": {
+          "type": "string",
+          "description": "Extension version. Must be non-empty."
+        },
+        "requirement": {
+          "enum": [
+            "required",
+            "optional"
+          ],
+          "description": "Requirement level. Required extensions need support."
+        },
+        "fallback": {
+          "type": "string",
+          "description": "Portable fallback. Required for optional extensions."
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "requirement"
+      ],
+      "type": "object"
+    },
+    "Migration": {
+      "additionalProperties": false,
+      "description": "Migration version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable migration identity. Unique among migrations."
+        },
+        "fromVersion": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Source version. Non-negative."
+        },
+        "toVersion": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Target version. Positive and greater than source."
+        },
+        "appliedAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Application timestamp. RFC 3339 date-time."
+        },
+        "tool": {
+          "type": "string",
+          "description": "Migration tool. Must be non-empty."
+        },
+        "toolVersion": {
+          "type": "string",
+          "description": "Tool version. Must be non-empty."
+        }
+      },
+      "required": [
+        "id",
+        "fromVersion",
+        "toVersion",
+        "appliedAt",
+        "tool",
+        "toolVersion"
+      ],
+      "type": "object"
+    },
+    "InteroperabilityReport": {
+      "additionalProperties": false,
+      "description": "InteroperabilityReport version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable report identity. Unique among reports."
+        },
+        "sourceFormat": {
+          "type": "string",
+          "description": "Source format. Must be non-empty."
+        },
+        "targetFormat": {
+          "type": "string",
+          "description": "Target format. Must be non-empty."
+        },
+        "status": {
+          "enum": [
+            "exact",
+            "lossy"
+          ],
+          "description": "Conversion status. Lossy requires declared losses."
+        },
+        "losses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Declared losses. Non-empty when status is lossy.",
+          "default": []
+        },
+        "preservedArtifacts": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Preserved original artifact IDs. Supports faithful round trips.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "sourceFormat",
+        "targetFormat",
+        "status"
+      ],
+      "type": "object"
+    },
+    "CorpusDocument": {
+      "additionalProperties": false,
+      "description": "CorpusDocument version-1 wire object.",
+      "properties": {
+        "format": {
+          "const": "lineage.corpus",
+          "type": "string",
+          "description": "Format discriminator. Exactly lineage.corpus."
+        },
+        "formatVersion": {
+          "const": 1,
+          "type": "integer",
+          "minimum": 1,
+          "description": "Wire version. Exactly numeric version one."
+        },
+        "corpusId": {
+          "type": "string",
+          "description": "Stable corpus identity. Application ownership is external."
+        },
+        "prompts": {
+          "items": {
+            "$ref": "#/$defs/Prompt"
+          },
+          "type": "array",
+          "description": "Prompt revisions. Identity/revision keys are unique."
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "type": "array",
+          "description": "Source revisions. Defaults to empty.",
+          "default": []
+        },
+        "materials": {
+          "items": {
+            "$ref": "#/$defs/Material"
+          },
+          "type": "array",
+          "description": "Material revisions. Defaults to empty.",
+          "default": []
+        },
+        "assets": {
+          "items": {
+            "$ref": "#/$defs/Asset"
+          },
+          "type": "array",
+          "description": "Asset declarations. Defaults to empty.",
+          "default": []
+        },
+        "relationships": {
+          "items": {
+            "$ref": "#/$defs/Relationship"
+          },
+          "type": "array",
+          "description": "Typed relationships. Defaults to empty.",
+          "default": []
+        },
+        "repetitions": {
+          "items": {
+            "$ref": "#/$defs/Repetition"
+          },
+          "type": "array",
+          "description": "Review history. Append-oriented.",
+          "default": []
+        },
+        "repetitionCorrections": {
+          "items": {
+            "$ref": "#/$defs/RepetitionCorrection"
+          },
+          "type": "array",
+          "description": "Correction history. Append-oriented.",
+          "default": []
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. Defaults to empty.",
+          "default": []
+        },
+        "extensions": {
+          "items": {
+            "$ref": "#/$defs/Extension"
+          },
+          "type": "array",
+          "description": "Capability declarations. Defaults to empty.",
+          "default": []
+        },
+        "migrations": {
+          "items": {
+            "$ref": "#/$defs/Migration"
+          },
+          "type": "array",
+          "description": "Forward migration history. Defaults to empty.",
+          "default": []
+        },
+        "interoperability": {
+          "items": {
+            "$ref": "#/$defs/InteroperabilityReport"
+          },
+          "type": "array",
+          "description": "Conversion reports. Defaults to empty.",
+          "default": []
+        }
+      },
+      "required": [
+        "format",
+        "formatVersion",
+        "corpusId",
+        "prompts"
+      ],
+      "type": "object"
+    },
+    "ArchiveEntry": {
+      "additionalProperties": false,
+      "description": "ArchiveEntry version-1 wire object.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Safe relative archive path. No absolute paths or traversal."
+        },
+        "byteSize": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Exact byte count. Computed from actual bytes."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase SHA-256 digest. Computed from actual bytes."
+        },
+        "mediaType": {
+          "type": "string",
+          "description": "Entry media type. Must be non-empty."
+        },
+        "role": {
+          "enum": [
+            "corpus",
+            "asset",
+            "preserved-original"
+          ],
+          "description": "Entry role. Determines closure requirements."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Dependency requirement. Required entries must be present."
+        }
+      },
+      "required": [
+        "path",
+        "byteSize",
+        "sha256",
+        "mediaType",
+        "role",
+        "required"
+      ],
+      "type": "object"
+    },
+    "Manifest": {
+      "additionalProperties": false,
+      "description": "Manifest version-1 wire object.",
+      "properties": {
+        "format": {
+          "const": "lineage.manifest",
+          "type": "string",
+          "description": "Manifest discriminator. Exactly lineage.manifest."
+        },
+        "formatVersion": {
+          "const": 1,
+          "type": "integer",
+          "minimum": 1,
+          "description": "Manifest version. Exactly numeric version one."
+        },
+        "corpusId": {
+          "type": "string",
+          "description": "Enclosed corpus identity. Must equal corpus document identity."
+        },
+        "corpus": {
+          "type": "string",
+          "description": "Corpus entry path. Safe relative path, normally corpus.json."
+        },
+        "corpusSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Canonical corpus digest. Host-computed SHA-256."
+        },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Archive creation timestamp. RFC 3339 date-time."
+        },
+        "modifiedAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Archive modification timestamp. RFC 3339 date-time."
+        },
+        "requiredProfiles": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Required presentation profiles. All must be supported.",
+          "default": []
+        },
+        "requiredExtensions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Required archive extensions. All must be supported.",
+          "default": []
+        },
+        "optionalExtensions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Optional archive extensions. Fallbacks preserve portability.",
+          "default": []
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/ArchiveEntry"
+          },
+          "type": "array",
+          "description": "Integrity table. Paths are unique and every required dependency is present."
+        }
+      },
+      "required": [
+        "format",
+        "formatVersion",
+        "corpusId",
+        "corpus",
+        "corpusSha256",
+        "createdAt",
+        "modifiedAt",
+        "entries"
+      ],
+      "type": "object"
     }
   },
-  "required": [
-    "format",
-    "formatVersion",
-    "corpusId",
-    "corpus",
-    "corpusSha256",
-    "createdAt",
-    "modifiedAt",
-    "entries"
-  ],
-  "type": "object",
+  "$id": "https://lineage.dev/schema/lineage-manifest.schema.json",
+  "$ref": "#/$defs/Manifest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Lineage archive manifest version 1"
 }

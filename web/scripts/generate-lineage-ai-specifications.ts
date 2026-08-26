@@ -2,23 +2,42 @@ import { mkdir, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 
 import lineageCore from "../app/features/lineage/generated/lineage-core.mjs"
+import {
+  decodeFormatDescription,
+  toAuthoringSpec,
+  toBriefSpec,
+  toFullSpec,
+  toJsonSchema,
+  toSerializableDescription,
+  toTypeScript,
+} from "./lineage-format-description"
 
-type FormatDescription = {
-  diagnosticCodes: string[]
-  entities: string[]
-  examples: string[]
-  formatName: string
-  promptKinds: string[]
-  responseModes: string[]
-  version: number
-}
 type GeneratedFile = { content: string; relativePath: string }
 const outputDirectory = path.resolve(
   process.argv[2] ?? "../generated/lineage-ai",
 )
-const description = JSON.parse(
-  lineageCore.formatDescriptionJson,
-) as FormatDescription
+const authoritativeDescription = decodeFormatDescription(
+  lineageCore.formatDescription,
+)
+const promptDescription = authoritativeDescription.objects.find(
+  ({ name }) => name === "Prompt",
+)
+const responseDescription = authoritativeDescription.objects.find(
+  ({ name }) => name === "ResponseInteraction",
+)
+const description = {
+  diagnosticCodes: authoritativeDescription.rules.map(({ code }) => code),
+  entities: authoritativeDescription.objects.map(({ name }) => name),
+  examples: authoritativeDescription.examples.map(({ fileName }) => fileName),
+  formatName: authoritativeDescription.formatName,
+  promptKinds:
+    (promptDescription?.fields.find(({ name }) => name === "kind")?.shape
+      .args[0] as string[] | undefined) ?? [],
+  responseModes: (responseDescription?.fields.find(
+    ({ name }) => name === "mode",
+  )?.shape.args[0] as string[] | undefined) ?? ["text", "self-check"],
+  version: authoritativeDescription.version,
+}
 const ref = (name: string) => ({ $ref: `#/$defs/${name}` })
 const string = { type: "string" }
 const id = { minLength: 1, type: "string" }
@@ -616,19 +635,43 @@ const invalid = [
   ],
 ] as const
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`
+const generatedCorpusSchema = toJsonSchema(
+  authoritativeDescription,
+  "CorpusDocument",
+  "https://lineage.dev/schema/lineage-corpus.schema.json",
+  "Lineage corpus version 1",
+)
+const generatedManifestSchema = toJsonSchema(
+  authoritativeDescription,
+  "Manifest",
+  "https://lineage.dev/schema/lineage-manifest.schema.json",
+  "Lineage archive manifest version 1",
+)
 const files: GeneratedFile[] = [
-  { content: brief, relativePath: "spec/lineage-ai-brief.md" },
-  { content: authoring, relativePath: "spec/lineage-ai-authoring.md" },
-  { content: full, relativePath: "spec/lineage-ai-full.md" },
   {
-    content: json(corpusSchema),
+    content: toBriefSpec(authoritativeDescription),
+    relativePath: "spec/lineage-ai-brief.md",
+  },
+  {
+    content: toAuthoringSpec(authoritativeDescription),
+    relativePath: "spec/lineage-ai-authoring.md",
+  },
+  {
+    content: toFullSpec(authoritativeDescription),
+    relativePath: "spec/lineage-ai-full.md",
+  },
+  {
+    content: json(generatedCorpusSchema),
     relativePath: "schema/lineage-corpus.schema.json",
   },
   {
-    content: json(manifestSchema),
+    content: json(generatedManifestSchema),
     relativePath: "schema/lineage-manifest.schema.json",
   },
-  { content: types, relativePath: "types/lineage-corpus.ts" },
+  {
+    content: toTypeScript(authoritativeDescription),
+    relativePath: "types/lineage-corpus.ts",
+  },
   { content: json(base), relativePath: "examples/basic.json" },
   { content: json(cloze), relativePath: "examples/cloze.json" },
   {
@@ -651,7 +694,10 @@ const files: GeneratedFile[] = [
     }),
     relativePath: `conformance/invalid/${fileName}`,
   })),
-  { content: json(description), relativePath: "format-description.json" },
+  {
+    content: json(toSerializableDescription(authoritativeDescription)),
+    relativePath: "format-description.json",
+  },
 ]
 await rm(outputDirectory, { force: true, recursive: true })
 for (const file of files) {

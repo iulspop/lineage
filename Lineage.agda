@@ -99,6 +99,7 @@ import Lineage.Correctness.Capability
 import Lineage.Correctness.Cloze
 import Lineage.Correctness.Codec
 import Lineage.Correctness.Corpus
+import Lineage.Correctness.CorpusWireV1
 import Lineage.Correctness.DependencyClosure
 import Lineage.Correctness.HistoricalScheduling
 import Lineage.Correctness.ImageOcclusion

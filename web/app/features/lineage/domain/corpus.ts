@@ -198,7 +198,8 @@ export const archiveEntrySchema = z.object({
   byteSize: z.int().nonnegative(),
   mediaType: z.string().min(1),
   path: safeArchivePath,
-  required: z.boolean().optional().default(true),
+  required: z.boolean(),
+  role: z.enum(["corpus", "asset", "preserved-original"]),
   sha256,
 })
 export const lineageManifestSchema = z.object({
@@ -207,17 +208,12 @@ export const lineageManifestSchema = z.object({
   corpusSha256: sha256,
   createdAt: timestamp,
   entries: z.array(archiveEntrySchema).min(1),
-  extensions: z
-    .object({
-      optional: z.array(id).optional().default([]),
-      required: z.array(id).optional().default([]),
-    })
-    .optional()
-    .default({ optional: [], required: [] }),
   format: z.literal("lineage.manifest"),
   formatVersion: z.literal(1),
   modifiedAt: timestamp,
-  presentationProfiles: z.array(z.string().min(1)).optional().default([]),
+  optionalExtensions: z.array(id).optional().default([]),
+  requiredExtensions: z.array(id).optional().default([]),
+  requiredProfiles: z.array(z.string().min(1)).optional().default([]),
 })
 
 export type ReviewContract = z.input<typeof reviewContractSchema>

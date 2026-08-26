@@ -1,67 +1,3287 @@
 {
-  "formatName": "lineage.corpus",
-  "version": 1,
-  "entities": [
-    "CorpusDocument",
-    "Manifest",
-    "Prompt",
-    "ResponseInteraction",
-    "ClozeTarget",
-    "OcclusionRegion",
-    "Source",
-    "Material",
-    "Asset",
-    "Relationship",
-    "Repetition",
-    "RepetitionCorrection",
-    "Provenance",
-    "Extension",
-    "Migration",
-    "InteroperabilityReport",
-    "ArchiveEntry"
-  ],
-  "promptKinds": [
-    "basic",
-    "cloze",
-    "image-occlusion"
-  ],
-  "responseModes": [
-    "text",
-    "self-check"
-  ],
-  "diagnosticCodes": [
-    "structure.invalid",
-    "format.unsupported-version",
-    "identity.empty",
-    "identity.duplicate",
-    "identity.duplicate-prompt-revision",
-    "revision.non-positive",
-    "reference.unresolved",
-    "disclosure.withheld-empty",
-    "disclosure.answer-leaked",
-    "disclosure.answer-missing",
-    "response.invalid-self-check",
-    "cloze.targets-required",
-    "occlusion.source-required",
-    "occlusion.regions-required",
-    "asset.unresolved",
-    "asset.integrity-host-required",
-    "asset.path-unsafe",
-    "history.prompt-unresolved",
-    "history.correction-invalid",
-    "migration.chain-invalid",
-    "extension.required-unsupported",
-    "extension.optional-fallback-missing",
-    "interoperability.loss-unreported",
-    "manifest.corpus-mismatch",
-    "archive.entry-missing",
-    "archive.digest-mismatch",
-    "archive.duplicate-path"
-  ],
   "examples": [
-    "basic.json",
-    "cloze.json",
-    "image-occlusion.json",
-    "media.json"
-  ]
+    {
+      "fileName": "basic.json",
+      "kind": "valid",
+      "summary": "Basic self-check Prompt."
+    },
+    {
+      "fileName": "cloze.json",
+      "kind": "valid",
+      "summary": "Stable cloze targets."
+    },
+    {
+      "fileName": "image-occlusion.json",
+      "kind": "host-media-required",
+      "summary": "Normalized stable regions."
+    },
+    {
+      "fileName": "media.json",
+      "kind": "host-media-required",
+      "summary": "Host-verified media reference."
+    }
+  ],
+  "formatName": "lineage.corpus",
+  "objects": [
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Use text capture or explicit self-check/no-capture.",
+          "name": "mode",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                {
+                  "args": [
+                    "text"
+                  ],
+                  "kind": "literal"
+                },
+                {
+                  "args": [
+                    "SelfCheckResponse"
+                  ],
+                  "kind": "objectRef"
+                }
+              ]
+            ],
+            "kind": "alternatives"
+          },
+          "summary": "Review response interaction."
+        }
+      ],
+      "name": "ResponseInteraction",
+      "summary": "ResponseInteraction version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Requires capture none.",
+          "name": "mode",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "self-check"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Self-check discriminator."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "The learner reveals and rates without typed capture.",
+          "name": "capture",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "none"
+            ],
+            "kind": "literal"
+          },
+          "summary": "No response capture."
+        }
+      ],
+      "name": "SelfCheckResponse",
+      "summary": "SelfCheckResponse version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve in the referenced namespace.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Referenced stable identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "When present it must be positive and resolve exactly.",
+          "name": "revision",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Optional exact revision."
+        }
+      ],
+      "name": "EntityReference",
+      "summary": "EntityReference version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Independent of marker order and wording.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable cloze-target identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be disclosed after reveal.",
+          "name": "answer",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Withheld target answer."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Hints must not leak the answer.",
+          "name": "hints",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Optional hints."
+        }
+      ],
+      "name": "ClozeTarget",
+      "summary": "ClozeTarget version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "maximum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Inclusive range zero through one.",
+          "name": "x",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Normalized horizontal coordinate."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "maximum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Inclusive range zero through one.",
+          "name": "y",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Normalized vertical coordinate."
+        }
+      ],
+      "name": "NormalizedPoint",
+      "summary": "NormalizedPoint version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Selects normalized rectangle fields.",
+          "name": "type",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "rectangle"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Geometry discriminator."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "maximum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Inclusive range zero through one.",
+          "name": "x",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Left coordinate."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "maximum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Inclusive range zero through one.",
+          "name": "y",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Top coordinate."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            },
+            {
+              "args": [
+                1
+              ],
+              "kind": "maximum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Greater than zero and at most one.",
+          "name": "width",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Normalized width."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            },
+            {
+              "args": [
+                1
+              ],
+              "kind": "maximum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Greater than zero and at most one.",
+          "name": "height",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Normalized height."
+        }
+      ],
+      "name": "RectangleGeometry",
+      "summary": "RectangleGeometry version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Selects polygon points.",
+          "name": "type",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "polygon"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Geometry discriminator."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "At least three points.",
+          "name": "points",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "NormalizedPoint"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Normalized polygon vertices."
+        }
+      ],
+      "name": "PolygonGeometry",
+      "summary": "PolygonGeometry version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Geometry changes do not change identity.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable region identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "label",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Human-readable region label."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must describe the concealed region without leaking its answer.",
+          "name": "accessibleDescription",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Accessible equivalent."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Rectangle or polygon with coordinates from zero through one.",
+          "name": "geometry",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "type",
+              [
+                "RectangleGeometry",
+                "PolygonGeometry"
+              ]
+            ],
+            "kind": "taggedChoice"
+          },
+          "summary": "Normalized geometry."
+        }
+      ],
+      "name": "OcclusionRegion",
+      "summary": "OcclusionRegion version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Pairs with revision.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable Source identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Starts at one.",
+          "name": "revision",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Positive immutable revision."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "title",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Source title."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Portable non-executable text.",
+          "name": "content",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Source content."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve locally.",
+          "name": "assets",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Asset"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Referenced assets."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve locally.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        }
+      ],
+      "name": "Source",
+      "summary": "Source version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Pairs with revision.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable Material identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Starts at one.",
+          "name": "revision",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Positive immutable revision."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Ordered content blocks.",
+          "name": "content",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Structured portable content."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve.",
+          "name": "sources",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Source"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Source references."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve.",
+          "name": "assets",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Asset"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Asset references."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        }
+      ],
+      "name": "Material",
+      "summary": "Material version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Referenced by Prompts, Sources, and Materials.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable asset identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "mediaType",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "IANA media type."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Computed by the host from actual bytes.",
+          "name": "byteSize",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Exact byte count."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "^[a-f0-9]{64}$"
+              ],
+              "kind": "regexPattern"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Exactly 64 hexadecimal characters, host-computed.",
+          "name": "sha256",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Lowercase SHA-256 digest."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must begin assets/ and cannot traverse.",
+          "name": "path",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Safe archive-relative path."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required when media conveys review meaning.",
+          "name": "accessibleDescription",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Accessible media equivalent."
+        }
+      ],
+      "name": "Asset",
+      "summary": "Asset version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Renderer support is mandatory.",
+          "name": "required",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Extension"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Required extensions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Portable fallback is mandatory.",
+          "name": "optional",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Extension"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Optional extensions."
+        }
+      ],
+      "name": "ExtensionSet",
+      "summary": "ExtensionSet version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "One independently scheduled recall stream.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable Prompt identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Repetitions bind to this exact revision.",
+          "name": "revision",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Positive immutable revision."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Defaults to active.",
+          "name": "status",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              [
+                "active",
+                "suspended",
+                "retired"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Lifecycle status."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Defaults to basic.",
+          "name": "kind",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              [
+                "basic",
+                "cloze",
+                "image-occlusion"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Prompt kind."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must not reveal withheld material.",
+          "name": "challenge",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Pre-disclosure content."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Non-empty and fully disclosed by resolution.",
+          "name": "withheld",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Concealed answer material."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Contains every withheld item.",
+          "name": "resolution",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Post-disclosure content."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Typed capture or self-check/no-capture.",
+          "name": "response",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                {
+                  "args": [
+                    "text"
+                  ],
+                  "kind": "literal"
+                },
+                {
+                  "args": [
+                    "SelfCheckResponse"
+                  ],
+                  "kind": "objectRef"
+                }
+              ]
+            ],
+            "kind": "alternatives"
+          },
+          "summary": "Response policy."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All resolve locally.",
+          "name": "materials",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Material"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Material references."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All resolve locally.",
+          "name": "sources",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Source"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Source references."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All resolve to archive bytes when exporting.",
+          "name": "assets",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Asset"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Asset references."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required for cloze Prompts.",
+          "name": "clozeTargets",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "ClozeTarget"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Stable cloze targets."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required for image occlusion.",
+          "name": "sourceAsset",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              "Asset"
+            ],
+            "kind": "reference"
+          },
+          "summary": "Occlusion source image."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required and non-empty for image occlusion.",
+          "name": "occlusionRegions",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "OcclusionRegion"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Stable occlusion regions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Defaults to lineage.review/1.",
+          "name": "presentationProfile",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Presentation contract version."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required and optional capabilities are explicit.",
+          "name": "extensions",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              "ExtensionSet"
+            ],
+            "kind": "objectRef"
+          },
+          "summary": "Prompt extension requirements."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        }
+      ],
+      "name": "Prompt",
+      "summary": "Prompt version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Unique among relationships.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable relationship identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Does not merge endpoint identities.",
+          "name": "kind",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "prerequisite",
+                "related",
+                "derived-from",
+                "sibling",
+                "duplicate-of"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Relationship kind."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve.",
+          "name": "source",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "EntityReference"
+            ],
+            "kind": "objectRef"
+          },
+          "summary": "Source endpoint."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve.",
+          "name": "target",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "EntityReference"
+            ],
+            "kind": "objectRef"
+          },
+          "summary": "Target endpoint."
+        }
+      ],
+      "name": "Relationship",
+      "summary": "Relationship version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "For example fsrs.",
+          "name": "family",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Scheduler family."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be explicit.",
+          "name": "version",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Scheduler/model version."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "^[a-f0-9]{64}$"
+              ],
+              "kind": "regexPattern"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Fingerprints exact parameters.",
+          "name": "parameterDigest",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Parameter-set SHA-256."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Historical observation.",
+          "name": "previousIntervalMinutes",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Previous interval."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Historical observation.",
+          "name": "nextIntervalMinutes",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Resulting interval."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Derived state captured for audit.",
+          "name": "dueAt",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Resulting due timestamp."
+        }
+      ],
+      "name": "SchedulerObservation",
+      "summary": "SchedulerObservation version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Append-only and unique.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable event identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve with promptRevision.",
+          "name": "promptId",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "Prompt"
+            ],
+            "kind": "reference"
+          },
+          "summary": "Served Prompt identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Positive and exact.",
+          "name": "promptRevision",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Served Prompt revision."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "^[a-f0-9]{64}$"
+              ],
+              "kind": "regexPattern"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "SHA-256 when present.",
+          "name": "snapshotDigest",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Served corpus snapshot digest."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "^[a-f0-9]{64}$"
+              ],
+              "kind": "regexPattern"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "SHA-256 when present.",
+          "name": "presentationDigest",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Served presentation digest."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "RFC 3339 date-time.",
+          "name": "reviewedAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Review timestamp."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Non-negative.",
+          "name": "durationMilliseconds",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Review duration."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Absent for self-check/no-capture.",
+          "name": "capturedResponse",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Captured learner response."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "One of four scheduler-neutral ratings.",
+          "name": "assessment",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "again",
+                "hard",
+                "good",
+                "easy"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Learner assessment."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Replaceable current state is not corpus meaning.",
+          "name": "scheduler",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              "SchedulerObservation"
+            ],
+            "kind": "objectRef"
+          },
+          "summary": "Historical scheduler observation."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        }
+      ],
+      "name": "Repetition",
+      "summary": "Repetition version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Distinct from target.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable correction identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve and cannot self-target.",
+          "name": "targetRepetitionId",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "Repetition"
+            ],
+            "kind": "reference"
+          },
+          "summary": "Corrected event."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "RFC 3339 date-time.",
+          "name": "correctedAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Correction timestamp."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "reason",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Correction reason."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Original event remains unchanged.",
+          "name": "replacementAssessment",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              [
+                "again",
+                "hard",
+                "good",
+                "easy"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Replacement assessment."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Original event remains unchanged.",
+          "name": "replacementResponse",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Replacement response."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        }
+      ],
+      "name": "RepetitionCorrection",
+      "summary": "RepetitionCorrection version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Unique among provenance records.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable provenance identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Does not imply truth or trust.",
+          "name": "kind",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "authored",
+                "imported",
+                "cited",
+                "derived",
+                "corrected"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Origin kind."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "RFC 3339 date-time.",
+          "name": "recordedAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Record timestamp."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Optional attribution.",
+          "name": "agent",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Human or software agent."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Portable source citation.",
+          "name": "citation",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Citation."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Optional rights information.",
+          "name": "license",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "License expression."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Optional explanatory text.",
+          "name": "note",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Origin note."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Forms append-only derivation chains.",
+          "name": "sources",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Prior provenance records."
+        }
+      ],
+      "name": "Provenance",
+      "summary": "Provenance version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Names a capability.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable extension identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "version",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Extension version."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required extensions need support.",
+          "name": "requirement",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "required",
+                "optional"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Requirement level."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required for optional extensions.",
+          "name": "fallback",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Portable fallback."
+        }
+      ],
+      "name": "Extension",
+      "summary": "Extension version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Unique among migrations.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable migration identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Non-negative.",
+          "name": "fromVersion",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Source version."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Positive and greater than source.",
+          "name": "toVersion",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Target version."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "RFC 3339 date-time.",
+          "name": "appliedAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Application timestamp."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "tool",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Migration tool."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "toolVersion",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Tool version."
+        }
+      ],
+      "name": "Migration",
+      "summary": "Migration version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Unique among reports.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable report identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "sourceFormat",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Source format."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "targetFormat",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Target format."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Lossy requires declared losses.",
+          "name": "status",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "exact",
+                "lossy"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Conversion status."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Non-empty when status is lossy.",
+          "name": "losses",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Declared losses."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Supports faithful round trips.",
+          "name": "preservedArtifacts",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Preserved original artifact IDs."
+        }
+      ],
+      "name": "InteroperabilityReport",
+      "summary": "InteroperabilityReport version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Exactly lineage.corpus.",
+          "name": "format",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "lineage.corpus"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Format discriminator."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Exactly numeric version one.",
+          "name": "formatVersion",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "1"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Wire version."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Application ownership is external.",
+          "name": "corpusId",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable corpus identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Identity/revision keys are unique.",
+          "name": "prompts",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Prompt"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Prompt revisions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "sources",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Source"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Source revisions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "materials",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Material"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Material revisions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "assets",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Asset"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Asset declarations."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "relationships",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Relationship"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Typed relationships."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Append-oriented.",
+          "name": "repetitions",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Repetition"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Review history."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Append-oriented.",
+          "name": "repetitionCorrections",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "RepetitionCorrection"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Correction history."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "extensions",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Extension"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Capability declarations."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "migrations",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Migration"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Forward migration history."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty.",
+          "name": "interoperability",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "InteroperabilityReport"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Conversion reports."
+        }
+      ],
+      "name": "CorpusDocument",
+      "summary": "CorpusDocument version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "No absolute paths or traversal.",
+          "name": "path",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Safe relative archive path."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Computed from actual bytes.",
+          "name": "byteSize",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Exact byte count."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "^[a-f0-9]{64}$"
+              ],
+              "kind": "regexPattern"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Computed from actual bytes.",
+          "name": "sha256",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Lowercase SHA-256 digest."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must be non-empty.",
+          "name": "mediaType",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Entry media type."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Determines closure requirements.",
+          "name": "role",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "corpus",
+                "asset",
+                "preserved-original"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Entry role."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required entries must be present.",
+          "name": "required",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Dependency requirement."
+        }
+      ],
+      "name": "ArchiveEntry",
+      "summary": "ArchiveEntry version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Exactly lineage.manifest.",
+          "name": "format",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "lineage.manifest"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Manifest discriminator."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Exactly numeric version one.",
+          "name": "formatVersion",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "1"
+            ],
+            "kind": "literal"
+          },
+          "summary": "Manifest version."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must equal corpus document identity.",
+          "name": "corpusId",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Enclosed corpus identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Safe relative path, normally corpus.json.",
+          "name": "corpus",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Corpus entry path."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "^[a-f0-9]{64}$"
+              ],
+              "kind": "regexPattern"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Host-computed SHA-256.",
+          "name": "corpusSha256",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Canonical corpus digest."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "RFC 3339 date-time.",
+          "name": "createdAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Archive creation timestamp."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "RFC 3339 date-time.",
+          "name": "modifiedAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Archive modification timestamp."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All must be supported.",
+          "name": "requiredProfiles",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Required presentation profiles."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All must be supported.",
+          "name": "requiredExtensions",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Required archive extensions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Fallbacks preserve portability.",
+          "name": "optionalExtensions",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Optional archive extensions."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Paths are unique and every required dependency is present.",
+          "name": "entries",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "ArchiveEntry"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Integrity table."
+        }
+      ],
+      "name": "Manifest",
+      "summary": "Manifest version-1 wire object."
+    }
+  ],
+  "roots": [
+    "CorpusDocument",
+    "Manifest"
+  ],
+  "rules": [
+    {
+      "appliesTo": "corpus",
+      "code": "structure.invalid",
+      "explanation": "Required fields, tags, or value constraints are invalid.",
+      "severity": "error",
+      "summary": "Document does not match the version-1 wire shape."
+    },
+    {
+      "appliesTo": "corpus",
+      "code": "format.unsupported-version",
+      "explanation": "Only version 1 is accepted.",
+      "severity": "error",
+      "summary": "The format version is unsupported."
+    },
+    {
+      "appliesTo": "identity",
+      "code": "identity.empty",
+      "explanation": "All durable entity identities are non-empty.",
+      "severity": "error",
+      "summary": "A stable identity is empty."
+    },
+    {
+      "appliesTo": "identity",
+      "code": "identity.duplicate",
+      "explanation": "Identity/revision keys and event identities are unique in their namespaces.",
+      "severity": "error",
+      "summary": "A stable entity identity is duplicated."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "identity.duplicate-prompt-revision",
+      "explanation": "Each immutable Prompt revision key occurs once.",
+      "severity": "error",
+      "summary": "A Prompt identity and revision are duplicated."
+    },
+    {
+      "appliesTo": "revision",
+      "code": "revision.non-positive",
+      "explanation": "Version-1 revisions begin at one.",
+      "severity": "error",
+      "summary": "A revision is not positive."
+    },
+    {
+      "appliesTo": "reference",
+      "code": "reference.unresolved",
+      "explanation": "All references resolve inside the local dependency closure.",
+      "severity": "error",
+      "summary": "A referenced entity is absent."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "disclosure.withheld-empty",
+      "explanation": "Every active-recall Prompt conceals at least one answer.",
+      "severity": "error",
+      "summary": "A Prompt has no withheld material."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "disclosure.answer-leaked",
+      "explanation": "No withheld answer may appear in challenge or accessible fallback content.",
+      "severity": "error",
+      "summary": "Challenge content contains withheld material."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "disclosure.answer-missing",
+      "explanation": "Every withheld item appears in the resolution.",
+      "severity": "error",
+      "summary": "Resolution omits withheld material."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "response.invalid-self-check",
+      "explanation": "Self-check mode uses capture none.",
+      "severity": "error",
+      "summary": "Self-check response configuration is invalid."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "cloze.targets-required",
+      "explanation": "Cloze Prompts require stable targets.",
+      "severity": "error",
+      "summary": "A cloze Prompt has no targets."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "occlusion.source-required",
+      "explanation": "Image occlusion requires a declared image asset.",
+      "severity": "error",
+      "summary": "Image occlusion has no source asset."
+    },
+    {
+      "appliesTo": "prompt",
+      "code": "occlusion.regions-required",
+      "explanation": "At least one stable normalized region is required.",
+      "severity": "error",
+      "summary": "Image occlusion has no regions."
+    },
+    {
+      "appliesTo": "asset",
+      "code": "asset.unresolved",
+      "explanation": "Asset references resolve in the corpus.",
+      "severity": "error",
+      "summary": "A Prompt references an undeclared asset."
+    },
+    {
+      "appliesTo": "asset",
+      "code": "asset.integrity-host-required",
+      "explanation": "AI must not invent bytes, sizes, or digests.",
+      "severity": "error",
+      "summary": "Media integrity is not host-established."
+    },
+    {
+      "appliesTo": "asset",
+      "code": "asset.path-unsafe",
+      "explanation": "Paths are relative, normalized, unique, and cannot traverse.",
+      "severity": "error",
+      "summary": "An asset path is unsafe."
+    },
+    {
+      "appliesTo": "repetition",
+      "code": "history.prompt-unresolved",
+      "explanation": "History resolves to exact served Prompt revisions.",
+      "severity": "error",
+      "summary": "A repetition references an absent Prompt revision."
+    },
+    {
+      "appliesTo": "correction",
+      "code": "history.correction-invalid",
+      "explanation": "Corrections are distinct append-only events.",
+      "severity": "error",
+      "summary": "A correction target is missing or self-referential."
+    },
+    {
+      "appliesTo": "migration",
+      "code": "migration.chain-invalid",
+      "explanation": "Each step starts at the preceding version and advances.",
+      "severity": "error",
+      "summary": "Migration history is not forward and contiguous."
+    },
+    {
+      "appliesTo": "extension",
+      "code": "extension.required-unsupported",
+      "explanation": "Required capabilities must be understood by the renderer.",
+      "severity": "error",
+      "summary": "A required extension is unsupported."
+    },
+    {
+      "appliesTo": "extension",
+      "code": "extension.optional-fallback-missing",
+      "explanation": "Portable fallback content keeps the Prompt reviewable.",
+      "severity": "error",
+      "summary": "An optional extension lacks a fallback."
+    },
+    {
+      "appliesTo": "interoperability",
+      "code": "interoperability.loss-unreported",
+      "explanation": "Losses must be explicit and inspectable.",
+      "severity": "error",
+      "summary": "A lossy conversion has no loss report."
+    },
+    {
+      "appliesTo": "manifest",
+      "code": "manifest.corpus-mismatch",
+      "explanation": "The archive manifest names the enclosed corpus.",
+      "severity": "error",
+      "summary": "Manifest and corpus identities differ."
+    },
+    {
+      "appliesTo": "archive",
+      "code": "archive.entry-missing",
+      "explanation": "All manifest entries must have actual bytes.",
+      "severity": "error",
+      "summary": "A declared archive entry is missing."
+    },
+    {
+      "appliesTo": "archive",
+      "code": "archive.digest-mismatch",
+      "explanation": "Hosts compute and verify SHA-256 over actual bytes.",
+      "severity": "error",
+      "summary": "Archive entry digest does not match bytes."
+    },
+    {
+      "appliesTo": "archive",
+      "code": "archive.duplicate-path",
+      "explanation": "Each normalized entry path occurs once.",
+      "severity": "error",
+      "summary": "Archive paths are duplicated."
+    }
+  ],
+  "summary": "Portable, locally complete version-1 Lineage corpus and archive format.",
+  "version": 1
 }

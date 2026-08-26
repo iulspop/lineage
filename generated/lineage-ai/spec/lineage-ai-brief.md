@@ -1,71 +1,49 @@
 # Lineage corpus v1: AI brief
 
-Generate only the requested JSON candidate matching `lineage.corpus` version 1.
+Produce only a candidate `lineage.corpus` document.
 
-## Minimal structure
+## Minimal corpus fields
 
-`{ "format": "lineage.corpus", "formatVersion": 1, "corpusId": "...", "prompts": [...] }`
+- `format` (required; literal): Format discriminator. Exactly lineage.corpus.
+- `formatVersion` (required; literal; minimum): Wire version. Exactly numeric version one.
+- `corpusId` (required; scalar): Stable corpus identity. Application ownership is external.
+- `prompts` (required; array): Prompt revisions. Identity/revision keys are unique.
 
-- Prompt kinds: basic, cloze, image-occlusion.
-- Response modes: `"text"` or `{ "mode": "self-check", "capture": "none" }`.
-- Prompt IDs are stable; revisions are positive and immutable.
-- Keep withheld answers out of every pre-reveal representation and include them in resolution.
-- Resolve all source, material, asset, provenance, extension, history, and relationship references.
-- Never invent media bytes, sizes, paths, or SHA-256 digests. Return media requirements to the host.
-- Do not mutate repetition history; add correction events.
-- A human must preview and explicitly accept before persistence.
+## Prompt fields
 
-## Common invalid patterns
+- `id` (required; scalar; nonEmpty): Stable Prompt identity. One independently scheduled recall stream.
+- `revision` (required; scalar; minimum): Positive immutable revision. Repetitions bind to this exact revision.
+- `status` (optional; enumeration): Lifecycle status. Defaults to active.
+- `kind` (optional; enumeration): Prompt kind. Defaults to basic.
+- `challenge` (required; array): Pre-disclosure content. Must not reveal withheld material.
+- `withheld` (required; array): Concealed answer material. Non-empty and fully disclosed by resolution.
+- `resolution` (required; array): Post-disclosure content. Contains every withheld item.
+- `response` (required; alternatives): Response policy. Typed capture or self-check/no-capture.
+- `materials` (optional; array): Material references. All resolve locally.
+- `sources` (optional; array): Source references. All resolve locally.
+- `assets` (optional; array): Asset references. All resolve to archive bytes when exporting.
+- `clozeTargets` (optional; array): Stable cloze targets. Required for cloze Prompts.
+- `sourceAsset` (optional; reference): Occlusion source image. Required for image occlusion.
+- `occlusionRegions` (optional; array): Stable occlusion regions. Required and non-empty for image occlusion.
+- `presentationProfile` (optional; scalar): Presentation contract version. Defaults to lineage.review/1.
+- `extensions` (optional; objectRef): Prompt extension requirements. Required and optional capabilities are explicit.
+- `provenance` (optional; array): Origin records. All references resolve.
 
-Answer leakage; missing resolution answers; duplicate identities; revision 0; unresolved references; missing cloze targets; invalid occlusion geometry; invented asset integrity; unsafe archive paths; non-contiguous migrations; unreported conversion loss.
+## Critical invariants
 
-## Small valid example
+- `structure.invalid`: Document does not match the version-1 wire shape.
+- `format.unsupported-version`: The format version is unsupported.
+- `identity.empty`: A stable identity is empty.
+- `identity.duplicate`: A stable entity identity is duplicated.
+- `identity.duplicate-prompt-revision`: A Prompt identity and revision are duplicated.
+- `revision.non-positive`: A revision is not positive.
+- `reference.unresolved`: A referenced entity is absent.
+- `disclosure.withheld-empty`: A Prompt has no withheld material.
+- `disclosure.answer-leaked`: Challenge content contains withheld material.
+- `disclosure.answer-missing`: Resolution omits withheld material.
+- `response.invalid-self-check`: Self-check response configuration is invalid.
+- `cloze.targets-required`: A cloze Prompt has no targets.
+- `occlusion.source-required`: Image occlusion has no source asset.
+- `occlusion.regions-required`: Image occlusion has no regions.
 
-```json
-{
-  "assets": [],
-  "corpusId": "example-basic",
-  "extensions": [],
-  "format": "lineage.corpus",
-  "formatVersion": 1,
-  "interoperability": [],
-  "materials": [],
-  "migrations": [],
-  "prompts": [
-    {
-      "assets": [],
-      "challenge": [
-        "What is the capital of France?"
-      ],
-      "extensions": {
-        "optional": [],
-        "required": []
-      },
-      "id": "capital-of-france",
-      "kind": "basic",
-      "materials": [],
-      "presentationProfile": "lineage.review/1",
-      "provenance": [],
-      "resolution": [
-        "What is the capital of France?",
-        "Paris"
-      ],
-      "response": {
-        "capture": "none",
-        "mode": "self-check"
-      },
-      "revision": 1,
-      "sources": [],
-      "status": "active",
-      "withheld": [
-        "Paris"
-      ]
-    }
-  ],
-  "provenance": [],
-  "relationships": [],
-  "repetitionCorrections": [],
-  "repetitions": [],
-  "sources": []
-}
-```
+Never invent asset bytes, sizes, paths, or digests. Preserve unrelated identities and revisions during repair. Require human preview and explicit acceptance before persistence.

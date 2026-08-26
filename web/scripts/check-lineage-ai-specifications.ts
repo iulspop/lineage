@@ -2,13 +2,30 @@ import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import Ajv2020 from "ajv/dist/2020.js"
 
+import {
+  lineageManifestSchema,
+  parseCorpusDocument,
+  serializeCorpusDocument,
+} from "../app/features/lineage/domain/corpus"
 import lineageCore from "../app/features/lineage/generated/lineage-core.mjs"
 import { createCompiledCoreValidator } from "../app/features/lineage/infrastructure/compiled-core"
+import {
+  decodeFormatDescription,
+  toSerializableDescription,
+} from "./lineage-format-description"
 
 const root = path.resolve(process.argv[2] ?? "../generated/lineage-ai")
 const readJson = async (relativePath: string) =>
   JSON.parse(await readFile(path.join(root, relativePath), "utf8"))
 const ajv = new Ajv2020({ allErrors: true, strict: true })
+for (const keyword of [
+  "x-lineage-discriminator",
+  "x-lineage-reference",
+  "x-lineage-requiresWhen",
+  "x-lineage-forbidsWhen",
+  "x-lineage-resolvesTo",
+])
+  ajv.addKeyword({ keyword })
 ajv.addFormat("date-time", {
   type: "string",
   validate: (value: string) => !Number.isNaN(Date.parse(value)),
@@ -40,6 +57,12 @@ for (const name of await readdir(path.join(root, "examples"))) {
     )
   if (!validator.validateCorpus?.(document).valid)
     throw new Error(`${name} does not pass semantic validation`)
+  const canonical = serializeCorpusDocument(parseCorpusDocument(document))
+  if (
+    serializeCorpusDocument(parseCorpusDocument(JSON.parse(canonical))) !==
+    canonical
+  )
+    throw new Error(`${name} does not have an idempotent canonical encoding`)
 }
 
 for (const name of await readdir(path.join(root, "conformance/valid"))) {
@@ -48,6 +71,14 @@ for (const name of await readdir(path.join(root, "conformance/valid"))) {
     throw new Error(`${name} valid fixture violates the corpus schema`)
   if (!validator.validateCorpus?.(fixture.document).valid)
     throw new Error(`${name} valid fixture failed semantic validation`)
+  const canonical = serializeCorpusDocument(
+    parseCorpusDocument(fixture.document),
+  )
+  if (
+    serializeCorpusDocument(parseCorpusDocument(JSON.parse(canonical))) !==
+    canonical
+  )
+    throw new Error(`${name} valid fixture failed canonical round-trip`)
 }
 for (const name of await readdir(path.join(root, "conformance/invalid"))) {
   const fixture = await readJson(`conformance/invalid/${name}`)
@@ -77,25 +108,34 @@ const manifestExample = {
       mediaType: "application/json",
       path: "corpus.json",
       required: true,
+      role: "corpus",
       sha256: "0".repeat(64),
     },
   ],
-  extensions: { optional: [], required: [] },
   format: "lineage.manifest",
   formatVersion: 1,
   modifiedAt: "2026-08-26T12:00:00Z",
-  presentationProfiles: ["lineage.review/1"],
+  optionalExtensions: [],
+  requiredExtensions: [],
+  requiredProfiles: ["lineage.review/1"],
 }
 if (!validateManifestSchema(manifestExample))
   throw new Error(
     `Generated manifest schema rejected a valid manifest: ${ajv.errorsText(validateManifestSchema.errors)}`,
   )
+if (!lineageManifestSchema.safeParse(manifestExample).success)
+  throw new Error(
+    "Production manifest decoder rejected a schema-valid manifest",
+  )
 const formatDescription = await readJson("format-description.json")
-if (JSON.stringify(formatDescription) !== lineageCore.formatDescriptionJson)
+const runtimeDescription = toSerializableDescription(
+  decodeFormatDescription(lineageCore.formatDescription),
+)
+if (JSON.stringify(formatDescription) !== JSON.stringify(runtimeDescription))
   throw new Error(
     "Generated format-description.json drifted from the Agda runtime",
   )
-if (formatDescription.entities.length < 15)
+if (formatDescription.objects.length < 15)
   throw new Error(
     "Format description does not cover the complete v1 entity set",
   )

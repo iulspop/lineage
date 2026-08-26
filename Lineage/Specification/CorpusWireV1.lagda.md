@@ -13,6 +13,7 @@ meaning.
 {-# OPTIONS --safe #-}
 module Lineage.Specification.CorpusWireV1 where
 
+open import Data.Bool.Base using (Bool)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.Nat.Base using (ℕ)
 open import Data.String.Base using (String)
@@ -157,6 +158,18 @@ record InteroperabilityReport : Set where
     losses : List String
     preservedArtifactIds : List String
 
+data ArchiveEntryRole : Set where
+  corpus asset preserved-original : ArchiveEntryRole
+
+record ArchiveEntry : Set where
+  constructor archiveEntry
+  field
+    path : String
+    byteSize : ℕ
+    digest mediaType : String
+    role : ArchiveEntryRole
+    entryRequired : Bool
+
 record Manifest : Set where
   constructor manifest
   field
@@ -164,14 +177,16 @@ record Manifest : Set where
     manifestVersion : ℕ
     corpusId : String
     corpusPath corpusDigest : String
-    createdAt modifiedAt : ℕ
+    createdAt modifiedAt : String
     requiredProfiles : List String
     requiredExtensions optionalExtensions : List String
-    archiveEntries : List String
+    archiveEntries : List ArchiveEntry
 
 record CorpusDocument : Set where
   constructor corpusDocument
   field
+    corpusFormat : String
+    corpusFormatVersion : ℕ
     corpusId : String
     prompts : List Prompt
     sources : List SourceRevision
@@ -185,91 +200,359 @@ record CorpusDocument : Set where
     migrations : List MigrationRecord
     interoperability : List InteroperabilityReport
 
-responseFields : List Field
-responseFields =
-  describeField "mode" required (choice ("text" ∷ "self-check" ∷ []))
-    "Review response mode."
-    "Text captures a learner response; self-check reveals before rating." ∷
-  describeField "capture" optional (literal "none")
-    "Explicitly disables response capture."
-    "Required when mode is self-check and forbidden for text mode." ∷ []
+responseInteractionFields : List Field
+responseInteractionFields =
+  describeField "mode" required (alternatives (literal "text" ∷ objectRef "SelfCheckResponse" ∷ []))
+    "Review response interaction." "Use text capture or explicit self-check/no-capture." ∷ []
+
+selfCheckResponseFields : List Field
+selfCheckResponseFields =
+  describeField "mode" required (literal "self-check")
+    "Self-check discriminator." "Requires capture none." ∷
+  describeField "capture" required (literal "none")
+    "No response capture." "The learner reveals and rates without typed capture." ∷ []
+
+entityReferenceFields : List Field
+entityReferenceFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Referenced stable identity." "Must resolve in the referenced namespace." ∷
+  describeField "revision" optional (scalar natural)
+    "Optional exact revision." "When present it must be positive and resolve exactly." ∷ []
+
+clozeTargetFields : List Field
+clozeTargetFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable cloze-target identity." "Independent of marker order and wording." ∷
+  describeField "answer" required (scalar text)
+    "Withheld target answer." "Must be disclosed after reveal." ∷
+  describeDefaultedField "hints" optional (array (scalar text)) defaultEmptyArray
+    "Optional hints." "Hints must not leak the answer." ∷ []
+
+normalizedPointFields : List Field
+normalizedPointFields =
+  describeConstrainedField "x" required (scalar normalizedCoordinate) (maximum 1 ∷ []) noDefault
+    "Normalized horizontal coordinate." "Inclusive range zero through one." ∷
+  describeConstrainedField "y" required (scalar normalizedCoordinate) (maximum 1 ∷ []) noDefault
+    "Normalized vertical coordinate." "Inclusive range zero through one." ∷ []
+
+rectangleGeometryFields : List Field
+rectangleGeometryFields =
+  describeField "type" required (literal "rectangle")
+    "Geometry discriminator." "Selects normalized rectangle fields." ∷
+  describeConstrainedField "x" required (scalar normalizedCoordinate) (maximum 1 ∷ []) noDefault
+    "Left coordinate." "Inclusive range zero through one." ∷
+  describeConstrainedField "y" required (scalar normalizedCoordinate) (maximum 1 ∷ []) noDefault
+    "Top coordinate." "Inclusive range zero through one." ∷
+  describeConstrainedField "width" required (scalar normalizedCoordinate) (minimum 1 ∷ maximum 1 ∷ []) noDefault
+    "Normalized width." "Greater than zero and at most one." ∷
+  describeConstrainedField "height" required (scalar normalizedCoordinate) (minimum 1 ∷ maximum 1 ∷ []) noDefault
+    "Normalized height." "Greater than zero and at most one." ∷ []
+
+polygonGeometryFields : List Field
+polygonGeometryFields =
+  describeField "type" required (literal "polygon")
+    "Geometry discriminator." "Selects polygon points." ∷
+  describeField "points" required (array (objectRef "NormalizedPoint"))
+    "Normalized polygon vertices." "At least three points." ∷ []
+
+occlusionRegionFields : List Field
+occlusionRegionFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable region identity." "Geometry changes do not change identity." ∷
+  describeField "label" required (scalar text)
+    "Human-readable region label." "Must be non-empty." ∷
+  describeField "accessibleDescription" required (scalar text)
+    "Accessible equivalent." "Must describe the concealed region without leaking its answer." ∷
+  describeField "geometry" required (taggedChoice "type" ("RectangleGeometry" ∷ "PolygonGeometry" ∷ []))
+    "Normalized geometry." "Rectangle or polygon with coordinates from zero through one." ∷ []
+
+sourceFields : List Field
+sourceFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable Source identity." "Pairs with revision." ∷
+  describeConstrainedField "revision" required (scalar natural) (minimum 1 ∷ []) noDefault
+    "Positive immutable revision." "Starts at one." ∷
+  describeField "title" required (scalar text)
+    "Source title." "Must be non-empty." ∷
+  describeField "content" required (scalar text)
+    "Source content." "Portable non-executable text." ∷
+  describeDefaultedField "assets" optional (array (reference "Asset")) defaultEmptyArray
+    "Referenced assets." "All references resolve locally." ∷
+  describeDefaultedField "provenance" optional (array (reference "Provenance")) defaultEmptyArray
+    "Origin records." "All references resolve locally." ∷ []
+
+materialFields : List Field
+materialFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable Material identity." "Pairs with revision." ∷
+  describeConstrainedField "revision" required (scalar natural) (minimum 1 ∷ []) noDefault
+    "Positive immutable revision." "Starts at one." ∷
+  describeField "content" required (array (scalar text))
+    "Structured portable content." "Ordered content blocks." ∷
+  describeDefaultedField "sources" optional (array (reference "Source")) defaultEmptyArray
+    "Source references." "All references resolve." ∷
+  describeDefaultedField "assets" optional (array (reference "Asset")) defaultEmptyArray
+    "Asset references." "All references resolve." ∷
+  describeDefaultedField "provenance" optional (array (reference "Provenance")) defaultEmptyArray
+    "Origin records." "All references resolve." ∷ []
+
+assetFields : List Field
+assetFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable asset identity." "Referenced by Prompts, Sources, and Materials." ∷
+  describeField "mediaType" required (scalar text)
+    "IANA media type." "Must be non-empty." ∷
+  describeField "byteSize" required (scalar natural)
+    "Exact byte count." "Computed by the host from actual bytes." ∷
+  describeConstrainedField "sha256" required (scalar text) (regexPattern "^[a-f0-9]{64}$" ∷ []) noDefault
+    "Lowercase SHA-256 digest." "Exactly 64 hexadecimal characters, host-computed." ∷
+  describeField "path" required (scalar text)
+    "Safe archive-relative path." "Must begin assets/ and cannot traverse." ∷
+  describeField "accessibleDescription" optional (scalar text)
+    "Accessible media equivalent." "Required when media conveys review meaning." ∷ []
+
+extensionSetFields : List Field
+extensionSetFields =
+  describeField "required" optional (array (reference "Extension"))
+    "Required extensions." "Renderer support is mandatory." ∷
+  describeField "optional" optional (array (reference "Extension"))
+    "Optional extensions." "Portable fallback is mandatory." ∷ []
 
 promptFields : List Field
 promptFields =
-  describeField "id" required (scalar text) "Stable Prompt identity."
-    "Identifies one independently scheduled recall stream." ∷
-  describeField "revision" required (scalar natural) "Positive immutable revision."
-    "Repetitions bind to the exact served Prompt revision." ∷
-  describeField "status" optional (choice ("active" ∷ "suspended" ∷ "retired" ∷ []))
-    "Prompt lifecycle status." "Only active Prompts enter review queues." ∷
-  describeField "kind" required (choice ("basic" ∷ "cloze" ∷ "image-occlusion" ∷ []))
-    "Prompt presentation kind." "Selects kind-specific requirements." ∷
-  describeField "challenge" required (array "string") "Pre-disclosure content."
-    "Must not expose any withheld answer." ∷
-  describeField "withheld" required (array "string") "Concealed answer material."
-    "Must be non-empty and fully represented in the resolution." ∷
-  describeField "resolution" required (array "string") "Post-disclosure content."
-    "Must disclose every withheld item." ∷
-  describeField "response" required (reference "ResponseInteraction")
-    "Learner response interaction." "Use self-check when no typed response is captured." ∷
-  describeField "materials" optional (array "reference:Material") "Referenced materials."
-    "Every reference must resolve within the corpus." ∷
-  describeField "sources" optional (array "reference:Source") "Referenced sources."
-    "Sources provide shared authored or imported context." ∷
-  describeField "assets" optional (array "reference:Asset") "Referenced assets."
-    "Every reference must resolve to verified local bytes for archive export." ∷
-  describeField "clozeTargets" optional (array "ClozeTarget") "Stable cloze targets."
-    "Required for cloze Prompts; identity is independent of array position." ∷
-  describeField "sourceAsset" optional (scalar text) "Image-occlusion source asset."
-    "Required for image occlusion and must resolve to a declared image asset." ∷
-  describeField "occlusionRegions" optional (array "OcclusionRegion") "Stable regions."
-    "Required for image occlusion; normalized geometry does not define identity." ∷ []
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable Prompt identity." "One independently scheduled recall stream." ∷
+  describeConstrainedField "revision" required (scalar natural) (minimum 1 ∷ []) noDefault
+    "Positive immutable revision." "Repetitions bind to this exact revision." ∷
+  describeField "status" optional (enumeration ("active" ∷ "suspended" ∷ "retired" ∷ []))
+    "Lifecycle status." "Defaults to active." ∷
+  describeField "kind" optional (enumeration ("basic" ∷ "cloze" ∷ "image-occlusion" ∷ []))
+    "Prompt kind." "Defaults to basic." ∷
+  describeField "challenge" required (array (scalar text))
+    "Pre-disclosure content." "Must not reveal withheld material." ∷
+  describeField "withheld" required (array (scalar text))
+    "Concealed answer material." "Non-empty and fully disclosed by resolution." ∷
+  describeField "resolution" required (array (scalar text))
+    "Post-disclosure content." "Contains every withheld item." ∷
+  describeField "response" required (alternatives (literal "text" ∷ objectRef "SelfCheckResponse" ∷ []))
+    "Response policy." "Typed capture or self-check/no-capture." ∷
+  describeDefaultedField "materials" optional (array (reference "Material")) defaultEmptyArray
+    "Material references." "All resolve locally." ∷
+  describeDefaultedField "sources" optional (array (reference "Source")) defaultEmptyArray
+    "Source references." "All resolve locally." ∷
+  describeDefaultedField "assets" optional (array (reference "Asset")) defaultEmptyArray
+    "Asset references." "All resolve to archive bytes when exporting." ∷
+  describeField "clozeTargets" optional (array (objectRef "ClozeTarget"))
+    "Stable cloze targets." "Required for cloze Prompts." ∷
+  describeField "sourceAsset" optional (reference "Asset")
+    "Occlusion source image." "Required for image occlusion." ∷
+  describeField "occlusionRegions" optional (array (objectRef "OcclusionRegion"))
+    "Stable occlusion regions." "Required and non-empty for image occlusion." ∷
+  describeField "presentationProfile" optional (scalar text)
+    "Presentation contract version." "Defaults to lineage.review/1." ∷
+  describeField "extensions" optional (objectRef "ExtensionSet")
+    "Prompt extension requirements." "Required and optional capabilities are explicit." ∷
+  describeDefaultedField "provenance" optional (array (reference "Provenance")) defaultEmptyArray
+    "Origin records." "All references resolve." ∷ []
 
-corpusFields : List Field
-corpusFields =
-  describeField "format" required (literal "lineage.corpus") "Format discriminator."
-    "Must be exactly lineage.corpus." ∷
-  describeField "formatVersion" required (literal "1") "Wire-format version."
-    "Must be exactly version 1." ∷
-  describeField "corpusId" required (scalar text) "Stable corpus identity."
-    "Application ownership is not part of corpus meaning." ∷
-  describeField "prompts" required (array "Prompt") "Prompt revisions."
-    "Prompt identity plus revision must be unique." ∷
-  describeField "sources" optional (array "Source") "Shared source revisions."
-    "Sources are not independently scheduled." ∷
-  describeField "materials" optional (array "Material") "Reusable material revisions."
-    "Materials can be shared by multiple Prompts." ∷
-  describeField "assets" optional (array "Asset") "Content-addressed assets."
-    "Archive export requires verified local bytes." ∷
-  describeField "relationships" optional (array "Relationship") "Typed relationships."
-    "Relationships never merge stable identities implicitly." ∷
-  describeField "repetitions" optional (array "Repetition") "Append-oriented review history."
-    "Events reference exact Prompt revisions and are never overwritten." ∷
-  describeField "repetitionCorrections" optional (array "RepetitionCorrection") "Corrections."
-    "Corrections are distinct auditable events." ∷
-  describeField "provenance" optional (array "Provenance") "Origin records."
-    "Provenance describes origin, not truth or trust." ∷
-  describeField "extensions" optional (array "Extension") "Capability declarations."
-    "Required extensions need renderer support; optional ones need fallbacks." ∷
-  describeField "migrations" optional (array "Migration") "Forward migration history."
-    "Migration chains are explicit and preserve denotation." ∷
-  describeField "interoperability" optional (array "InteroperabilityReport") "Conversions."
-    "Every non-exact conversion names its losses." ∷ []
+relationshipFields : List Field
+relationshipFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable relationship identity." "Unique among relationships." ∷
+  describeField "kind" required (enumeration ("prerequisite" ∷ "related" ∷ "derived-from" ∷ "sibling" ∷ "duplicate-of" ∷ []))
+    "Relationship kind." "Does not merge endpoint identities." ∷
+  describeField "source" required (objectRef "EntityReference")
+    "Source endpoint." "Must resolve." ∷
+  describeField "target" required (objectRef "EntityReference")
+    "Target endpoint." "Must resolve." ∷ []
+
+schedulerObservationFields : List Field
+schedulerObservationFields =
+  describeField "family" required (scalar text)
+    "Scheduler family." "For example fsrs." ∷
+  describeField "version" required (scalar text)
+    "Scheduler/model version." "Must be explicit." ∷
+  describeConstrainedField "parameterDigest" optional (scalar text) (regexPattern "^[a-f0-9]{64}$" ∷ []) noDefault
+    "Parameter-set SHA-256." "Fingerprints exact parameters." ∷
+  describeField "previousIntervalMinutes" optional (scalar natural)
+    "Previous interval." "Historical observation." ∷
+  describeField "nextIntervalMinutes" optional (scalar natural)
+    "Resulting interval." "Historical observation." ∷
+  describeConstrainedField "dueAt" optional (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Resulting due timestamp." "Derived state captured for audit." ∷ []
+
+repetitionFields : List Field
+repetitionFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable event identity." "Append-only and unique." ∷
+  describeField "promptId" required (reference "Prompt")
+    "Served Prompt identity." "Must resolve with promptRevision." ∷
+  describeConstrainedField "promptRevision" required (scalar natural) (minimum 1 ∷ []) noDefault
+    "Served Prompt revision." "Positive and exact." ∷
+  describeConstrainedField "snapshotDigest" optional (scalar text) (regexPattern "^[a-f0-9]{64}$" ∷ []) noDefault
+    "Served corpus snapshot digest." "SHA-256 when present." ∷
+  describeConstrainedField "presentationDigest" optional (scalar text) (regexPattern "^[a-f0-9]{64}$" ∷ []) noDefault
+    "Served presentation digest." "SHA-256 when present." ∷
+  describeConstrainedField "reviewedAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Review timestamp." "RFC 3339 date-time." ∷
+  describeField "durationMilliseconds" optional (scalar natural)
+    "Review duration." "Non-negative." ∷
+  describeField "capturedResponse" optional (scalar text)
+    "Captured learner response." "Absent for self-check/no-capture." ∷
+  describeField "assessment" required (enumeration ("again" ∷ "hard" ∷ "good" ∷ "easy" ∷ []))
+    "Learner assessment." "One of four scheduler-neutral ratings." ∷
+  describeField "scheduler" optional (objectRef "SchedulerObservation")
+    "Historical scheduler observation." "Replaceable current state is not corpus meaning." ∷
+  describeDefaultedField "provenance" optional (array (reference "Provenance")) defaultEmptyArray
+    "Origin records." "All references resolve." ∷ []
+
+repetitionCorrectionFields : List Field
+repetitionCorrectionFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable correction identity." "Distinct from target." ∷
+  describeField "targetRepetitionId" required (reference "Repetition")
+    "Corrected event." "Must resolve and cannot self-target." ∷
+  describeConstrainedField "correctedAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Correction timestamp." "RFC 3339 date-time." ∷
+  describeField "reason" required (scalar text)
+    "Correction reason." "Must be non-empty." ∷
+  describeField "replacementAssessment" optional (enumeration ("again" ∷ "hard" ∷ "good" ∷ "easy" ∷ []))
+    "Replacement assessment." "Original event remains unchanged." ∷
+  describeField "replacementResponse" optional (scalar text)
+    "Replacement response." "Original event remains unchanged." ∷
+  describeDefaultedField "provenance" optional (array (reference "Provenance")) defaultEmptyArray
+    "Origin records." "All references resolve." ∷ []
+
+provenanceFields : List Field
+provenanceFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable provenance identity." "Unique among provenance records." ∷
+  describeField "kind" required (enumeration ("authored" ∷ "imported" ∷ "cited" ∷ "derived" ∷ "corrected" ∷ []))
+    "Origin kind." "Does not imply truth or trust." ∷
+  describeConstrainedField "recordedAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Record timestamp." "RFC 3339 date-time." ∷
+  describeField "agent" optional (scalar text)
+    "Human or software agent." "Optional attribution." ∷
+  describeField "citation" optional (scalar text)
+    "Citation." "Portable source citation." ∷
+  describeField "license" optional (scalar text)
+    "License expression." "Optional rights information." ∷
+  describeField "note" optional (scalar text)
+    "Origin note." "Optional explanatory text." ∷
+  describeDefaultedField "sources" optional (array (reference "Provenance")) defaultEmptyArray
+    "Prior provenance records." "Forms append-only derivation chains." ∷ []
+
+extensionFields : List Field
+extensionFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable extension identity." "Names a capability." ∷
+  describeField "version" required (scalar text)
+    "Extension version." "Must be non-empty." ∷
+  describeField "requirement" required (enumeration ("required" ∷ "optional" ∷ []))
+    "Requirement level." "Required extensions need support." ∷
+  describeField "fallback" optional (scalar text)
+    "Portable fallback." "Required for optional extensions." ∷ []
+
+migrationFields : List Field
+migrationFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable migration identity." "Unique among migrations." ∷
+  describeField "fromVersion" required (scalar natural)
+    "Source version." "Non-negative." ∷
+  describeField "toVersion" required (scalar natural)
+    "Target version." "Positive and greater than source." ∷
+  describeConstrainedField "appliedAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Application timestamp." "RFC 3339 date-time." ∷
+  describeField "tool" required (scalar text)
+    "Migration tool." "Must be non-empty." ∷
+  describeField "toolVersion" required (scalar text)
+    "Tool version." "Must be non-empty." ∷ []
+
+interoperabilityReportFields : List Field
+interoperabilityReportFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable report identity." "Unique among reports." ∷
+  describeField "sourceFormat" required (scalar text)
+    "Source format." "Must be non-empty." ∷
+  describeField "targetFormat" required (scalar text)
+    "Target format." "Must be non-empty." ∷
+  describeField "status" required (enumeration ("exact" ∷ "lossy" ∷ []))
+    "Conversion status." "Lossy requires declared losses." ∷
+  describeDefaultedField "losses" optional (array (scalar text)) defaultEmptyArray
+    "Declared losses." "Non-empty when status is lossy." ∷
+  describeDefaultedField "preservedArtifacts" optional (array (scalar text)) defaultEmptyArray
+    "Preserved original artifact IDs." "Supports faithful round trips." ∷ []
+
+corpusDocumentFields : List Field
+corpusDocumentFields =
+  describeField "format" required (literal "lineage.corpus")
+    "Format discriminator." "Exactly lineage.corpus." ∷
+  describeConstrainedField "formatVersion" required (literal "1") (minimum 1 ∷ []) noDefault
+    "Wire version." "Exactly numeric version one." ∷
+  describeField "corpusId" required (scalar text)
+    "Stable corpus identity." "Application ownership is external." ∷
+  describeField "prompts" required (array (objectRef "Prompt"))
+    "Prompt revisions." "Identity/revision keys are unique." ∷
+  describeDefaultedField "sources" optional (array (objectRef "Source")) defaultEmptyArray
+    "Source revisions." "Defaults to empty." ∷
+  describeDefaultedField "materials" optional (array (objectRef "Material")) defaultEmptyArray
+    "Material revisions." "Defaults to empty." ∷
+  describeDefaultedField "assets" optional (array (objectRef "Asset")) defaultEmptyArray
+    "Asset declarations." "Defaults to empty." ∷
+  describeDefaultedField "relationships" optional (array (objectRef "Relationship")) defaultEmptyArray
+    "Typed relationships." "Defaults to empty." ∷
+  describeDefaultedField "repetitions" optional (array (objectRef "Repetition")) defaultEmptyArray
+    "Review history." "Append-oriented." ∷
+  describeDefaultedField "repetitionCorrections" optional (array (objectRef "RepetitionCorrection")) defaultEmptyArray
+    "Correction history." "Append-oriented." ∷
+  describeDefaultedField "provenance" optional (array (objectRef "Provenance")) defaultEmptyArray
+    "Origin records." "Defaults to empty." ∷
+  describeDefaultedField "extensions" optional (array (objectRef "Extension")) defaultEmptyArray
+    "Capability declarations." "Defaults to empty." ∷
+  describeDefaultedField "migrations" optional (array (objectRef "Migration")) defaultEmptyArray
+    "Forward migration history." "Defaults to empty." ∷
+  describeDefaultedField "interoperability" optional (array (objectRef "InteroperabilityReport")) defaultEmptyArray
+    "Conversion reports." "Defaults to empty." ∷ []
+
+archiveEntryFields : List Field
+archiveEntryFields =
+  describeField "path" required (scalar text)
+    "Safe relative archive path." "No absolute paths or traversal." ∷
+  describeField "byteSize" required (scalar natural)
+    "Exact byte count." "Computed from actual bytes." ∷
+  describeConstrainedField "sha256" required (scalar text) (regexPattern "^[a-f0-9]{64}$" ∷ []) noDefault
+    "Lowercase SHA-256 digest." "Computed from actual bytes." ∷
+  describeField "mediaType" required (scalar text)
+    "Entry media type." "Must be non-empty." ∷
+  describeField "role" required (enumeration ("corpus" ∷ "asset" ∷ "preserved-original" ∷ []))
+    "Entry role." "Determines closure requirements." ∷
+  describeField "required" required (scalar boolean)
+    "Dependency requirement." "Required entries must be present." ∷ []
 
 manifestFields : List Field
 manifestFields =
-  describeField "format" required (literal "lineage.manifest") "Manifest discriminator."
-    "Must be exactly lineage.manifest." ∷
-  describeField "formatVersion" required (literal "1") "Manifest version."
-    "Must be exactly version 1." ∷
-  describeField "corpusId" required (scalar text) "Referenced corpus identity."
-    "Must equal the corpus document identity." ∷
-  describeField "corpus" required (scalar text) "Safe corpus entry path."
-    "Normally corpus.json; traversal and absolute paths are forbidden." ∷
-  describeField "corpusSha256" required (scalar text) "Corpus entry digest."
-    "Computed by the archive host from canonical corpus bytes." ∷
-  describeField "entries" required (array "ArchiveEntry") "Archive integrity table."
-    "Every required file has a safe unique path, byte size, and SHA-256 digest." ∷ []
+  describeField "format" required (literal "lineage.manifest")
+    "Manifest discriminator." "Exactly lineage.manifest." ∷
+  describeConstrainedField "formatVersion" required (literal "1") (minimum 1 ∷ []) noDefault
+    "Manifest version." "Exactly numeric version one." ∷
+  describeField "corpusId" required (scalar text)
+    "Enclosed corpus identity." "Must equal corpus document identity." ∷
+  describeField "corpus" required (scalar text)
+    "Corpus entry path." "Safe relative path, normally corpus.json." ∷
+  describeConstrainedField "corpusSha256" required (scalar text) (regexPattern "^[a-f0-9]{64}$" ∷ []) noDefault
+    "Canonical corpus digest." "Host-computed SHA-256." ∷
+  describeConstrainedField "createdAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Archive creation timestamp." "RFC 3339 date-time." ∷
+  describeConstrainedField "modifiedAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Archive modification timestamp." "RFC 3339 date-time." ∷
+  describeDefaultedField "requiredProfiles" optional (array (scalar text)) defaultEmptyArray
+    "Required presentation profiles." "All must be supported." ∷
+  describeDefaultedField "requiredExtensions" optional (array (scalar text)) defaultEmptyArray
+    "Required archive extensions." "All must be supported." ∷
+  describeDefaultedField "optionalExtensions" optional (array (scalar text)) defaultEmptyArray
+    "Optional archive extensions." "Fallbacks preserve portability." ∷
+  describeField "entries" required (array (objectRef "ArchiveEntry"))
+    "Integrity table." "Paths are unique and every required dependency is present." ∷ []
 
 v1Rules : List Rule
 v1Rules =
@@ -304,20 +587,31 @@ v1Rules =
 v1Description : FormatDescription
 v1Description = format "lineage.corpus" 1
   "Portable, locally complete version-1 Lineage corpus and archive format."
-  (object "CorpusDocument" "Canonical corpus document." corpusFields ∷
-   object "Manifest" "Archive manifest and integrity root." manifestFields ∷
-   object "Prompt" "Independently scheduled immutable Prompt revision." promptFields ∷
-   object "ResponseInteraction" "Learner response policy." responseFields ∷
-   object "Source" "Shared immutable source revision." [] ∷
-   object "Material" "Reusable immutable material revision." [] ∷
-   object "Asset" "Content-addressed local media declaration." [] ∷
-   object "Relationship" "Typed identity-neutral relationship." [] ∷
-   object "Repetition" "Append-only durable review event." [] ∷
-   object "RepetitionCorrection" "Append-only correction event." [] ∷
-   object "Provenance" "Auditable origin record." [] ∷
-   object "Extension" "Versioned capability declaration." [] ∷
-   object "Migration" "Forward migration record." [] ∷
-   object "InteroperabilityReport" "Exactness and loss report." [] ∷ [])
+  ("CorpusDocument" ∷ "Manifest" ∷ [])
+  (object "ResponseInteraction" "ResponseInteraction version-1 wire object." responseInteractionFields ∷
+   object "SelfCheckResponse" "SelfCheckResponse version-1 wire object." selfCheckResponseFields ∷
+   object "EntityReference" "EntityReference version-1 wire object." entityReferenceFields ∷
+   object "ClozeTarget" "ClozeTarget version-1 wire object." clozeTargetFields ∷
+   object "NormalizedPoint" "NormalizedPoint version-1 wire object." normalizedPointFields ∷
+   object "RectangleGeometry" "RectangleGeometry version-1 wire object." rectangleGeometryFields ∷
+   object "PolygonGeometry" "PolygonGeometry version-1 wire object." polygonGeometryFields ∷
+   object "OcclusionRegion" "OcclusionRegion version-1 wire object." occlusionRegionFields ∷
+   object "Source" "Source version-1 wire object." sourceFields ∷
+   object "Material" "Material version-1 wire object." materialFields ∷
+   object "Asset" "Asset version-1 wire object." assetFields ∷
+   object "ExtensionSet" "ExtensionSet version-1 wire object." extensionSetFields ∷
+   object "Prompt" "Prompt version-1 wire object." promptFields ∷
+   object "Relationship" "Relationship version-1 wire object." relationshipFields ∷
+   object "SchedulerObservation" "SchedulerObservation version-1 wire object." schedulerObservationFields ∷
+   object "Repetition" "Repetition version-1 wire object." repetitionFields ∷
+   object "RepetitionCorrection" "RepetitionCorrection version-1 wire object." repetitionCorrectionFields ∷
+   object "Provenance" "Provenance version-1 wire object." provenanceFields ∷
+   object "Extension" "Extension version-1 wire object." extensionFields ∷
+   object "Migration" "Migration version-1 wire object." migrationFields ∷
+   object "InteroperabilityReport" "InteroperabilityReport version-1 wire object." interoperabilityReportFields ∷
+   object "CorpusDocument" "CorpusDocument version-1 wire object." corpusDocumentFields ∷
+   object "ArchiveEntry" "ArchiveEntry version-1 wire object." archiveEntryFields ∷
+   object "Manifest" "Manifest version-1 wire object." manifestFields ∷ [])
   v1Rules
   (example "basic.json" "Basic self-check Prompt." "valid" ∷
    example "cloze.json" "Stable cloze targets." "valid" ∷

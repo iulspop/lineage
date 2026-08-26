@@ -1,89 +1,109 @@
 # Lineage corpus v1: AI authoring specification
 
-# Lineage corpus v1: AI brief
+Portable, locally complete version-1 Lineage corpus and archive format.
 
-Generate only the requested JSON candidate matching `lineage.corpus` version 1.
+## ClozeTarget
 
-## Minimal structure
+ClozeTarget version-1 wire object.
 
-`{ "format": "lineage.corpus", "formatVersion": 1, "corpusId": "...", "prompts": [...] }`
+- `id` (required; scalar; nonEmpty): Stable cloze-target identity. Independent of marker order and wording.
+- `answer` (required; scalar): Withheld target answer. Must be disclosed after reveal.
+- `hints` (optional; array): Optional hints. Hints must not leak the answer.
 
-- Prompt kinds: basic, cloze, image-occlusion.
-- Response modes: `"text"` or `{ "mode": "self-check", "capture": "none" }`.
-- Prompt IDs are stable; revisions are positive and immutable.
-- Keep withheld answers out of every pre-reveal representation and include them in resolution.
-- Resolve all source, material, asset, provenance, extension, history, and relationship references.
-- Never invent media bytes, sizes, paths, or SHA-256 digests. Return media requirements to the host.
-- Do not mutate repetition history; add correction events.
-- A human must preview and explicitly accept before persistence.
+## RectangleGeometry
 
-## Common invalid patterns
+RectangleGeometry version-1 wire object.
 
-Answer leakage; missing resolution answers; duplicate identities; revision 0; unresolved references; missing cloze targets; invalid occlusion geometry; invented asset integrity; unsafe archive paths; non-contiguous migrations; unreported conversion loss.
+- `type` (required; literal): Geometry discriminator. Selects normalized rectangle fields.
+- `x` (required; scalar; maximum): Left coordinate. Inclusive range zero through one.
+- `y` (required; scalar; maximum): Top coordinate. Inclusive range zero through one.
+- `width` (required; scalar; minimum, maximum): Normalized width. Greater than zero and at most one.
+- `height` (required; scalar; minimum, maximum): Normalized height. Greater than zero and at most one.
 
-## Small valid example
+## PolygonGeometry
 
-```json
-{
-  "assets": [],
-  "corpusId": "example-basic",
-  "extensions": [],
-  "format": "lineage.corpus",
-  "formatVersion": 1,
-  "interoperability": [],
-  "materials": [],
-  "migrations": [],
-  "prompts": [
-    {
-      "assets": [],
-      "challenge": [
-        "What is the capital of France?"
-      ],
-      "extensions": {
-        "optional": [],
-        "required": []
-      },
-      "id": "capital-of-france",
-      "kind": "basic",
-      "materials": [],
-      "presentationProfile": "lineage.review/1",
-      "provenance": [],
-      "resolution": [
-        "What is the capital of France?",
-        "Paris"
-      ],
-      "response": {
-        "capture": "none",
-        "mode": "self-check"
-      },
-      "revision": 1,
-      "sources": [],
-      "status": "active",
-      "withheld": [
-        "Paris"
-      ]
-    }
-  ],
-  "provenance": [],
-  "relationships": [],
-  "repetitionCorrections": [],
-  "repetitions": [],
-  "sources": []
-}
-```
+PolygonGeometry version-1 wire object.
 
-## Content and review contracts
+- `type` (required; literal): Geometry discriminator. Selects polygon points.
+- `points` (required; array): Normalized polygon vertices. At least three points.
 
-Challenge and resolution are explicit canonical views. Structured reusable content belongs in Materials and Sources; Prompts reference them without losing a complete review contract. Accessibility descriptions preserve reading order and the disclosure boundary. Cloze targets and occlusion regions have stable IDs independent of position, numbering, wording, or geometry.
+## OcclusionRegion
 
-## Media
+OcclusionRegion version-1 wire object.
 
-AI output may propose an asset ID, media type, accessible description, and purpose. The host obtains bytes, chooses a safe `assets/...` path, computes byte size and SHA-256, and then revalidates dependency closure. Placeholder media examples are intentionally not importable.
+- `id` (required; scalar; nonEmpty): Stable region identity. Geometry changes do not change identity.
+- `label` (required; scalar): Human-readable region label. Must be non-empty.
+- `accessibleDescription` (required; scalar): Accessible equivalent. Must describe the concealed region without leaking its answer.
+- `geometry` (required; taggedChoice): Normalized geometry. Rectangle or polygon with coordinates from zero through one.
+
+## Source
+
+Source version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable Source identity. Pairs with revision.
+- `revision` (required; scalar; minimum): Positive immutable revision. Starts at one.
+- `title` (required; scalar): Source title. Must be non-empty.
+- `content` (required; scalar): Source content. Portable non-executable text.
+- `assets` (optional; array): Referenced assets. All references resolve locally.
+- `provenance` (optional; array): Origin records. All references resolve locally.
+
+## Material
+
+Material version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable Material identity. Pairs with revision.
+- `revision` (required; scalar; minimum): Positive immutable revision. Starts at one.
+- `content` (required; array): Structured portable content. Ordered content blocks.
+- `sources` (optional; array): Source references. All references resolve.
+- `assets` (optional; array): Asset references. All references resolve.
+- `provenance` (optional; array): Origin records. All references resolve.
+
+## Asset
+
+Asset version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable asset identity. Referenced by Prompts, Sources, and Materials.
+- `mediaType` (required; scalar): IANA media type. Must be non-empty.
+- `byteSize` (required; scalar): Exact byte count. Computed by the host from actual bytes.
+- `sha256` (required; scalar; regexPattern): Lowercase SHA-256 digest. Exactly 64 hexadecimal characters, host-computed.
+- `path` (required; scalar): Safe archive-relative path. Must begin assets/ and cannot traverse.
+- `accessibleDescription` (optional; scalar): Accessible media equivalent. Required when media conveys review meaning.
+
+## Prompt
+
+Prompt version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable Prompt identity. One independently scheduled recall stream.
+- `revision` (required; scalar; minimum): Positive immutable revision. Repetitions bind to this exact revision.
+- `status` (optional; enumeration): Lifecycle status. Defaults to active.
+- `kind` (optional; enumeration): Prompt kind. Defaults to basic.
+- `challenge` (required; array): Pre-disclosure content. Must not reveal withheld material.
+- `withheld` (required; array): Concealed answer material. Non-empty and fully disclosed by resolution.
+- `resolution` (required; array): Post-disclosure content. Contains every withheld item.
+- `response` (required; alternatives): Response policy. Typed capture or self-check/no-capture.
+- `materials` (optional; array): Material references. All resolve locally.
+- `sources` (optional; array): Source references. All resolve locally.
+- `assets` (optional; array): Asset references. All resolve to archive bytes when exporting.
+- `clozeTargets` (optional; array): Stable cloze targets. Required for cloze Prompts.
+- `sourceAsset` (optional; reference): Occlusion source image. Required for image occlusion.
+- `occlusionRegions` (optional; array): Stable occlusion regions. Required and non-empty for image occlusion.
+- `presentationProfile` (optional; scalar): Presentation contract version. Defaults to lineage.review/1.
+- `extensions` (optional; objectRef): Prompt extension requirements. Required and optional capabilities are explicit.
+- `provenance` (optional; array): Origin records. All references resolve.
 
 ## Provenance
 
-Use provenance for authorship, citations, licenses, imports, derivations, and corrections. Provenance is evidence of origin, not a truth claim. Preserve source chains.
+Provenance version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable provenance identity. Unique among provenance records.
+- `kind` (required; enumeration): Origin kind. Does not imply truth or trust.
+- `recordedAt` (required; scalar; semanticFormat): Record timestamp. RFC 3339 date-time.
+- `agent` (optional; scalar): Human or software agent. Optional attribution.
+- `citation` (optional; scalar): Citation. Portable source citation.
+- `license` (optional; scalar): License expression. Optional rights information.
+- `note` (optional; scalar): Origin note. Optional explanatory text.
+- `sources` (optional; array): Prior provenance records. Forms append-only derivation chains.
 
 ## Repair protocol
 
-Use stable diagnostic code/path pairs. Modify only named paths, preserve unrelated IDs/revisions/history, revalidate after every attempt, stop at the configured limit, and return unresolved failures for human action.
+Use stable diagnostic code/path pairs. Modify only named paths, preserve unrelated IDs, revisions, and history, revalidate after every attempt, stop at the configured limit, and surface unresolved failures for human action. Media integrity is always computed by the host from actual bytes.

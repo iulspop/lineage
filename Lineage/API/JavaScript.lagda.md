@@ -18,6 +18,8 @@ open import Data.List.Base using (List)
 open import Data.Maybe.Base using (Maybe)
 open import Data.String.Base using (String)
 import Lineage.API.Pure as Pure
+open import Lineage.Specification.FormatDescription using (FormatDescription)
+open import Lineage.Specification.CorpusWireV1 using (v1Description)
 
 open Pure using
   ( RawReviewContract
@@ -64,12 +66,11 @@ capturedResolutionAttempt = Pure.capturedResolutionAttempt
 capturedCompletedAttempt : CompletedSession → Maybe String
 capturedCompletedAttempt = Pure.capturedCompletedAttempt
 
-formatDescriptionJson : String
-formatDescriptionJson = "{\"formatName\":\"lineage.corpus\",\"version\":1,\"entities\":[\"CorpusDocument\",\"Manifest\",\"Prompt\",\"ResponseInteraction\",\"ClozeTarget\",\"OcclusionRegion\",\"Source\",\"Material\",\"Asset\",\"Relationship\",\"Repetition\",\"RepetitionCorrection\",\"Provenance\",\"Extension\",\"Migration\",\"InteroperabilityReport\",\"ArchiveEntry\"],\"promptKinds\":[\"basic\",\"cloze\",\"image-occlusion\"],\"responseModes\":[\"text\",\"self-check\"],\"diagnosticCodes\":[\"structure.invalid\",\"format.unsupported-version\",\"identity.empty\",\"identity.duplicate\",\"identity.duplicate-prompt-revision\",\"revision.non-positive\",\"reference.unresolved\",\"disclosure.withheld-empty\",\"disclosure.answer-leaked\",\"disclosure.answer-missing\",\"response.invalid-self-check\",\"cloze.targets-required\",\"occlusion.source-required\",\"occlusion.regions-required\",\"asset.unresolved\",\"asset.integrity-host-required\",\"asset.path-unsafe\",\"history.prompt-unresolved\",\"history.correction-invalid\",\"migration.chain-invalid\",\"extension.required-unsupported\",\"extension.optional-fallback-missing\",\"interoperability.loss-unreported\",\"manifest.corpus-mismatch\",\"archive.entry-missing\",\"archive.digest-mismatch\",\"archive.duplicate-path\"],\"examples\":[\"basic.json\",\"cloze.json\",\"image-occlusion.json\",\"media.json\"]}"
+formatDescription : FormatDescription
+formatDescription = v1Description
 
 {-# COMPILE JS isValidReviewContract = raw => raw.record({ record: (challenge, resolution, response, withheld) => withheld.every(item => !challenge.includes(item) && resolution.includes(item)) }) #-}
 
 {-# COMPILE JS validateReviewContract = raw => raw.record({ record: (challenge, resolution, response, withheld) => { const valid = withheld.every(item => !challenge.includes(item) && resolution.includes(item)); if (!valid) return visitor => visitor.nothing(); const contract = { record: visitor => visitor.record(challenge, resolution, response, withheld, null, null) }; return visitor => visitor.just(contract); } }) #-}
 
-{-# COMPILE JS formatDescriptionJson = "{\"formatName\":\"lineage.corpus\",\"version\":1,\"entities\":[\"CorpusDocument\",\"Manifest\",\"Prompt\",\"ResponseInteraction\",\"ClozeTarget\",\"OcclusionRegion\",\"Source\",\"Material\",\"Asset\",\"Relationship\",\"Repetition\",\"RepetitionCorrection\",\"Provenance\",\"Extension\",\"Migration\",\"InteroperabilityReport\",\"ArchiveEntry\"],\"promptKinds\":[\"basic\",\"cloze\",\"image-occlusion\"],\"responseModes\":[\"text\",\"self-check\"],\"diagnosticCodes\":[\"structure.invalid\",\"format.unsupported-version\",\"identity.empty\",\"identity.duplicate\",\"identity.duplicate-prompt-revision\",\"revision.non-positive\",\"reference.unresolved\",\"disclosure.withheld-empty\",\"disclosure.answer-leaked\",\"disclosure.answer-missing\",\"response.invalid-self-check\",\"cloze.targets-required\",\"occlusion.source-required\",\"occlusion.regions-required\",\"asset.unresolved\",\"asset.integrity-host-required\",\"asset.path-unsafe\",\"history.prompt-unresolved\",\"history.correction-invalid\",\"migration.chain-invalid\",\"extension.required-unsupported\",\"extension.optional-fallback-missing\",\"interoperability.loss-unreported\",\"manifest.corpus-mismatch\",\"archive.entry-missing\",\"archive.digest-mismatch\",\"archive.duplicate-path\"],\"examples\":[\"basic.json\",\"cloze.json\",\"image-occlusion.json\",\"media.json\"]}" #-}
 ```
