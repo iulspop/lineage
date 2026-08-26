@@ -1,0 +1,359 @@
+import { IconArrowLeft, IconDownload, IconSearch } from "@tabler/icons-react"
+import { Form, Link } from "react-router"
+
+import type { CorpusBrowseProjection } from "./corpus-browse-projection"
+import * as s from "./corpus-detail-page.css"
+import { AppShell } from "~/components/app-shell/app-shell"
+import { PageHeader } from "~/components/ui/page-header"
+
+const tabs = ["overview", "memories", "sources", "history", "advanced"] as const
+
+type CorpusDetailPageProps = CorpusBrowseProjection & {
+  filters: {
+    due: string
+    kind: string
+    query: string
+    source: string
+    status: string
+  }
+  tab: string
+  userEmail: string
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+export function CorpusDetailPage(props: CorpusDetailPageProps) {
+  const activeTab = tabs.includes(props.tab as (typeof tabs)[number])
+    ? props.tab
+    : "overview"
+  const query = props.filters.query.toLocaleLowerCase()
+  const memories = props.memories.filter((memory) => {
+    if (
+      query &&
+      !`${memory.challenge} ${memory.promptId}`
+        .toLocaleLowerCase()
+        .includes(query)
+    )
+      return false
+    if (props.filters.kind !== "all" && memory.kind !== props.filters.kind)
+      return false
+    if (
+      props.filters.status !== "all" &&
+      memory.status !== props.filters.status
+    )
+      return false
+    if (props.filters.due === "due" && !memory.due) return false
+    if (
+      props.filters.due === "scheduled" &&
+      (memory.due || !memory.nextReviewAt)
+    )
+      return false
+    if (
+      props.filters.source !== "all" &&
+      !memory.sourceIds.includes(props.filters.source)
+    )
+      return false
+    return true
+  })
+
+  return (
+    <AppShell userEmail={props.userEmail}>
+      <div className={s.page}>
+        <Link className={s.back} to="/library">
+          <IconArrowLeft aria-hidden="true" /> Library
+        </Link>
+        <PageHeader
+          actions={
+            <a
+              className={s.primaryAction}
+              href={`/library/${encodeURIComponent(props.corpus.corpusId)}/export`}
+            >
+              <IconDownload aria-hidden="true" /> Export
+            </a>
+          }
+          description={`${props.corpus.memoryCount} memories · ${props.corpus.sourceCount} sources · ${props.corpus.assetCount} assets`}
+          eyebrow="Corpus"
+          title={props.corpus.corpusId.replaceAll(/[-_]+/g, " ")}
+        />
+        <nav aria-label="Corpus sections" className={s.tabs}>
+          {tabs.map((tab) => (
+            <Link
+              aria-current={activeTab === tab ? "page" : undefined}
+              className={activeTab === tab ? s.activeTab : s.tab}
+              key={tab}
+              to={`?tab=${tab}`}
+            >
+              {tab}
+            </Link>
+          ))}
+        </nav>
+
+        {activeTab === "overview" && (
+          <>
+            <section aria-label="Corpus summary" className={s.summary}>
+              <div>
+                <span>Memories</span>
+                <strong>{props.corpus.memoryCount}</strong>
+              </div>
+              <div>
+                <span>Sources</span>
+                <strong>{props.corpus.sourceCount}</strong>
+              </div>
+              <div>
+                <span>Revisions</span>
+                <strong>{props.revisions.length}</strong>
+              </div>
+              <div>
+                <span>Compatibility</span>
+                <strong>{props.compatibility.status}</strong>
+              </div>
+            </section>
+            <div className={s.twoColumn}>
+              <section className={s.panel}>
+                <h2>Recently reviewed</h2>
+                {props.history.length === 0 ? (
+                  <p className={s.muted}>No reviews yet.</p>
+                ) : (
+                  <ul className={s.cleanList}>
+                    {props.history.slice(0, 5).map((review) => (
+                      <li key={review.id}>
+                        <Link
+                          to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(review.promptId)}`}
+                        >
+                          {review.promptId}
+                        </Link>
+                        <span>
+                          {review.assessment} · {formatDate(review.reviewedAt)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section className={s.panel}>
+                <h2>Snapshot timeline</h2>
+                <ul className={s.cleanList}>
+                  {props.revisions.slice(0, 5).map((revision) => (
+                    <li key={revision.digest}>
+                      <code>{revision.digest.slice(0, 12)}…</code>
+                      <span>
+                        {revision.memoryCount} memories ·{" "}
+                        {formatDate(revision.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          </>
+        )}
+
+        {activeTab === "memories" && (
+          <section className={s.panel}>
+            <div className={s.toolbar}>
+              <div>
+                <span className={s.eyebrow}>Memories</span>
+                <h2>Browse this corpus</h2>
+              </div>
+            </div>
+            <Form className={s.filters} method="get" role="search">
+              <input name="tab" type="hidden" value="memories" />
+              <label className={s.search}>
+                <IconSearch aria-hidden="true" />
+                <input
+                  aria-label="Search memories"
+                  defaultValue={props.filters.query}
+                  name="q"
+                  placeholder="Search memories"
+                  type="search"
+                />
+              </label>
+              <select
+                aria-label="Memory kind"
+                defaultValue={props.filters.kind}
+                name="kind"
+              >
+                <option value="all">All kinds</option>
+                <option value="basic">Basic</option>
+                <option value="cloze">Cloze</option>
+                <option value="image-occlusion">Image occlusion</option>
+              </select>
+              <select
+                aria-label="Memory status"
+                defaultValue={props.filters.status}
+                name="status"
+              >
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="retired">Retired</option>
+              </select>
+              <select
+                aria-label="Review schedule"
+                defaultValue={props.filters.due}
+                name="due"
+              >
+                <option value="all">Any schedule</option>
+                <option value="due">Due now</option>
+                <option value="scheduled">Scheduled</option>
+              </select>
+              <select
+                aria-label="Source"
+                defaultValue={props.filters.source}
+                name="source"
+              >
+                <option value="all">All sources</option>
+                {props.sources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.title}
+                  </option>
+                ))}
+              </select>
+              <button type="submit">Apply</button>
+            </Form>
+            {memories.length === 0 ? (
+              <p className={s.empty}>No memories match these filters.</p>
+            ) : (
+              <div className={s.memoryList}>
+                {memories.map((memory) => (
+                  <Link
+                    className={s.memory}
+                    key={memory.promptId}
+                    to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(memory.promptId)}`}
+                  >
+                    <div className={s.memoryMain}>
+                      <div className={s.badges}>
+                        <span>{memory.kind}</span>
+                        <span>{memory.status}</span>
+                        {memory.due && <span className={s.due}>due</span>}
+                      </div>
+                      <h3>{memory.challenge}</h3>
+                      <code>{memory.promptId}</code>
+                    </div>
+                    <span className={s.revision}>
+                      {memory.lastAssessment ?? "New"}
+                      <br />
+                      Revision {memory.revision}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeTab === "sources" && (
+          <section className={s.cardGrid}>
+            {props.sources.length === 0 ? (
+              <p className={s.empty}>This corpus has no sources.</p>
+            ) : (
+              props.sources.map((source) => (
+                <article
+                  className={s.panel}
+                  key={`${source.id}:${source.revision}`}
+                >
+                  <span className={s.eyebrow}>
+                    Source · revision {source.revision}
+                  </span>
+                  <h2>{source.title}</h2>
+                  <p>{source.contentPreview || "No source content preview."}</p>
+                  <small>
+                    {source.memoryCount} linked memories · {source.assetCount}{" "}
+                    assets
+                  </small>
+                </article>
+              ))
+            )}
+          </section>
+        )}
+
+        {activeTab === "history" && (
+          <section className={s.panel}>
+            <h2>Review history</h2>
+            {props.history.length === 0 ? (
+              <p className={s.muted}>No reviews yet.</p>
+            ) : (
+              <ol className={s.timeline}>
+                {props.history.map((review) => (
+                  <li key={review.id}>
+                    <div>
+                      <Link
+                        to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(review.promptId)}`}
+                      >
+                        {review.promptId}
+                      </Link>
+                      <strong>{review.assessment}</strong>
+                    </div>
+                    <span>
+                      Prompt revision {review.promptRevision} ·{" "}
+                      {review.intervalMinutes} minute interval ·{" "}
+                      {formatDate(review.reviewedAt)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        )}
+
+        {activeTab === "advanced" && (
+          <div className={s.advancedGrid}>
+            <section className={s.panel}>
+              <h2>Compatibility</h2>
+              <dl className={s.details}>
+                <div>
+                  <dt>Format</dt>
+                  <dd>
+                    {props.advanced.format} v{props.advanced.formatVersion}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Digest</dt>
+                  <dd>
+                    <code>{props.advanced.digest}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Migrations</dt>
+                  <dd>{props.compatibility.migrations}</dd>
+                </div>
+                <div>
+                  <dt>Reported losses</dt>
+                  <dd>{props.compatibility.losses.length}</dd>
+                </div>
+              </dl>
+            </section>
+            <section className={s.panel}>
+              <h2>Extensions</h2>
+              {props.compatibility.extensions.length === 0 ? (
+                <p className={s.muted}>No extensions declared.</p>
+              ) : (
+                <ul>
+                  {props.compatibility.extensions.map((extension) => (
+                    <li key={extension.id}>
+                      <code>{extension.id}</code> {extension.version} ·{" "}
+                      {extension.requirement}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            <section className={s.raw}>
+              <h2>Canonical JSON</h2>
+              <p>
+                This is the validated durable snapshot. Ordinary workflows
+                should use the visual surfaces above.
+              </p>
+              <pre>{props.advanced.canonicalJson}</pre>
+            </section>
+          </div>
+        )}
+      </div>
+    </AppShell>
+  )
+}

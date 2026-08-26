@@ -6,7 +6,7 @@ import { LandingPageComponent } from "~/features/lineage/application/landing-pag
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await getUserId(request)
-  if (userId) throw redirect("/review")
+  if (userId) throw redirect("/today")
 
   return { pageTitle: "Lineage" }
 }

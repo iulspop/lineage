@@ -1,9 +1,12 @@
 import {
+  IconBooks,
   IconBrain,
-  IconDatabase,
+  IconChartBar,
+  IconHelpCircle,
+  IconHome2,
   IconLogout,
   IconMenu2,
-  IconMessageCircle,
+  IconPlus,
   IconSettings,
 } from "@tabler/icons-react"
 import type { ReactNode } from "react"
@@ -22,29 +25,39 @@ type AppShellProps = {
   userEmail: string
 }
 
+const navItems = [
+  { icon: IconHome2, label: "Today", to: "/today" },
+  { icon: IconBooks, label: "Library", to: "/library" },
+  { icon: IconPlus, label: "Create", to: "/create" },
+  { icon: IconChartBar, label: "Insights", to: "/insights" },
+] as const
+
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   cx(s.navLink, isActive && s.navLinkActive)
 
-function PrimaryNavigation({
-  chatUnreadCount = 0,
-  isOwner = false,
-}: Pick<AppShellProps, "chatUnreadCount" | "isOwner">) {
+function PrimaryNavigation() {
   return (
     <nav aria-label="Primary navigation" className={s.navigation}>
-      <NavLink className={navClassName} to="/review">
-        <IconBrain aria-hidden="true" />
-        <span>Review</span>
-      </NavLink>
-      <NavLink className={navClassName} to="/corpora">
-        <IconDatabase aria-hidden="true" />
-        <span>Corpora</span>
-      </NavLink>
-      <NavLink className={navClassName} to={isOwner ? "/owner/chats" : "/chat"}>
-        <IconMessageCircle aria-hidden="true" />
-        <span>{isOwner ? "Chat dashboard" : "Chat with founder"}</span>
-        {chatUnreadCount > 0 ? <Badge>{chatUnreadCount}</Badge> : null}
-      </NavLink>
+      {navItems.map(({ icon: Icon, label, to }) => (
+        <NavLink className={navClassName} key={to} to={to}>
+          <Icon aria-hidden="true" />
+          <span>{label}</span>
+        </NavLink>
+      ))}
     </nav>
+  )
+}
+
+function SupportLink({
+  chatUnreadCount,
+  isOwner,
+}: Pick<AppShellProps, "chatUnreadCount" | "isOwner">) {
+  return (
+    <NavLink className={s.accountLink} to={isOwner ? "/owner/chats" : "/chat"}>
+      <IconHelpCircle aria-hidden="true" />
+      <span>{isOwner ? "Support inbox" : "Help & feedback"}</span>
+      {chatUnreadCount ? <Badge>{chatUnreadCount}</Badge> : null}
+    </NavLink>
   )
 }
 
@@ -61,20 +74,18 @@ function AppShell({
         Skip to content
       </a>
       <header className={s.header}>
-        <NavLink aria-label="Lineage review" className={s.brand} to="/review">
+        <NavLink aria-label="Lineage home" className={s.brand} to="/today">
           <IconBrain aria-hidden="true" className={s.brandMark} />
           <span className={s.brandName}>Lineage</span>
         </NavLink>
         <div className={s.desktopNavigation}>
-          <PrimaryNavigation
-            chatUnreadCount={chatUnreadCount}
-            isOwner={isOwner}
-          />
+          <PrimaryNavigation />
         </div>
         <div className={s.account}>
           <span className={s.accountEmail} title={userEmail}>
             {userEmail}
           </span>
+          <SupportLink chatUnreadCount={chatUnreadCount} isOwner={isOwner} />
           <NavLink className={s.accountLink} to="/settings">
             <IconSettings aria-hidden="true" />
             <span>Settings</span>
@@ -87,18 +98,14 @@ function AppShell({
           </Form>
         </div>
         <details className={s.mobileAccount}>
-          <summary aria-label="Open navigation menu">
+          <summary aria-label="Open account menu">
             <IconMenu2 aria-hidden="true" />
           </summary>
           <div className={s.mobileAccountMenu}>
             <span className={s.mobileAccountEmail} title={userEmail}>
               {userEmail}
             </span>
-            <PrimaryNavigation
-              chatUnreadCount={chatUnreadCount}
-              isOwner={isOwner}
-            />
-            <div className={s.mobileMenuSeparator} />
+            <SupportLink chatUnreadCount={chatUnreadCount} isOwner={isOwner} />
             <NavLink className={s.accountLink} to="/settings">
               <IconSettings aria-hidden="true" />
               <span>Settings</span>
@@ -114,13 +121,16 @@ function AppShell({
       </header>
       {canClaimOwner ? (
         <div className={s.ownerPrompt}>
-          <span>Your account can claim the owner chat seat.</span>
+          <span>Your account can claim the owner support seat.</span>
           <NavLink to="/owner/claim">Set up owner access</NavLink>
         </div>
       ) : null}
       <main className={s.main} id="main-content">
         {children}
       </main>
+      <div className={s.mobileNavigation}>
+        <PrimaryNavigation />
+      </div>
     </div>
   )
 }

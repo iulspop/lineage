@@ -22,17 +22,15 @@ export const skipLink = style({
 
 export const header = style({
   "@media": {
-    "screen and (max-width: 48rem)": {
-      gridTemplateColumns: "minmax(0, 1fr) auto",
-    },
     "screen and (max-width: 64rem)": {
       alignItems: "center",
       borderBottom: `1px solid ${theme.color.border.default}`,
       borderRight: 0,
       bottom: "auto",
-      display: "grid",
-      gridTemplateColumns: "auto minmax(0, 1fr) auto",
+      display: "flex",
+      flexDirection: "row",
       height: theme.layout.shellHeaderHeight,
+      justifyContent: "space-between",
       padding: `0 ${theme.space[4]}`,
       right: 0,
       width: "auto",
@@ -44,7 +42,7 @@ export const header = style({
   display: "flex",
   flexDirection: "column",
   left: 0,
-  padding: `${theme.space[4]} ${theme.space[3]}`,
+  padding: `${theme.space[5]} ${theme.space[3]} ${theme.space[4]}`,
   position: "fixed",
   top: 0,
   width: theme.layout.railWidth,
@@ -64,19 +62,19 @@ export const brand = style({
 })
 
 export const brandMark = style({
-  color: theme.color.intent.primary.background,
-  height: "1.125rem",
+  color: theme.color.accent.solid,
+  height: "1.25rem",
   strokeWidth: 1.9,
-  width: "1.125rem",
+  width: "1.25rem",
 })
 
-export const brandName = style({})
+export const brandName = style({
+  letterSpacing: theme.font.letterSpacing.tight,
+})
 
 export const desktopNavigation = style({
-  "@media": {
-    "screen and (max-width: 64rem)": { display: "none" },
-  },
-  marginTop: theme.space[5],
+  "@media": { "screen and (max-width: 64rem)": { display: "none" } },
+  marginTop: theme.space[6],
 })
 
 export const navigation = style({
@@ -87,14 +85,14 @@ export const navigation = style({
 
 export const navLink = style({
   alignItems: "center",
-  borderRadius: theme.radius.sm,
+  borderRadius: theme.radius.md,
   color: theme.color.text.secondary,
   display: "flex",
   fontSize: theme.font.role.body,
   fontWeight: theme.font.weight.medium,
-  gap: theme.space[2],
-  minHeight: theme.layout.controlHeightCompact,
-  paddingInline: theme.space[2],
+  gap: theme.space[3],
+  minHeight: theme.layout.controlHeight,
+  paddingInline: theme.space[3],
   selectors: {
     "&:hover": {
       background: theme.color.background.subtle,
@@ -102,18 +100,19 @@ export const navLink = style({
     },
   },
   textDecoration: "none",
+  transition: `background ${theme.duration.fast} ${theme.easing.standard}, color ${theme.duration.fast} ${theme.easing.standard}`,
 })
 
 globalStyle(`${navLink} > svg`, {
   flexShrink: 0,
-  height: "1.125rem",
-  strokeWidth: 1.9,
-  width: "1.125rem",
+  height: "1.2rem",
+  strokeWidth: 1.8,
+  width: "1.2rem",
 })
 
 export const navLinkActive = style({
-  background: theme.color.background.elevated,
-  color: theme.color.text.primary,
+  background: theme.color.accent.subtle,
+  color: theme.color.accent.foreground,
 })
 
 export const account = style({
@@ -142,8 +141,8 @@ globalStyle(`${account} form`, { display: "flex" })
 globalStyle(`${account} form button`, {
   fontWeight: theme.font.weight.medium,
   justifyContent: "flex-start",
-  minHeight: theme.layout.controlHeightCompact,
-  paddingInline: theme.space[2],
+  minHeight: theme.layout.controlHeight,
+  paddingInline: theme.space[3],
   width: "100%",
 })
 
@@ -166,14 +165,15 @@ globalStyle(`${mobileAccount} summary`, {
 })
 
 globalStyle(`${mobileAccount} summary > svg`, {
-  height: "1.125rem",
-  strokeWidth: 1.9,
-  width: "1.125rem",
+  height: "1.25rem",
+  strokeWidth: 1.8,
+  width: "1.25rem",
 })
 
 globalStyle(`${mobileAccount} summary::-webkit-details-marker`, {
   display: "none",
 })
+
 globalStyle(`${mobileAccount} summary:hover`, {
   background: theme.color.background.subtle,
   color: theme.color.text.primary,
@@ -190,12 +190,6 @@ export const mobileAccountMenu = style({
   position: "absolute",
   right: 0,
   top: `calc(100% + ${theme.space[2]})`,
-})
-
-export const mobileMenuSeparator = style({
-  background: theme.color.border.default,
-  height: "1px",
-  marginBlock: theme.space[1],
 })
 
 export const mobileAccountEmail = style({
@@ -215,8 +209,37 @@ globalStyle(`${mobileAccountMenu} form button`, {
   fontWeight: theme.font.weight.medium,
   justifyContent: "flex-start",
   minHeight: theme.layout.mobileControlHeight,
-  paddingInline: theme.space[2],
+  paddingInline: theme.space[3],
   width: "100%",
+})
+
+export const mobileNavigation = style({
+  "@media": {
+    "screen and (max-width: 48rem)": { display: "block" },
+  },
+  background: theme.color.background.elevated,
+  borderTop: `1px solid ${theme.color.border.default}`,
+  bottom: 0,
+  display: "none",
+  left: 0,
+  padding: `${theme.space[1]} ${theme.space[2]} calc(${theme.space[1]} + env(safe-area-inset-bottom))`,
+  position: "fixed",
+  right: 0,
+  zIndex: theme.zIndex.progress,
+})
+
+globalStyle(`${mobileNavigation} nav`, {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+})
+
+globalStyle(`${mobileNavigation} ${navLink}`, {
+  flexDirection: "column",
+  fontSize: theme.font.role.metadata,
+  gap: "0.125rem",
+  justifyContent: "center",
+  minHeight: "3.5rem",
+  padding: theme.space[1],
 })
 
 export const ownerPrompt = style({
@@ -245,12 +268,12 @@ globalStyle(`${ownerPrompt} a`, {
 export const main = style({
   "@media": {
     "screen and (max-width: 48rem)": {
-      paddingBottom: theme.space[4],
-      paddingInline: theme.space[3],
+      paddingBottom: "6rem",
+      paddingInline: theme.space[4],
     },
     "screen and (max-width: 64rem)": {
       marginLeft: 0,
-      paddingTop: `calc(${theme.layout.shellHeaderHeight} + ${theme.space[5]})`,
+      paddingTop: `calc(${theme.layout.shellHeaderHeight} + ${theme.space[6]})`,
     },
   },
   marginLeft: theme.layout.railWidth,

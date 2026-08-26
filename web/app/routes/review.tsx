@@ -22,7 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     snapshotStore: corpusSnapshotStore,
     userId,
   })
-  if (corpora.length === 0) throw redirect("/corpora")
+  if (corpora.length === 0) throw redirect("/library")
 
   const requestedCorpusId = new URL(request.url).searchParams.get("corpusId")
   const corpusId = corpora.some(

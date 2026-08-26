@@ -4,6 +4,22 @@ import type {
 } from "../domain/corpus-ports"
 import { prisma } from "~/utils/db.server"
 
+export async function listCorpusSnapshotRevisions(
+  ownerId: string,
+  corpusId: string,
+) {
+  return prisma.lineageCorpusSnapshot.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: {
+      canonicalJson: true,
+      createdAt: true,
+      digest: true,
+      formatVersion: true,
+    },
+    where: { corpusId, ownerId },
+  })
+}
+
 export const corpusSnapshotStore: CorpusSnapshotStore = {
   async append(ownerId, snapshot) {
     await prisma.lineageCorpusSnapshot.upsert({

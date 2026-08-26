@@ -58,6 +58,42 @@ export async function setupTestUser(overrides: { email?: string } = {}) {
   }
 }
 
+export async function setupLineageCorpus(
+  ownerId: string,
+  corpusId = "powers-of-i",
+) {
+  const prisma = createPrisma()
+  const document = {
+    corpusId,
+    format: "lineage.corpus",
+    formatVersion: 1,
+    prompts: [
+      {
+        challenge: ["What is i squared?"],
+        id: "powers-i-2",
+        resolution: ["-1"],
+        response: { capture: "none", mode: "self-check" },
+        revision: 1,
+        withheld: ["-1"],
+      },
+    ],
+  }
+
+  try {
+    await prisma.lineageCorpusSnapshot.create({
+      data: {
+        canonicalJson: JSON.stringify(document),
+        corpusId,
+        digest: `e2e-${corpusId}-${Date.now()}`,
+        formatVersion: 1,
+        ownerId,
+      },
+    })
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 export async function setupChatOwner(email: string) {
   const prisma = createPrisma()
 
