@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  email                 String             @unique
+  emailVerifiedAt       DateTime?
+  lastSeenAt            DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  connections           Connection[]
+  passkeys              Passkey[]
+  sessions              Session[]
+  ownerClaim            OwnerClaim?
+  ownedConversations    ChatConversation[] @relation("ConversationOwner")
+  chatConversation      ChatConversation?  @relation("ConversationUser")
+  sentChatMessages      ChatMessage[]      @relation("MessageSender")
+  receivedNotifications ChatNotification[] @relation("NotificationRecipient")
+  chatTypingStates      ChatTypingState[]
+}
+
+model Todo {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  userId         String
+  expirationDate DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Verification {
+  id        String   @id @default(cuid())
+  type      String
+  target    String
+  secret    String
+  algorithm String
+  digits    Int
+  period    Int
+  charSet   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([type, target])
+}
+
+model Connection {
+  id           String   @id @default(cuid())
+  providerName String
+  providerId   String
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerName, providerId])
+  @@index([userId])
+}
+
+model Passkey {
+  id                   String   @id @default(cuid())
+  credentialId         String   @unique
+  credentialPublicKey  String
+  counter              Int
+  transports           String
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  userId               String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OwnerClaim {
+  singletonKey Int      @id @default(1)
+  userId       String   @unique
+  claimedAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatConversation {
+  id          String        @id @default(cuid())
+  userId      String        @unique
+  ownerId     String
+  userReadAt  DateTime?
+  ownerReadAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation("ConversationUser", fields: [userId], references: [id], onDelete: Cascade)
+  owner       User          @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  messages    ChatMessage[]
+  typingStates ChatTypingState[]
+
+  @@index([ownerId, updatedAt])
+}
+
+model ChatTypingState {
+  conversationId String
+  userId         String
+  expiresAt      DateTime
+  updatedAt      DateTime         @updatedAt
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([expiresAt])
+  @@index([userId, expiresAt])
+}
+
+model ChatMessage {
+  id             String             @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String             @default("")
+  createdAt      DateTime           @default(now())
+  conversation   ChatConversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  attachments    ChatAttachment[]
+  notifications  ChatNotification[]
+
+  @@index([conversationId, createdAt, id])
+  @@index([senderId])
+}
+
+model ChatAttachment {
+  id           String      @id @default(cuid())
+  messageId    String
+  storageName  String      @unique
+  originalName String
+  mimeType     String
+  byteSize     Int
+  createdAt    DateTime    @default(now())
+  message      ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+model ChatNotification {
+  id          String      @id @default(cuid())
+  messageId   String
+  recipientId String
+  channel     String
+  status      String
+  attemptedAt DateTime    @default(now())
+  errorCode   String?
+  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  recipient   User        @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, recipientId, channel])
+  @@index([recipientId, attemptedAt])
+}

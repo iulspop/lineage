@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+    inputs:
+      run_checks:
+        description: Run all CI checks
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  lint:
+    name: ⬣ Biome
+    if: vars.RUN_CI == 'true' || inputs.run_checks == true
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: useblacksmith/checkout@v1
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔐 Load Infisical secrets
+        uses: Infisical/secrets-action@v1.0.9
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: dev
+          secret-path: /web
+
+      - name: 🔬 Lint
+        run: pnpm lint
+
+  type-check:
+    name: ʦ TypeScript
+    if: vars.RUN_CI == 'true' || inputs.run_checks == true
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: useblacksmith/checkout@v1
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔐 Load Infisical secrets
+        uses: Infisical/secrets-action@v1.0.9
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: dev
+          secret-path: /web
+
+      - name: 🔎 Type check
+        run: pnpm typecheck
+
+  vitest:
+    name: ⚡ Vitest
+    if: vars.RUN_CI == 'true' || inputs.run_checks == true
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: useblacksmith/checkout@v1
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔐 Load Infisical secrets
+        uses: Infisical/secrets-action@v1.0.9
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: dev
+          secret-path: /web
+
+      - name: 🛠 Setup Database
+        run: pnpm prisma generate && pnpm prisma migrate dev
+
+      - name: ⚡ Run vitest
+        run: pnpm test -- --coverage
+
+  playwright-chrome:
+    name: 🎭 Playwright Chrome
+    if: vars.RUN_CI == 'true' || inputs.run_checks == true
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: useblacksmith/checkout@v1
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔐 Load Infisical secrets
+        uses: Infisical/secrets-action@v1.0.9
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: dev
+          secret-path: /web
+
+      - name: 🌐 Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: 🛠 Setup Database
+        run: pnpm prisma generate && pnpm prisma migrate dev
+
+      - name: 🏗️ Build Application
+        run: pnpm build
+
+      - name: 🎭 Playwright Run Chrome
+        run: npx playwright test --project=chromium --reporter=list
+
+      - name: 📸 Playwright Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

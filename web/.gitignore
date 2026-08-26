@@ -1,0 +1,28 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+/node_modules/
+
+# Prisma
+/generated/prisma/
+prisma/*.db
+prisma/*.db-journal
+
+# React Router
+/.react-router/
+/build/
+
+# Test
+/coverage/
+/playwright-report/
+/blob-report/
+/test-results/
+app/test/mocks/fixtures/
+tests/fixtures/openimg/
+
+# Storybook
+/storybook-static/
+
+# Image optimization cache
+/data/images/
