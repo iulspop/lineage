@@ -6,6 +6,7 @@ import Lineage.Specification.Asset
 import Lineage.Specification.Cloze
 import Lineage.Specification.DependencyClosure
 import Lineage.Specification.ImageOcclusion
+import Lineage.Specification.MaterialSource
 import Lineage.Specification.ReviewContract
 import Lineage.Specification.Prompt
 import Lineage.Specification.Provenance
@@ -17,6 +18,7 @@ import Lineage.Implementation.Asset
 import Lineage.Implementation.Cloze
 import Lineage.Implementation.DependencyClosure
 import Lineage.Implementation.ImageOcclusion
+import Lineage.Implementation.MaterialSource
 import Lineage.Implementation.ReviewContract
 import Lineage.Implementation.Prompt
 import Lineage.Implementation.Provenance
@@ -28,6 +30,7 @@ import Lineage.Validation.Asset
 import Lineage.Validation.Cloze
 import Lineage.Validation.DependencyClosure
 import Lineage.Validation.ImageOcclusion
+import Lineage.Validation.MaterialSource
 import Lineage.Validation.ReviewContract
 import Lineage.Validation.Prompt
 import Lineage.Validation.Provenance
@@ -36,6 +39,7 @@ import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
 import Lineage.Denotation.Cloze
 import Lineage.Denotation.ImageOcclusion
+import Lineage.Denotation.MaterialSource
 import Lineage.Denotation.DependencyClosure
 import Lineage.Denotation.ReviewContract
 import Lineage.Denotation.Prompt
@@ -48,6 +52,7 @@ import Lineage.Correctness.Asset
 import Lineage.Correctness.Cloze
 import Lineage.Correctness.DependencyClosure
 import Lineage.Correctness.ImageOcclusion
+import Lineage.Correctness.MaterialSource
 import Lineage.Correctness.ReviewContract
 import Lineage.Correctness.Prompt
 import Lineage.Correctness.Provenance
@@ -59,6 +64,7 @@ import Lineage.Examples.Asset
 import Lineage.Examples.Cloze
 import Lineage.Examples.DependencyClosure
 import Lineage.Examples.ImageOcclusion
+import Lineage.Examples.MaterialSource
 import Lineage.Examples.ReviewContract
 import Lineage.Examples.Prompt
 import Lineage.Examples.Provenance
