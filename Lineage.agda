@@ -12,6 +12,7 @@ import Lineage.Specification.Manifest
 import Lineage.Specification.MaterialSource
 import Lineage.Specification.Migration
 import Lineage.Specification.ReviewContract
+import Lineage.Specification.ReviewOutcome
 import Lineage.Specification.ReviewSession
 import Lineage.Specification.Prompt
 import Lineage.Specification.Provenance
@@ -30,6 +31,7 @@ import Lineage.Implementation.Manifest
 import Lineage.Implementation.MaterialSource
 import Lineage.Implementation.Migration
 import Lineage.Implementation.ReviewContract
+import Lineage.Implementation.ReviewOutcome
 import Lineage.Implementation.ReviewSession
 import Lineage.Implementation.Prompt
 import Lineage.Implementation.Provenance
@@ -63,6 +65,7 @@ import Lineage.Denotation.MaterialSource
 import Lineage.Denotation.Migration
 import Lineage.Denotation.DependencyClosure
 import Lineage.Denotation.ReviewContract
+import Lineage.Denotation.ReviewOutcome
 import Lineage.Denotation.ReviewSession
 import Lineage.Denotation.Prompt
 import Lineage.Denotation.Provenance
@@ -81,6 +84,7 @@ import Lineage.Correctness.Manifest
 import Lineage.Correctness.MaterialSource
 import Lineage.Correctness.Migration
 import Lineage.Correctness.ReviewContract
+import Lineage.Correctness.ReviewOutcome
 import Lineage.Correctness.ReviewSession
 import Lineage.Correctness.Prompt
 import Lineage.Correctness.Provenance
@@ -99,6 +103,7 @@ import Lineage.Examples.Manifest
 import Lineage.Examples.MaterialSource
 import Lineage.Examples.Migration
 import Lineage.Examples.ReviewContract
+import Lineage.Examples.ReviewOutcome
 import Lineage.Examples.ReviewSession
 import Lineage.Examples.Prompt
 import Lineage.Examples.Provenance
