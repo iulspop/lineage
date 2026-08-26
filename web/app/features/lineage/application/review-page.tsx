@@ -1,4 +1,4 @@
-import { Form } from "react-router"
+import { Form, Link } from "react-router"
 
 import * as s from "./review-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
@@ -86,6 +86,14 @@ export function ReviewPage({
                 ? "Due now"
                 : `Next review ${new Date(loaderData.dueAt ?? "").toLocaleString()}`}
             </p>
+            {loaderData.prompt && (
+              <Link
+                className={s.memoryLink}
+                to={`/library/${encodeURIComponent(loaderData.corpusId)}/memories/${encodeURIComponent(loaderData.prompt.id)}`}
+              >
+                Inspect or revise this memory
+              </Link>
+            )}
           </div>
         </header>
 

@@ -69,6 +69,39 @@ test.describe("Lineage daily workspace", () => {
     await expect(page.getByText("-1", { exact: true })).toBeVisible()
   })
 
+  test("given: a manual draft, should: preview, save, revise, and suspend a memory", async ({
+    page,
+  }) => {
+    await loginAsTestUser(page)
+
+    await page.goto("/create/manual")
+    await page.getByLabel("Corpus").fill("calculus")
+    await page.getByLabel("Stable memory ID").fill("derivative")
+    await page.getByLabel("Challenge").fill("What is a derivative?")
+    await page
+      .getByLabel("Answer")
+      .fill("The instantaneous rate of change of a function.")
+    await page.getByRole("button", { name: "Validate and preview" }).click()
+    await expect(
+      page.getByRole("complementary").getByText("What is a derivative?"),
+    ).toBeVisible()
+    await page.getByRole("button", { name: "Approve and save memory" }).click()
+
+    await expect(page).toHaveURL(/\/library\/calculus\/memories\/derivative$/)
+    await expect(
+      page.getByRole("heading", { name: "derivative" }),
+    ).toBeVisible()
+    await page.getByRole("link", { name: "Revise" }).click()
+    await expect(page).toHaveURL(/\/edit$/)
+    await page.getByLabel("Challenge").fill("What does a derivative measure?")
+    await page.getByRole("button", { name: "Validate and preview" }).click()
+    await page.getByRole("button", { name: "Approve and save memory" }).click()
+
+    await expect(page.getByText(/revision 2/)).toBeVisible()
+    await page.getByRole("button", { name: "Suspend" }).click()
+    await expect(page.getByText(/revision 3 · suspended/)).toBeVisible()
+  })
+
   test("given: a due memory, should: start review from Today", async ({
     page,
   }) => {

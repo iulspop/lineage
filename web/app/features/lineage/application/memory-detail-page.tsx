@@ -1,4 +1,9 @@
-import { IconArrowLeft, IconEye, IconPlayerPlay } from "@tabler/icons-react"
+import {
+  IconArrowLeft,
+  IconEdit,
+  IconEye,
+  IconPlayerPlay,
+} from "@tabler/icons-react"
 import { useState } from "react"
 import { Form, Link } from "react-router"
 
@@ -32,6 +37,12 @@ export function MemoryDetailPage(props: Props) {
         <PageHeader
           actions={
             <div className={s.actions}>
+              <Link
+                className={s.secondaryAction}
+                to={`/library/${encodeURIComponent(props.corpusId)}/memories/${encodeURIComponent(memory.promptId)}/edit`}
+              >
+                <IconEdit aria-hidden="true" /> Revise
+              </Link>
               <Form method="post">
                 <input
                   name="baseDigest"

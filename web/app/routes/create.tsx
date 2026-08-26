@@ -5,7 +5,7 @@ import { requireUserId } from "~/features/auth/application/auth-session.server"
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireUserId(request)
-  throw redirect("/create/import")
+  throw redirect("/create/manual")
 }
 
 export default function CreateRedirect() {

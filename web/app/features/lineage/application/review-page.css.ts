@@ -35,6 +35,12 @@ export const progress = style({
   textAlign: "right",
 })
 
+export const memoryLink = style({
+  color: theme.color.intent.primary.background,
+  fontWeight: theme.font.weight.semibold,
+  textDecoration: "none",
+})
+
 export const corpusPicker = style({
   alignItems: "end",
   display: "grid",
