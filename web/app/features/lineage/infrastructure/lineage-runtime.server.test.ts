@@ -48,6 +48,43 @@ describe("generated Lineage runtime", () => {
     })
   })
 
+  test("given: a minimal wire document, should: canonicalize optional fields before Agda validation", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      corpusId: "corpus-france",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [contract],
+    })
+    if (!result) throw new Error("Structured validation is unavailable")
+
+    expect(result.valid).toBe(true)
+    if (!result.valid) throw new Error("Expected valid corpus")
+    expect(result.document).toMatchObject({
+      assets: [],
+      extensions: [],
+      interoperability: [],
+      materials: [],
+      migrations: [],
+      prompts: [
+        {
+          assets: [],
+          extensions: { optional: [], required: [] },
+          kind: "basic",
+          materials: [],
+          presentationProfile: "lineage.review/1",
+          provenance: [],
+          sources: [],
+          status: "active",
+        },
+      ],
+      provenance: [],
+      relationships: [],
+      repetitionCorrections: [],
+      repetitions: [],
+      sources: [],
+    })
+  })
+
   test("given: an image-occlusion candidate without media, should: report dependency diagnostics", () => {
     const result = lineageRuntime.validateCorpus?.({
       corpusId: "corpus-image",

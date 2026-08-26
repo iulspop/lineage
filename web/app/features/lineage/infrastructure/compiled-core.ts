@@ -10,6 +10,8 @@ import {
 } from "../domain/corpus"
 import type { ReviewContractValidator } from "../domain/corpus-ports"
 
+type AgdaValue = unknown
+type AgdaConstructor = (value: unknown) => AgdaValue
 type RawReviewContract = unknown
 type CompiledLineageApi = {
   isValidReviewContract(raw: RawReviewContract): boolean
@@ -18,7 +20,48 @@ type CompiledLineageApi = {
   ): (
     resolution: string[],
   ) => (response: string) => (withheld: string[]) => RawReviewContract
+  some: (erased: unknown) => AgdaConstructor
+  none: AgdaConstructor
+  promptKind: AgdaConstructor
+  lifecycle: AgdaConstructor
+  requirementLevel: AgdaConstructor
+  relationshipKind: AgdaConstructor
+  repetitionRating: AgdaConstructor
+  provenanceKind: AgdaConstructor
+  conversionStatus: AgdaConstructor
+  responseInteraction: AgdaConstructor
+  entityReference: AgdaConstructor
+  extensionSet: AgdaConstructor
+  normalizedPoint: AgdaConstructor
+  rectangleGeometry: AgdaConstructor
+  polygonGeometry: AgdaConstructor
+  rectangleGeometryValue: AgdaConstructor
+  polygonGeometryValue: AgdaConstructor
+  assetReference: AgdaConstructor
+  clozeTarget: AgdaConstructor
+  occlusionRegion: AgdaConstructor
+  sourceRevision: AgdaConstructor
+  materialRevision: AgdaConstructor
+  prompt: AgdaConstructor
+  schedulerObservation: AgdaConstructor
+  repetition: AgdaConstructor
+  repetitionCorrection: AgdaConstructor
+  relationship: AgdaConstructor
+  provenanceRecord: AgdaConstructor
+  extensionDeclaration: AgdaConstructor
+  migrationRecord: AgdaConstructor
+  interoperabilityReport: AgdaConstructor
+  corpusDocument: AgdaConstructor
+  validateCorpus(document: AgdaValue): AgdaValue[]
 }
+
+const apply = (agdaConstructor: AgdaConstructor, ...values: unknown[]) =>
+  values.reduce<AgdaValue>(
+    (current, value) => (current as AgdaConstructor)(value),
+    agdaConstructor,
+  )
+
+const natural = (value: number) => BigInt(value)
 
 export function createCompiledCoreValidator(
   api: CompiledLineageApi,
@@ -38,7 +81,9 @@ export function createCompiledCoreValidator(
           diagnostics: structuralDiagnostics(parsed.error),
           valid: false,
         }
-      const diagnostics = semanticDiagnostics(parsed.data, isValid)
+      const diagnostics = api
+        .validateCorpus(toAgdaCorpus(api, parsed.data))
+        .map(decodeDiagnostic)
       return diagnostics.length
         ? { diagnostics, valid: false }
         : { diagnostics: [], document: parsed.data, valid: true }
@@ -46,276 +91,275 @@ export function createCompiledCoreValidator(
   }
 }
 
-function semanticDiagnostics(
-  document: CorpusDocument,
-  coreValid: (contract: ReviewContract) => boolean,
-): LineageDiagnostic[] {
-  const diagnostics: LineageDiagnostic[] = []
-  const assets = new Set(document.assets.map(({ id }) => id))
-  const sources = new Set(document.sources.map(({ id }) => id))
-  const materials = new Set(document.materials.map(({ id }) => id))
-  const provenance = new Set(document.provenance.map(({ id }) => id))
-  const extensions = new Map(document.extensions.map((item) => [item.id, item]))
-  const promptKeys = new Set<string>()
-  const repetitionIds = new Set<string>()
-
-  document.prompts.forEach((prompt, promptIndex) => {
-    const path = `/prompts/${promptIndex}`
-    const key = `${prompt.id}\u0000${prompt.revision}`
-    duplicate(
-      promptKeys,
-      key,
-      `${path}`,
-      diagnostics,
-      "identity.duplicate-prompt-revision",
+// This is the explicit canonical-host → Agda boundary. Zod materializes all
+// documented defaults before this function runs; absent wire values become
+// Agda Maybe.none, while wire names such as sha256 map positionally to the
+// identically named canonical Agda fields. Keep this mapping exhaustive.
+function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
+  const maybe = (value: unknown) =>
+    value === undefined ? api.none(undefined) : api.some(undefined)(value)
+  const strings = (values: string[]) => values
+  const reference = (value: { id: string; revision?: number }) =>
+    apply(
+      api.entityReference,
+      value.id,
+      maybe(value.revision && natural(value.revision)),
     )
-
-    prompt.withheld.forEach((answer, withheldIndex) => {
-      const normalized = answer.toLocaleLowerCase()
-      const challengeIndex = prompt.challenge.findIndex((item) =>
-        item.toLocaleLowerCase().includes(normalized),
+  const extensionSet = (value: { optional: string[]; required: string[] }) =>
+    apply(api.extensionSet, strings(value.required), strings(value.optional))
+  const geometry = (
+    value: CorpusDocument["prompts"][number]["occlusionRegions"] extends
+      | (infer Region)[]
+      | undefined
+      ? Region extends { geometry: infer Geometry }
+        ? Geometry
+        : never
+      : never,
+  ) => {
+    if (value.type === "rectangle")
+      return api.rectangleGeometryValue(
+        apply(
+          api.rectangleGeometry,
+          value.x,
+          value.y,
+          value.width,
+          value.height,
+        ),
       )
-      if (challengeIndex >= 0)
-        diagnostics.push(
-          error(
-            "disclosure.answer-leaked",
-            `${path}/challenge/${challengeIndex}`,
-            "Challenge content contains a withheld answer.",
-            `${path}/withheld/${withheldIndex}`,
+    return api.polygonGeometryValue(
+      api.polygonGeometry(
+        value.points.map((point) =>
+          apply(api.normalizedPoint, point.x, point.y),
+        ),
+      ),
+    )
+  }
+  const prompts = document.prompts.map((value) =>
+    apply(
+      api.prompt,
+      value.id,
+      natural(value.revision),
+      api.lifecycle(value.status),
+      api.promptKind(value.kind),
+      value.challenge,
+      value.withheld,
+      value.resolution,
+      api.responseInteraction(
+        typeof value.response === "string"
+          ? value.response
+          : value.response.mode,
+      ),
+      value.materials,
+      value.sources,
+      value.assets,
+      maybe(
+        value.clozeTargets?.map((target) =>
+          apply(api.clozeTarget, target.id, target.answer, maybe(target.hints)),
+        ),
+      ),
+      maybe(value.sourceAsset),
+      maybe(
+        value.occlusionRegions?.map((region) =>
+          apply(
+            api.occlusionRegion,
+            region.id,
+            region.label,
+            geometry(region.geometry),
+            region.accessibleDescription,
           ),
-        )
-      if (!prompt.resolution.some((item) => item.includes(answer)))
-        diagnostics.push(
-          error(
-            "disclosure.answer-missing",
-            `${path}/resolution`,
-            "Resolution content omits a withheld answer.",
-            `${path}/withheld/${withheldIndex}`,
+        ),
+      ),
+      value.presentationProfile,
+      extensionSet(value.extensions),
+      value.provenance,
+    ),
+  )
+  const sources = document.sources.map((value) =>
+    apply(
+      api.sourceRevision,
+      value.id,
+      natural(value.revision),
+      value.title,
+      value.content,
+      value.assets,
+      value.provenance,
+    ),
+  )
+  const materials = document.materials.map((value) =>
+    apply(
+      api.materialRevision,
+      value.id,
+      natural(value.revision),
+      value.content,
+      value.sources,
+      value.assets,
+      value.provenance,
+    ),
+  )
+  const assets = document.assets.map((value) =>
+    apply(
+      api.assetReference,
+      value.id,
+      value.mediaType,
+      value.sha256,
+      natural(value.byteSize),
+      value.path,
+      maybe(value.accessibleDescription),
+    ),
+  )
+  const relationships = document.relationships.map((value) =>
+    apply(
+      api.relationship,
+      value.id,
+      api.relationshipKind(value.kind),
+      reference(value.source),
+      reference(value.target),
+    ),
+  )
+  const repetitions = document.repetitions.map((value) => {
+    const scheduler = value.scheduler
+      ? apply(
+          api.schedulerObservation,
+          value.scheduler.family,
+          value.scheduler.version,
+          maybe(value.scheduler.parameterDigest),
+          maybe(
+            value.scheduler.previousIntervalMinutes === undefined
+              ? undefined
+              : natural(value.scheduler.previousIntervalMinutes),
           ),
-        )
-    })
-    if (
-      !coreValid(prompt) &&
-      !diagnostics.some((item) => item.path.startsWith(path))
-    )
-      diagnostics.push(
-        error(
-          "structure.invalid",
-          path,
-          "The compiled Lineage core rejected this review contract.",
-        ),
-      )
-    if (prompt.kind === "cloze" && !prompt.clozeTargets)
-      diagnostics.push(
-        error(
-          "cloze.targets-required",
-          `${path}/clozeTargets`,
-          "Cloze prompts require at least one stable target.",
-        ),
-      )
-    if (prompt.kind === "image-occlusion") {
-      if (!prompt.sourceAsset)
-        diagnostics.push(
-          error(
-            "occlusion.source-required",
-            `${path}/sourceAsset`,
-            "Image occlusion requires a source asset.",
+          maybe(
+            value.scheduler.nextIntervalMinutes === undefined
+              ? undefined
+              : natural(value.scheduler.nextIntervalMinutes),
           ),
+          maybe(value.scheduler.dueAt),
         )
-      if (!prompt.occlusionRegions)
-        diagnostics.push(
-          error(
-            "occlusion.regions-required",
-            `${path}/occlusionRegions`,
-            "Image occlusion requires at least one stable region.",
-          ),
-        )
-    }
-    checkReferences(
-      prompt.assets,
-      assets,
-      `${path}/assets`,
-      diagnostics,
-      "asset.unresolved",
-    )
-    checkReferences(prompt.sources, sources, `${path}/sources`, diagnostics)
-    checkReferences(
-      prompt.materials,
-      materials,
-      `${path}/materials`,
-      diagnostics,
-    )
-    checkReferences(
-      prompt.provenance,
-      provenance,
-      `${path}/provenance`,
-      diagnostics,
-    )
-    if (prompt.sourceAsset && !assets.has(prompt.sourceAsset))
-      diagnostics.push(
-        error(
-          "asset.unresolved",
-          `${path}/sourceAsset`,
-          `Referenced asset ${prompt.sourceAsset} is not declared.`,
-        ),
-      )
-    prompt.extensions.required.forEach((extensionId, index) => {
-      if (!extensions.has(extensionId))
-        diagnostics.push(
-          error(
-            "reference.unresolved",
-            `${path}/extensions/required/${index}`,
-            `Required extension ${extensionId} is not declared.`,
-          ),
-        )
-    })
-  })
-
-  document.materials.forEach((material, index) => {
-    checkReferences(
-      material.assets,
-      assets,
-      `/materials/${index}/assets`,
-      diagnostics,
-    )
-    checkReferences(
-      material.sources,
-      sources,
-      `/materials/${index}/sources`,
-      diagnostics,
+      : undefined
+    return apply(
+      api.repetition,
+      value.id,
+      value.promptId,
+      natural(value.promptRevision),
+      maybe(value.snapshotDigest),
+      maybe(value.presentationDigest),
+      value.reviewedAt,
+      maybe(
+        value.durationMilliseconds === undefined
+          ? undefined
+          : natural(value.durationMilliseconds),
+      ),
+      maybe(value.capturedResponse),
+      api.repetitionRating(value.assessment),
+      maybe(scheduler),
+      value.provenance,
     )
   })
-  document.sources.forEach((source, index) => {
-    checkReferences(
-      source.assets,
-      assets,
-      `/sources/${index}/assets`,
-      diagnostics,
-    )
-  })
-  document.extensions.forEach((extension, index) => {
-    if (extension.requirement === "optional" && !extension.fallback)
-      diagnostics.push(
-        error(
-          "extension.optional-fallback-missing",
-          `/extensions/${index}/fallback`,
-          "Optional extensions require a portable fallback.",
-        ),
-      )
-  })
-  document.interoperability.forEach((report, index) => {
-    if (report.status === "lossy" && report.losses.length === 0)
-      diagnostics.push(
-        error(
-          "interoperability.loss-unreported",
-          `/interoperability/${index}/losses`,
-          "Lossy conversions must identify at least one loss.",
-        ),
-      )
-    if (report.status === "exact" && report.losses.length > 0)
-      diagnostics.push(
-        error(
-          "interoperability.loss-unreported",
-          `/interoperability/${index}/status`,
-          "An exact conversion cannot report losses.",
-        ),
-      )
-  })
-  document.migrations.forEach((migration, index) => {
-    if (migration.toVersion <= migration.fromVersion)
-      diagnostics.push(
-        error(
-          "migration.chain-invalid",
-          `/migrations/${index}/toVersion`,
-          "Migrations must advance the format version.",
-        ),
-      )
-    if (
-      index > 0 &&
-      document.migrations[index - 1]?.toVersion !== migration.fromVersion
-    )
-      diagnostics.push(
-        error(
-          "migration.chain-invalid",
-          `/migrations/${index}/fromVersion`,
-          "Migration history must be contiguous.",
-        ),
-      )
-  })
-  document.repetitions.forEach((repetition, index) => {
-    duplicate(
-      repetitionIds,
-      repetition.id,
-      `/repetitions/${index}`,
-      diagnostics,
-      "identity.duplicate",
-    )
-    if (
-      !promptKeys.has(
-        `${repetition.promptId}\u0000${repetition.promptRevision}`,
-      )
-    )
-      diagnostics.push(
-        error(
-          "history.prompt-unresolved",
-          `/repetitions/${index}/promptId`,
-          "Repetition does not resolve to the exact served Prompt revision.",
-          `/repetitions/${index}/promptRevision`,
-        ),
-      )
-  })
-  document.repetitionCorrections.forEach((correction, index) => {
-    if (
-      correction.id === correction.targetRepetitionId ||
-      !repetitionIds.has(correction.targetRepetitionId)
-    )
-      diagnostics.push(
-        error(
-          "history.correction-invalid",
-          `/repetitionCorrections/${index}/targetRepetitionId`,
-          "Correction targets must resolve to a distinct Repetition.",
-        ),
-      )
-  })
-  return diagnostics
+  const repetitionCorrections = document.repetitionCorrections.map((value) =>
+    apply(
+      api.repetitionCorrection,
+      value.id,
+      value.targetRepetitionId,
+      value.correctedAt,
+      value.reason,
+      maybe(
+        value.replacementAssessment
+          ? api.repetitionRating(value.replacementAssessment)
+          : undefined,
+      ),
+      maybe(value.replacementResponse),
+      value.provenance,
+    ),
+  )
+  const provenance = document.provenance.map((value) =>
+    apply(
+      api.provenanceRecord,
+      value.id,
+      api.provenanceKind(value.kind),
+      value.recordedAt,
+      maybe(value.agent),
+      maybe(value.citation),
+      maybe(value.license),
+      maybe(value.note),
+      value.sources,
+    ),
+  )
+  const extensions = document.extensions.map((value) =>
+    apply(
+      api.extensionDeclaration,
+      value.id,
+      value.version,
+      api.requirementLevel(value.requirement),
+      maybe(value.fallback),
+    ),
+  )
+  const migrations = document.migrations.map((value) =>
+    apply(
+      api.migrationRecord,
+      value.id,
+      natural(value.fromVersion),
+      natural(value.toVersion),
+      value.appliedAt,
+      value.tool,
+      value.toolVersion,
+    ),
+  )
+  const interoperability = document.interoperability.map((value) =>
+    apply(
+      api.interoperabilityReport,
+      value.id,
+      value.sourceFormat,
+      value.targetFormat,
+      api.conversionStatus(value.status),
+      value.losses,
+      value.preservedArtifacts,
+    ),
+  )
+  return apply(
+    api.corpusDocument,
+    document.format,
+    natural(document.formatVersion),
+    document.corpusId,
+    prompts,
+    sources,
+    materials,
+    assets,
+    relationships,
+    repetitions,
+    repetitionCorrections,
+    provenance,
+    extensions,
+    migrations,
+    interoperability,
+  )
 }
 
-function checkReferences(
-  values: string[],
-  known: Set<string>,
-  path: string,
-  diagnostics: LineageDiagnostic[],
-  code = "reference.unresolved",
-) {
-  values.forEach((value, index) => {
-    if (!known.has(value))
-      diagnostics.push(
-        error(
-          code,
-          `${path}/${index}`,
-          `Referenced entity ${value} is not declared.`,
-        ),
-      )
+type AgdaVisitor<T> = Record<string, (...values: never[]) => T>
+
+function visitAgda<T>(value: AgdaValue, visitor: AgdaVisitor<T>): T {
+  if (typeof value === "function")
+    return (value as (visitor: AgdaVisitor<T>) => T)(visitor)
+  const record = value as Record<string, (visitor: AgdaVisitor<T>) => T>
+  const constructorName = Object.keys(record)[0]
+  if (!constructorName) throw new Error("Agda value has no constructor")
+  return record[constructorName](visitor)
+}
+
+function decodeDiagnostic(value: AgdaValue): LineageDiagnostic {
+  return visitAgda(value, {
+    diagnostic: (code, _severity, path, message, relatedPath) => ({
+      code,
+      message,
+      path,
+      relatedPath: decodeMaybeString(relatedPath),
+      severity: "error",
+    }),
   })
 }
-function duplicate(
-  set: Set<string>,
-  key: string,
-  path: string,
-  diagnostics: LineageDiagnostic[],
-  code: string,
-) {
-  if (set.has(key))
-    diagnostics.push(
-      error(code, path, "Stable identities must be unique in their namespace."),
-    )
-  set.add(key)
-}
-function error(
-  code: string,
-  path: string,
-  message: string,
-  relatedPath?: string,
-): LineageDiagnostic {
-  return { code, message, path, relatedPath, severity: "error" }
+
+function decodeMaybeString(value: AgdaValue): string | undefined {
+  return visitAgda(value, {
+    just: (item) => item,
+    nothing: () => undefined,
+  })
 }

@@ -9,8 +9,45 @@ type ChallengeSession = unknown
 type ResolutionSession = unknown
 type CompletedSession = unknown
 
+type AgdaValue = unknown
+type AgdaConstructor = (value: unknown) => AgdaValue
+
 type LineageApi = {
   formatDescription: unknown
+  some: (erased: unknown) => AgdaConstructor
+  none: AgdaConstructor
+  promptKind: AgdaConstructor
+  lifecycle: AgdaConstructor
+  requirementLevel: AgdaConstructor
+  relationshipKind: AgdaConstructor
+  repetitionRating: AgdaConstructor
+  provenanceKind: AgdaConstructor
+  conversionStatus: AgdaConstructor
+  responseInteraction: AgdaConstructor
+  entityReference: AgdaConstructor
+  extensionSet: AgdaConstructor
+  normalizedPoint: AgdaConstructor
+  rectangleGeometry: AgdaConstructor
+  polygonGeometry: AgdaConstructor
+  rectangleGeometryValue: AgdaConstructor
+  polygonGeometryValue: AgdaConstructor
+  assetReference: AgdaConstructor
+  clozeTarget: AgdaConstructor
+  occlusionRegion: AgdaConstructor
+  sourceRevision: AgdaConstructor
+  materialRevision: AgdaConstructor
+  prompt: AgdaConstructor
+  schedulerObservation: AgdaConstructor
+  repetition: AgdaConstructor
+  repetitionCorrection: AgdaConstructor
+  relationship: AgdaConstructor
+  provenanceRecord: AgdaConstructor
+  extensionDeclaration: AgdaConstructor
+  migrationRecord: AgdaConstructor
+  interoperabilityReport: AgdaConstructor
+  corpusDocument: AgdaConstructor
+  validateCorpus: (document: AgdaValue) => AgdaValue[]
+  isValidCorpus: (document: AgdaValue) => boolean
   rawReviewContract: (
     challenge: string[],
   ) => (

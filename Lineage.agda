@@ -56,6 +56,7 @@ import Lineage.Validation.Capability
 import Lineage.Validation.Cloze
 import Lineage.Validation.Codec
 import Lineage.Validation.Corpus
+import Lineage.Validation.CorpusWireV1
 import Lineage.Validation.DependencyClosure
 import Lineage.Validation.Diagnostic
 import Lineage.Validation.HistoricalScheduling

@@ -19,7 +19,7 @@ type ChallengeSession = unknown
 type ResolutionSession = unknown
 type CompletedSession = unknown
 
-type LineageApi = {
+type LineageApi = Parameters<typeof createCompiledCoreValidator>[0] & {
   rawReviewContract: (
     challenge: string[],
   ) => (

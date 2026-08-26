@@ -81,7 +81,7 @@ data OcclusionGeometry : Set where
 record AssetReference : Set where
   constructor assetReference
   field
-    assetId mediaType digest : String
+    assetId mediaType sha256 : String
     byteSize : ℕ
     path : String
     accessibleDescription : Maybe String
@@ -207,7 +207,7 @@ record ArchiveEntry : Set where
   field
     path : String
     byteSize : ℕ
-    digest mediaType : String
+    sha256 mediaType : String
     role : ArchiveEntryRole
     entryRequired : Bool
 
@@ -217,7 +217,7 @@ record Manifest : Set where
     manifestFormat : String
     manifestVersion : ℕ
     corpusId : String
-    corpusPath corpusDigest : String
+    corpusPath corpusSha256 : String
     createdAt modifiedAt : String
     requiredProfiles : List String
     requiredExtensions optionalExtensions : List String
