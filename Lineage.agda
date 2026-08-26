@@ -3,6 +3,7 @@
 module Lineage where
 
 import Lineage.Specification.Asset
+import Lineage.Specification.Capability
 import Lineage.Specification.Cloze
 import Lineage.Specification.DependencyClosure
 import Lineage.Specification.ImageOcclusion
@@ -15,6 +16,7 @@ import Lineage.Specification.RepetitionHistory
 import Lineage.Specification.Scheduling
 import Lineage.Specification.StructuredContent
 import Lineage.Implementation.Asset
+import Lineage.Implementation.Capability
 import Lineage.Implementation.Cloze
 import Lineage.Implementation.DependencyClosure
 import Lineage.Implementation.ImageOcclusion
@@ -27,6 +29,7 @@ import Lineage.Implementation.RepetitionHistory
 import Lineage.Implementation.Scheduling
 import Lineage.Implementation.StructuredContent
 import Lineage.Validation.Asset
+import Lineage.Validation.Capability
 import Lineage.Validation.Cloze
 import Lineage.Validation.DependencyClosure
 import Lineage.Validation.ImageOcclusion
@@ -37,6 +40,7 @@ import Lineage.Validation.Provenance
 import Lineage.Validation.Repetition
 import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
+import Lineage.Denotation.Capability
 import Lineage.Denotation.Cloze
 import Lineage.Denotation.ImageOcclusion
 import Lineage.Denotation.MaterialSource
@@ -49,6 +53,7 @@ import Lineage.Denotation.RepetitionHistory
 import Lineage.Denotation.Scheduling
 import Lineage.Denotation.StructuredContent
 import Lineage.Correctness.Asset
+import Lineage.Correctness.Capability
 import Lineage.Correctness.Cloze
 import Lineage.Correctness.DependencyClosure
 import Lineage.Correctness.ImageOcclusion
@@ -61,6 +66,7 @@ import Lineage.Correctness.RepetitionHistory
 import Lineage.Correctness.Scheduling
 import Lineage.Correctness.StructuredContent
 import Lineage.Examples.Asset
+import Lineage.Examples.Capability
 import Lineage.Examples.Cloze
 import Lineage.Examples.DependencyClosure
 import Lineage.Examples.ImageOcclusion
