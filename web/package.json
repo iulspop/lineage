@@ -84,6 +84,7 @@
     "db:studio:secrets": "infisical run --env=dev --path=/web -- pnpm db:studio",
     "dev": "infisical run --env=dev --path=/web -- react-router dev --port 5250",
     "dev:secrets": "pnpm dev",
+    "lineage:runtime:check": "../scripts/check-generated-javascript-api",
     "lint": "biome ci .",
     "prepare": "lefthook install",
     "pwa:assets": "tsx scripts/generate-pwa-assets.ts",

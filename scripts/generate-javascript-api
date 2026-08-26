@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+compiled="${TMPDIR:-/tmp}/lineage-js"
+generated="${1:-$root/web/app/features/lineage/generated}"
+
+rm -rf "$compiled"
+agda -i "$root" -l standard-library --js --js-optimize \
+  --compile-dir="$compiled" "$root/Lineage/API/JavaScript.lagda.md"
+
+cd "$root/web"
+pnpm exec tsx scripts/bundle-lineage-api.ts "$compiled" "$generated"

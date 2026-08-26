@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+generated="$root/web/app/features/lineage/generated/lineage-core.mjs"
+temporary="$(mktemp -d "${TMPDIR:-/tmp}/lineage-generated.XXXXXX")"
+trap 'rm -rf "$temporary"' EXIT
+
+"$root/scripts/generate-javascript-api" "$temporary"
+
+if ! cmp -s "$generated" "$temporary/lineage-core.mjs"; then
+  echo "Generated Lineage JavaScript runtime is stale. Run ./scripts/generate-javascript-api." >&2
+  exit 1
+fi
+
+echo "Generated Lineage JavaScript runtime is current."
