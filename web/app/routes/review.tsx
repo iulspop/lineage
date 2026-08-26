@@ -19,7 +19,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
   const review = await loadReview({
     core: reviewCore,
+    reviewStore: reviewRecordStore,
     snapshotStore: corpusSnapshotStore,
+    userId,
     validator: lineageRuntime,
   })
   const [progress, user] = await Promise.all([
@@ -40,7 +42,9 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent")
   const review = await loadReview({
     core: reviewCore,
+    reviewStore: reviewRecordStore,
     snapshotStore: corpusSnapshotStore,
+    userId,
     validator: lineageRuntime,
   })
   const attempt =

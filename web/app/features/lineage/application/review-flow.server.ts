@@ -10,22 +10,37 @@ import {
   reviewAssessmentSchema,
 } from "../domain/review"
 import { exportCorpus, importCorpus } from "./import-corpus.server"
+import { selectNextPrompt } from "./review-queue"
 import { dueAt, isDue, scheduleReview } from "./review-scheduling"
 
 const demoCorpus = {
   corpusId: REVIEW_CORPUS_ID,
   format: "lineage.corpus" as const,
   formatVersion: 1 as const,
-  prompts: [demoReviewContract],
+  prompts: [
+    demoReviewContract,
+    {
+      challenge: ["Which planet is known as the Red Planet?"],
+      id: "red-planet",
+      resolution: ["Which planet is known as the Red Planet?", "Mars"],
+      response: "text",
+      revision: 1,
+      withheld: ["Mars"],
+    },
+  ],
 }
 
 export async function loadReview({
   core,
+  reviewStore,
   snapshotStore,
+  userId,
   validator,
 }: {
   core: ReviewCore
+  reviewStore: ReviewRecordStore
   snapshotStore: CorpusSnapshotStore
+  userId: string
   validator: ReviewContractValidator
 }) {
   let corpus = await exportCorpus({
@@ -37,9 +52,19 @@ export async function loadReview({
       await importCorpus({ input: demoCorpus, store: snapshotStore, validator })
     ).document
   }
-  const prompt = corpus.prompts[0]
-  if (!prompt) throw new Error("The review corpus contains no Prompts")
-  return { corpusId: corpus.corpusId, presentation: core.begin(prompt), prompt }
+  const latestReviews = await reviewStore.latestForCorpus({
+    corpusId: corpus.corpusId,
+    userId,
+  })
+  const queued = selectNextPrompt(corpus.prompts, latestReviews)
+  if (!queued) throw new Error("The review corpus contains no Prompts")
+  return {
+    corpusId: corpus.corpusId,
+    presentation: core.begin(queued.prompt),
+    prompt: queued.prompt,
+    queueDueAt: queued.dueAt?.toISOString() ?? null,
+    queueReviewed: queued.reviewed,
+  }
 }
 
 export async function loadReviewProgress({

@@ -27,7 +27,23 @@ describe("review flow", () => {
   test("loads a validated Prompt and preserves the disclosure boundary", async () => {
     const review = await loadReview({
       core: reviewCore,
+      reviewStore: {
+        async append() {},
+        async countForUser() {
+          return 0
+        },
+        async latestForCorpus() {
+          return []
+        },
+        async latestForPrompt() {
+          return null
+        },
+        async recentForUser() {
+          return []
+        },
+      },
       snapshotStore: memorySnapshotStore(),
+      userId: "user-1",
       validator: lineageRuntime,
     })
 
@@ -43,6 +59,72 @@ describe("review flow", () => {
       attempt: "Paris",
       presentation: ["What is the capital of France?", "Paris"],
     })
+  })
+
+  test("selects the next unreviewed Prompt from corpus order", async () => {
+    const store = memorySnapshotStore()
+    const first = await loadReview({
+      core: reviewCore,
+      reviewStore: {
+        async append() {},
+        async countForUser() {
+          return 0
+        },
+        async latestForCorpus() {
+          return []
+        },
+        async latestForPrompt() {
+          return null
+        },
+        async recentForUser() {
+          return []
+        },
+      },
+      snapshotStore: store,
+      userId: "user-1",
+      validator: lineageRuntime,
+    })
+    const reviewedFirst = {
+      assessment: "good" as const,
+      attemptedResponse: "Paris",
+      corpusId: first.corpusId,
+      id: 1,
+      nextIntervalMinutes: 1440,
+      previousIntervalMinutes: 0,
+      promptId: first.prompt.id,
+      promptRevision: first.prompt.revision,
+      reviewedAt: new Date("2026-08-26T00:00:00.000Z"),
+      scheduler: "lineage-prototype",
+      schedulerVersion: "1",
+      userId: "user-1",
+    }
+    const next = await loadReview({
+      core: reviewCore,
+      reviewStore: {
+        async append() {},
+        async countForUser() {
+          return 1
+        },
+        async latestForCorpus() {
+          return [reviewedFirst]
+        },
+        async latestForPrompt() {
+          return reviewedFirst
+        },
+        async recentForUser() {
+          return [reviewedFirst]
+        },
+      },
+      snapshotStore: store,
+      userId: "user-1",
+      validator: lineageRuntime,
+    })
+
+    expect(next.prompt.id).toBe("red-planet")
+    expect(next.presentation).toEqual([
+      "Which planet is known as the Red Planet?",
+    ])
+    expect(next.presentation).not.toContain("Mars")
   })
 
   test("derives queue status and recent history from durable reviews", async () => {
@@ -69,6 +151,9 @@ describe("review flow", () => {
         async countForUser() {
           return 1
         },
+        async latestForCorpus() {
+          return [entry]
+        },
         async latestForPrompt() {
           return entry
         },
@@ -94,7 +179,23 @@ describe("review flow", () => {
   test("records a completed review as a durable event", async () => {
     const review = await loadReview({
       core: reviewCore,
+      reviewStore: {
+        async append() {},
+        async countForUser() {
+          return 0
+        },
+        async latestForCorpus() {
+          return []
+        },
+        async latestForPrompt() {
+          return null
+        },
+        async recentForUser() {
+          return []
+        },
+      },
       snapshotStore: memorySnapshotStore(),
+      userId: "user-1",
       validator: lineageRuntime,
     })
     const records: Parameters<ReviewRecordStore["append"]>[0][] = []
@@ -111,6 +212,9 @@ describe("review flow", () => {
         },
         async countForUser() {
           return records.length
+        },
+        async latestForCorpus() {
+          return []
         },
         async latestForPrompt() {
           return null

@@ -46,5 +46,16 @@ describe("reviewRecordStore", () => {
     await expect(
       reviewRecordStore.recentForUser(user.id, 10),
     ).resolves.toHaveLength(1)
+    await expect(
+      reviewRecordStore.latestForCorpus({
+        corpusId: "lineage-demo",
+        userId: user.id,
+      }),
+    ).resolves.toMatchObject([
+      {
+        promptId: "capital-of-france",
+        promptRevision: 1,
+      },
+    ])
   })
 })
