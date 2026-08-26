@@ -28,14 +28,29 @@ export type ReviewRecord = {
   assessment: ReviewAssessment
   attemptedResponse: string | null
   corpusId: string
+  nextIntervalMinutes: number
+  previousIntervalMinutes: number
   promptId: string
   promptRevision: number
+  scheduler: string
+  schedulerVersion: string
   userId: string
+}
+
+export type ReviewHistoryEntry = ReviewRecord & {
+  id: number
+  reviewedAt: Date
 }
 
 export type ReviewRecordStore = {
   append(record: ReviewRecord): Promise<void>
   countForUser(userId: string): Promise<number>
+  latestForPrompt(input: {
+    corpusId: string
+    promptId: string
+    userId: string
+  }): Promise<ReviewHistoryEntry | null>
+  recentForUser(userId: string, limit: number): Promise<ReviewHistoryEntry[]>
 }
 
 export const REVIEW_CORPUS_ID = "lineage-demo"

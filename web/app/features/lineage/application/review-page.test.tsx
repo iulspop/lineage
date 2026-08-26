@@ -5,6 +5,9 @@ import { ReviewPage } from "./review-page"
 import { render, screen } from "~/test/react-test-utils"
 
 const loaderData = {
+  due: true,
+  dueAt: null,
+  history: [],
   presentation: ["What is the capital of France?"],
   prompt: { id: "capital-of-france", revision: 1 },
   reviewCount: 0,

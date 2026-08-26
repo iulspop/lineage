@@ -5,6 +5,7 @@ import { requireUserId } from "~/features/auth/application/auth-session.server"
 import {
   completeReview,
   loadReview,
+  loadReviewProgress,
   resolveReview,
 } from "~/features/lineage/application/review-flow.server"
 import { ReviewPage } from "~/features/lineage/application/review-page"
@@ -16,16 +17,21 @@ import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/us
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
-  const [review, reviewCount, user] = await Promise.all([
-    loadReview({
-      core: reviewCore,
-      snapshotStore: corpusSnapshotStore,
-      validator: lineageRuntime,
+  const review = await loadReview({
+    core: reviewCore,
+    snapshotStore: corpusSnapshotStore,
+    validator: lineageRuntime,
+  })
+  const [progress, user] = await Promise.all([
+    loadReviewProgress({
+      corpusId: review.corpusId,
+      promptId: review.prompt.id,
+      store: reviewRecordStore,
+      userId,
     }),
-    reviewRecordStore.countForUser(userId),
     retrieveUserFromDatabaseById(userId),
   ])
-  return { ...review, reviewCount, userEmail: user?.email ?? "" }
+  return { ...review, ...progress, userEmail: user?.email ?? "" }
 }
 
 export async function action({ request }: Route.ActionArgs) {

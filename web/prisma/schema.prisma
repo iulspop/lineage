@@ -53,10 +53,14 @@ model LineageReview {
   corpusId          String
   promptId          String
   promptRevision    Int
-  attemptedResponse String?
-  assessment        String
-  reviewedAt        DateTime @default(now())
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptedResponse       String?
+  assessment              String
+  scheduler               String
+  schedulerVersion        String
+  previousIntervalMinutes Int
+  nextIntervalMinutes     Int
+  reviewedAt              DateTime @default(now())
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, reviewedAt])
   @@index([corpusId, promptId, promptRevision])

@@ -10,6 +10,7 @@ import {
   reviewAssessmentSchema,
 } from "../domain/review"
 import { exportCorpus, importCorpus } from "./import-corpus.server"
+import { dueAt, isDue, scheduleReview } from "./review-scheduling"
 
 const demoCorpus = {
   corpusId: REVIEW_CORPUS_ID,
@@ -39,6 +40,36 @@ export async function loadReview({
   const prompt = corpus.prompts[0]
   if (!prompt) throw new Error("The review corpus contains no Prompts")
   return { corpusId: corpus.corpusId, presentation: core.begin(prompt), prompt }
+}
+
+export async function loadReviewProgress({
+  corpusId,
+  promptId,
+  store,
+  userId,
+}: {
+  corpusId: string
+  promptId: string
+  store: ReviewRecordStore
+  userId: string
+}) {
+  const [history, latest, reviewCount] = await Promise.all([
+    store.recentForUser(userId, 10),
+    store.latestForPrompt({ corpusId, promptId, userId }),
+    store.countForUser(userId),
+  ])
+  return {
+    due: isDue(latest),
+    dueAt: dueAt(latest)?.toISOString() ?? null,
+    history: history.map((review) => ({
+      assessment: review.assessment,
+      attemptedResponse: review.attemptedResponse,
+      nextIntervalMinutes: review.nextIntervalMinutes,
+      promptId: review.promptId,
+      reviewedAt: review.reviewedAt.toISOString(),
+    })),
+    reviewCount,
+  }
 }
 
 export function resolveReview({
@@ -76,6 +107,11 @@ export async function completeReview({
     attempt?.trim() || null,
     parsedAssessment,
   )
+  const previous = await store.latestForPrompt({
+    corpusId,
+    promptId: prompt.id,
+    userId,
+  })
   await store.append({
     assessment: completed.assessment,
     attemptedResponse: completed.attempt,
@@ -83,6 +119,7 @@ export async function completeReview({
     promptId: prompt.id,
     promptRevision: prompt.revision,
     userId,
+    ...scheduleReview(completed.assessment, previous),
   })
   return completed
 }

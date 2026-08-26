@@ -20,10 +20,25 @@ type ReviewActionData =
   | undefined
 
 type ReviewLoaderData = {
+  due: boolean
+  dueAt: string | null
+  history: Array<{
+    assessment: (typeof assessments)[number]
+    attemptedResponse: string | null
+    nextIntervalMinutes: number
+    promptId: string
+    reviewedAt: string
+  }>
   presentation: string[]
   prompt: { id: string; revision: number }
   reviewCount: number
   userEmail: string
+}
+
+function formatInterval(minutes: number) {
+  if (minutes < 60) return `${minutes} min`
+  if (minutes < 24 * 60) return `${Math.round(minutes / 60)} hr`
+  return `${Math.round(minutes / (24 * 60))} days`
 }
 
 export function ReviewPage({
@@ -44,9 +59,14 @@ export function ReviewPage({
             <p className={s.eyebrow}>Prompt {loaderData.prompt.id}</p>
             <h1 className={s.title}>Review</h1>
           </div>
-          <p className={s.progress}>
-            {loaderData.reviewCount} reviews recorded
-          </p>
+          <div className={s.progress}>
+            <p>{loaderData.reviewCount} reviews recorded</p>
+            <p>
+              {loaderData.due
+                ? "Due now"
+                : `Next review ${new Date(loaderData.dueAt ?? "").toLocaleString()}`}
+            </p>
+          </div>
         </header>
 
         <section aria-live="polite" className={s.card}>
@@ -101,6 +121,33 @@ export function ReviewPage({
                 <input name="intent" type="hidden" value="assess" />
               </Form>
             </div>
+          )}
+        </section>
+
+        <section className={s.history}>
+          <h2>Recent history</h2>
+          {loaderData.history.length ? (
+            <ol className={s.historyList}>
+              {loaderData.history.map((review) => (
+                <li className={s.historyItem} key={review.reviewedAt}>
+                  <div>
+                    <strong>{review.assessment}</strong>
+                    <p>{review.attemptedResponse || "No answer"}</p>
+                  </div>
+                  <div className={s.historyMeta}>
+                    <time dateTime={review.reviewedAt}>
+                      {new Date(review.reviewedAt).toLocaleString()}
+                    </time>
+                    <span>
+                      Next interval:{" "}
+                      {formatInterval(review.nextIntervalMinutes)}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className={s.emptyHistory}>No completed reviews yet.</p>
           )}
         </section>
       </div>

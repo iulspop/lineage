@@ -1,5 +1,17 @@
-import type { ReviewRecordStore } from "../domain/review"
+import type { ReviewHistoryEntry, ReviewRecordStore } from "../domain/review"
+import { reviewAssessmentSchema } from "../domain/review"
 import { prisma } from "~/utils/db.server"
+
+function toHistoryEntry(
+  record: NonNullable<
+    Awaited<ReturnType<typeof prisma.lineageReview.findFirst>>
+  >,
+) {
+  return {
+    ...record,
+    assessment: reviewAssessmentSchema.parse(record.assessment),
+  } satisfies ReviewHistoryEntry
+}
 
 export const reviewRecordStore: ReviewRecordStore = {
   async append(record) {
@@ -7,5 +19,20 @@ export const reviewRecordStore: ReviewRecordStore = {
   },
   async countForUser(userId) {
     return prisma.lineageReview.count({ where: { userId } })
+  },
+  async latestForPrompt({ corpusId, promptId, userId }) {
+    const record = await prisma.lineageReview.findFirst({
+      orderBy: { reviewedAt: "desc" },
+      where: { corpusId, promptId, userId },
+    })
+    return record ? toHistoryEntry(record) : null
+  },
+  async recentForUser(userId, limit) {
+    const records = await prisma.lineageReview.findMany({
+      orderBy: { reviewedAt: "desc" },
+      take: limit,
+      where: { userId },
+    })
+    return records.map(toHistoryEntry)
   },
 }

@@ -29,7 +29,10 @@ export const title = style({
 
 export const progress = style({
   color: theme.color.text.muted,
+  display: "grid",
   fontSize: theme.font.role.supporting,
+  gap: theme.space[1],
+  textAlign: "right",
 })
 
 export const card = style({
@@ -70,3 +73,36 @@ export const complete = style({
   gap: theme.space[4],
   justifyContent: "space-between",
 })
+
+export const history = style({
+  display: "grid",
+  gap: theme.space[3],
+  marginTop: theme.space[8],
+})
+
+export const historyList = style({
+  display: "grid",
+  gap: theme.space[2],
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+})
+
+export const historyItem = style({
+  alignItems: "start",
+  borderBottom: `1px solid ${theme.color.border.default}`,
+  display: "flex",
+  gap: theme.space[4],
+  justifyContent: "space-between",
+  paddingBlock: theme.space[3],
+})
+
+export const historyMeta = style({
+  color: theme.color.text.muted,
+  display: "grid",
+  fontSize: theme.font.role.metadata,
+  gap: theme.space[1],
+  textAlign: "right",
+})
+
+export const emptyHistory = style({ color: theme.color.text.muted })
