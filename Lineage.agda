@@ -5,6 +5,7 @@ module Lineage where
 import Lineage.Specification.Asset
 import Lineage.Specification.Capability
 import Lineage.Specification.Cloze
+import Lineage.Specification.Corpus
 import Lineage.Specification.DependencyClosure
 import Lineage.Specification.ImageOcclusion
 import Lineage.Specification.Manifest
@@ -21,6 +22,7 @@ import Lineage.Specification.StructuredContent
 import Lineage.Implementation.Asset
 import Lineage.Implementation.Capability
 import Lineage.Implementation.Cloze
+import Lineage.Implementation.Corpus
 import Lineage.Implementation.DependencyClosure
 import Lineage.Implementation.ImageOcclusion
 import Lineage.Implementation.Manifest
@@ -37,6 +39,7 @@ import Lineage.Implementation.StructuredContent
 import Lineage.Validation.Asset
 import Lineage.Validation.Capability
 import Lineage.Validation.Cloze
+import Lineage.Validation.Corpus
 import Lineage.Validation.DependencyClosure
 import Lineage.Validation.ImageOcclusion
 import Lineage.Validation.Manifest
@@ -51,6 +54,7 @@ import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
 import Lineage.Denotation.Capability
 import Lineage.Denotation.Cloze
+import Lineage.Denotation.Corpus
 import Lineage.Denotation.ImageOcclusion
 import Lineage.Denotation.Manifest
 import Lineage.Denotation.MaterialSource
@@ -67,6 +71,7 @@ import Lineage.Denotation.StructuredContent
 import Lineage.Correctness.Asset
 import Lineage.Correctness.Capability
 import Lineage.Correctness.Cloze
+import Lineage.Correctness.Corpus
 import Lineage.Correctness.DependencyClosure
 import Lineage.Correctness.ImageOcclusion
 import Lineage.Correctness.Manifest
@@ -83,6 +88,7 @@ import Lineage.Correctness.StructuredContent
 import Lineage.Examples.Asset
 import Lineage.Examples.Capability
 import Lineage.Examples.Cloze
+import Lineage.Examples.Corpus
 import Lineage.Examples.DependencyClosure
 import Lineage.Examples.ImageOcclusion
 import Lineage.Examples.Manifest
