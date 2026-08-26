@@ -3,6 +3,7 @@ import {
   IconEdit,
   IconEye,
   IconPlayerPlay,
+  IconSparkles,
 } from "@tabler/icons-react"
 import { useState } from "react"
 import { Form, Link } from "react-router"
@@ -37,6 +38,12 @@ export function MemoryDetailPage(props: Props) {
         <PageHeader
           actions={
             <div className={s.actions}>
+              <Link
+                className={s.secondaryAction}
+                to={`/create/ai?intent=improve-memory&corpusId=${encodeURIComponent(props.corpusId)}&promptId=${encodeURIComponent(memory.promptId)}&topic=${encodeURIComponent(`Improve ${memory.promptId}`)}`}
+              >
+                <IconSparkles aria-hidden="true" /> Improve with AI
+              </Link>
               <Link
                 className={s.secondaryAction}
                 to={`/library/${encodeURIComponent(props.corpusId)}/memories/${encodeURIComponent(memory.promptId)}/edit`}

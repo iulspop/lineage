@@ -75,7 +75,9 @@ test.describe("Lineage daily workspace", () => {
     await loginAsTestUser(page)
 
     await page.goto("/create/manual")
-    await expect(page.getByRole("heading", { name: "Create a memory" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Create a memory" }),
+    ).toBeVisible()
     await page.waitForTimeout(250)
     await page.getByLabel("Corpus").fill("calculus")
     await page.getByLabel("Stable memory ID").fill("derivative")
@@ -102,6 +104,50 @@ test.describe("Lineage daily workspace", () => {
     await expect(page.getByText(/revision 2/)).toBeVisible()
     await page.getByRole("button", { name: "Suspend" }).click()
     await expect(page.getByText(/revision 3 · suspended/)).toBeVisible()
+  })
+
+  test("given: an AI brief, should: generate, edit, select, and accept a memory", async ({
+    page,
+  }) => {
+    await loginAsTestUser(page)
+
+    await page.goto("/create/ai")
+    await expect(page.getByRole("progressbar")).toBeHidden()
+    await page.waitForTimeout(250)
+    await expect(
+      page.getByRole("heading", { name: "Generate memories with AI" }),
+    ).toBeVisible()
+    await page
+      .getByRole("combobox", { exact: true, name: "Corpus" })
+      .fill("calculus-ai")
+    await page.getByLabel("Topic or learning goal").fill("derivatives")
+    await page
+      .getByLabel("Source text (optional)")
+      .fill("A derivative is the instantaneous rate of change of a function.")
+    await page.getByLabel("Memory count").selectOption("1")
+    await expect(
+      page.getByRole("combobox", { exact: true, name: "Corpus" }),
+    ).toHaveValue("calculus-ai")
+    await expect(page.getByLabel("Topic or learning goal")).toHaveValue(
+      "derivatives",
+    )
+    await page
+      .getByRole("button", { name: "Generate candidate memories" })
+      .click()
+
+    await expect(
+      page.getByRole("checkbox", { name: /include basic memory/i }),
+    ).toBeChecked()
+    await page
+      .getByLabel("Challenge")
+      .last()
+      .fill("What does a derivative measure?")
+    await page.getByRole("button", { name: "Accept selected memories" }).click()
+
+    await expect(page).toHaveURL(/\/library\/calculus-ai\?tab=memories$/)
+    await expect(
+      page.getByText("What does a derivative measure?"),
+    ).toBeVisible()
   })
 
   test("given: a due memory, should: start review from Today", async ({

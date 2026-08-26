@@ -16,6 +16,21 @@ export const back = style({
   textDecoration: "none",
   width: "fit-content",
 })
+export const actions = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: theme.space[2],
+})
+export const secondaryAction = style({
+  alignItems: "center",
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  display: "inline-flex",
+  gap: theme.space[2],
+  padding: `${theme.space[2]} ${theme.space[4]}`,
+  textDecoration: "none",
+})
 export const primaryAction = style({
   alignItems: "center",
   background: theme.color.intent.primary.background,

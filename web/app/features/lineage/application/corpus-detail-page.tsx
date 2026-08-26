@@ -1,4 +1,9 @@
-import { IconArrowLeft, IconDownload, IconSearch } from "@tabler/icons-react"
+import {
+  IconArrowLeft,
+  IconDownload,
+  IconSearch,
+  IconSparkles,
+} from "@tabler/icons-react"
 import { Form, Link } from "react-router"
 
 import type { CorpusBrowseProjection } from "./corpus-browse-projection"
@@ -69,12 +74,20 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
         </Link>
         <PageHeader
           actions={
-            <a
-              className={s.primaryAction}
-              href={`/library/${encodeURIComponent(props.corpus.corpusId)}/export`}
-            >
-              <IconDownload aria-hidden="true" /> Export
-            </a>
+            <div className={s.actions}>
+              <Link
+                className={s.secondaryAction}
+                to={`/create/ai?intent=expand-corpus&corpusId=${encodeURIComponent(props.corpus.corpusId)}&topic=${encodeURIComponent(`Expand ${props.corpus.corpusId}`)}`}
+              >
+                <IconSparkles aria-hidden="true" /> Generate memories
+              </Link>
+              <a
+                className={s.primaryAction}
+                href={`/library/${encodeURIComponent(props.corpus.corpusId)}/export`}
+              >
+                <IconDownload aria-hidden="true" /> Export
+              </a>
+            </div>
           }
           description={`${props.corpus.memoryCount} memories · ${props.corpus.sourceCount} sources · ${props.corpus.assetCount} assets`}
           eyebrow="Corpus"

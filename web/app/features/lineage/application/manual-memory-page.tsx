@@ -56,8 +56,8 @@ export function ManualMemoryPage({
       <div className={s.page}>
         <PageHeader
           actions={
-            <Link className={s.secondaryAction} to="/create/import">
-              Import instead
+            <Link className={s.secondaryAction} to="/create/ai">
+              Generate with AI
             </Link>
           }
           description={
