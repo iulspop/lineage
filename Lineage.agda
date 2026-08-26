@@ -12,6 +12,7 @@ import Lineage.Specification.Provenance
 import Lineage.Specification.Repetition
 import Lineage.Specification.RepetitionHistory
 import Lineage.Specification.Scheduling
+import Lineage.Specification.StructuredContent
 import Lineage.Implementation.Asset
 import Lineage.Implementation.Cloze
 import Lineage.Implementation.DependencyClosure
@@ -22,6 +23,7 @@ import Lineage.Implementation.Provenance
 import Lineage.Implementation.Repetition
 import Lineage.Implementation.RepetitionHistory
 import Lineage.Implementation.Scheduling
+import Lineage.Implementation.StructuredContent
 import Lineage.Validation.Asset
 import Lineage.Validation.Cloze
 import Lineage.Validation.DependencyClosure
@@ -30,6 +32,7 @@ import Lineage.Validation.ReviewContract
 import Lineage.Validation.Prompt
 import Lineage.Validation.Provenance
 import Lineage.Validation.Repetition
+import Lineage.Validation.StructuredContent
 import Lineage.Denotation.Asset
 import Lineage.Denotation.Cloze
 import Lineage.Denotation.ImageOcclusion
@@ -40,6 +43,7 @@ import Lineage.Denotation.Provenance
 import Lineage.Denotation.Repetition
 import Lineage.Denotation.RepetitionHistory
 import Lineage.Denotation.Scheduling
+import Lineage.Denotation.StructuredContent
 import Lineage.Correctness.Asset
 import Lineage.Correctness.Cloze
 import Lineage.Correctness.DependencyClosure
@@ -50,6 +54,7 @@ import Lineage.Correctness.Provenance
 import Lineage.Correctness.Repetition
 import Lineage.Correctness.RepetitionHistory
 import Lineage.Correctness.Scheduling
+import Lineage.Correctness.StructuredContent
 import Lineage.Examples.Asset
 import Lineage.Examples.Cloze
 import Lineage.Examples.DependencyClosure
@@ -60,4 +65,5 @@ import Lineage.Examples.Provenance
 import Lineage.Examples.Repetition
 import Lineage.Examples.RepetitionHistory
 import Lineage.Examples.Scheduling
+import Lineage.Examples.StructuredContent
 import Lineage.API.Pure
