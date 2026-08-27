@@ -27,6 +27,68 @@ const card = {
   padding: theme.space[6],
 } as const
 
+export const quickCard = style({
+  ...card,
+  "@media": {
+    "screen and (max-width: 42rem)": {
+      alignItems: "stretch",
+      gridTemplateColumns: "1fr",
+    },
+  },
+  alignItems: "end",
+  gridTemplateColumns: "minmax(0, 1fr) auto",
+  padding: theme.space[5],
+})
+
+export const quickField = style({ display: "grid", gap: theme.space[2] })
+globalStyle(`${quickField} > span`, {
+  fontSize: theme.font.size.sm,
+  fontWeight: theme.font.weight.semibold,
+})
+globalStyle(`${quickField} input`, {
+  background: theme.color.background.canvas,
+  border: `1px solid ${theme.color.border.strong}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  font: "inherit",
+  fontSize: theme.font.size.lg,
+  minHeight: "3.25rem",
+  padding: `${theme.space[3]} ${theme.space[4]}`,
+  width: "100%",
+})
+globalStyle(`${quickField} input:focus`, {
+  borderColor: theme.color.intent.primary.background,
+  outline: `2px solid ${theme.color.accent.subtle}`,
+  outlineOffset: "2px",
+})
+
+export const quickHelp = style({
+  color: theme.color.text.secondary,
+  fontSize: theme.font.size.sm,
+  gridColumn: "1 / -1",
+  margin: 0,
+})
+globalStyle(`${quickHelp} code`, {
+  color: theme.color.text.primary,
+  fontWeight: theme.font.weight.semibold,
+})
+
+export const quickError = style({
+  color: theme.color.text.danger,
+  gridColumn: "1 / -1",
+  margin: 0,
+})
+globalStyle(`${quickError} p`, { margin: 0 })
+
+export const advanced = style({ display: "grid", gap: theme.space[4] })
+globalStyle(`${advanced} > summary`, {
+  color: theme.color.text.secondary,
+  cursor: "pointer",
+  fontWeight: theme.font.weight.semibold,
+  justifySelf: "start",
+})
+globalStyle(`${advanced}[open] > summary`, { marginBottom: theme.space[4] })
+
 export const formCard = style(card)
 export const previewCard = style({
   ...card,

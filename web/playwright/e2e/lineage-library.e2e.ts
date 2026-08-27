@@ -96,6 +96,36 @@ test.describe("Lineage daily workspace", () => {
     await expect(page.getByText("-1", { exact: true })).toBeVisible()
   })
 
+  test("given: quick syntax, should: create basic and cloze memories immediately", async ({
+    page,
+  }) => {
+    await loginAsTestUser(page)
+
+    await page.goto("/create/manual?corpusId=calculus")
+    await expect(page.getByRole("progressbar")).toBeHidden()
+    await page.waitForTimeout(250)
+    await page
+      .getByLabel("Quick capture")
+      .fill("What is a derivative? >> The instantaneous rate of change.")
+    await page.getByRole("button", { name: "Create memory" }).click()
+    await expect(page).toHaveURL(
+      /\/library\/calculus\/memories\/what-is-a-derivative$/,
+    )
+    await expect(page.getByText("What is a derivative?")).toBeVisible()
+
+    await page.goto("/create/manual?corpusId=calculus")
+    await expect(page.getByRole("progressbar")).toBeHidden()
+    await page.waitForTimeout(250)
+    await page
+      .getByLabel("Quick capture")
+      .fill("The derivative of {{x²}} is {{2x}}.")
+    await page.getByRole("button", { name: "Create memory" }).click()
+    await expect(page).toHaveURL(/cloze-1$/)
+    await page.goto("/library/calculus?tab=memories")
+    await expect(page.getByText("The derivative of […] is 2x.")).toBeVisible()
+    await expect(page.getByText("The derivative of x² is […].")).toBeVisible()
+  })
+
   test("given: a manual draft, should: preview, save, revise, and suspend a memory", async ({
     page,
   }) => {
@@ -106,6 +136,7 @@ test.describe("Lineage daily workspace", () => {
       page.getByRole("heading", { name: "Create a memory" }),
     ).toBeVisible()
     await page.waitForTimeout(250)
+    await page.getByText("More options").click()
     await page.getByLabel("Corpus").fill("calculus")
     await page.getByLabel("Stable memory ID").fill("derivative")
     await page.getByLabel("Challenge").fill("What is a derivative?")

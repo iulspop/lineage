@@ -4,7 +4,11 @@ import type { Route } from "./+types/create.manual"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
 import { importCorpus } from "~/features/lineage/application/import-corpus.server"
 import type { ManualMemoryDraft } from "~/features/lineage/application/manual-memory-draft"
-import { validateManualMemoryDraft } from "~/features/lineage/application/manual-memory-draft"
+import {
+  parseQuickMemoryCapture,
+  validateManualMemoryDraft,
+  validateQuickMemoryCapture,
+} from "~/features/lineage/application/manual-memory-draft"
 import { ManualMemoryPage } from "~/features/lineage/application/manual-memory-page"
 import { parseCorpusDocument } from "~/features/lineage/domain/corpus"
 import { corpusSnapshotStore } from "~/features/lineage/infrastructure/corpus-model.server"
@@ -31,9 +35,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     retrieveUserFromDatabaseById(ownerId),
   ])
   const url = new URL(request.url)
+  const corpora = snapshots.map(({ corpusId }) => corpusId)
   return {
-    corpora: snapshots.map(({ corpusId }) => corpusId),
-    selectedCorpusId: url.searchParams.get("corpusId") ?? "",
+    corpora,
+    selectedCorpusId: url.searchParams.get("corpusId") ?? corpora[0] ?? "inbox",
     userEmail: user?.email ?? "",
   }
 }
@@ -52,6 +57,48 @@ export async function action({ request }: Route.ActionArgs) {
       validator: lineageRuntime,
     })
     const promptId = imported.document.prompts.at(-1)?.id
+    throw redirect(
+      promptId
+        ? `/library/${encodeURIComponent(imported.document.corpusId)}/memories/${encodeURIComponent(promptId)}`
+        : `/library/${encodeURIComponent(imported.document.corpusId)}`,
+    )
+  }
+
+  if (intent === "quick-create") {
+    const corpusId = String(formData.get("corpusId") ?? "").trim()
+    const quickInput = String(formData.get("quickInput") ?? "")
+    const existing = corpusId
+      ? await corpusSnapshotStore.latest(ownerId, corpusId)
+      : null
+    const base = existing
+      ? parseCorpusDocument(JSON.parse(existing.canonicalJson))
+      : null
+    const parsed = parseQuickMemoryCapture({
+      corpusId,
+      existingPromptIds: base?.prompts.map(({ id }) => id),
+      input: quickInput,
+    })
+    if (!parsed.valid)
+      return data({ quickError: parsed.message, quickInput }, { status: 400 })
+
+    const result = validateQuickMemoryCapture({
+      base,
+      drafts: parsed.drafts,
+      validator: lineageRuntime,
+    })
+    if (!result.valid)
+      return data(
+        { diagnostics: result.diagnostics, quickInput, valid: false as const },
+        { status: 400 },
+      )
+
+    const imported = await importCorpus({
+      input: result.preview.document,
+      ownerId,
+      store: corpusSnapshotStore,
+      validator: lineageRuntime,
+    })
+    const promptId = parsed.drafts[0]?.promptId
     throw redirect(
       promptId
         ? `/library/${encodeURIComponent(imported.document.corpusId)}/memories/${encodeURIComponent(promptId)}`
