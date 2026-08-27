@@ -66,27 +66,31 @@ describe("AppShell", () => {
     ).toBeInTheDocument()
   })
 
-  test("given: an owner-eligible account, should: expose support inbox and owner setup navigation", () => {
+  test("given: owner access from the root loader, should: expose support inbox and owner setup navigation", async () => {
     const RoutesStub = createRoutesStub([
       {
         Component: () => (
-          <AppShell canClaimOwner isOwner userEmail="owner@example.com">
+          <AppShell userEmail="owner@example.com">
             <h1>Workspace</h1>
           </AppShell>
         ),
+        id: "root",
+        loader: () => ({
+          ownerAccess: { canClaimOwner: true, isOwner: true },
+        }),
         path: "/",
       },
     ])
 
     render(<RoutesStub initialEntries={["/"]} />)
 
-    for (const link of screen.getAllByRole("link", {
+    for (const link of await screen.findAllByRole("link", {
       name: "Support inbox",
     })) {
       expect(link).toHaveAttribute("href", "/owner/chats")
     }
     expect(
-      screen.getByRole("link", { name: "Set up owner access" }),
+      await screen.findByRole("link", { name: "Set up owner access" }),
     ).toHaveAttribute("href", "/owner/claim")
   })
 })

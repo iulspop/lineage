@@ -21,6 +21,7 @@ import { ProgressBarComponent } from "./components/progress-bar"
 import { authMiddleware } from "./features/auth/application/auth-middleware.server"
 import { getUserId } from "./features/auth/application/auth-session.server"
 import { ChatNotificationProvider } from "./features/chat/application/chat-notification-provider"
+import { getOwnerAccess } from "./features/chat/application/owner-access.server"
 import * as s from "./root.css"
 import { ChatStoreProviderComponent } from "./store/store-provider"
 import { ClientHintCheck, getHints } from "./utils/client-hints"
@@ -34,6 +35,7 @@ export const middleware = [securityMiddleware, authMiddleware]
 export async function loader({ request }: Route.LoaderArgs) {
   const env = getServerEnv()
   const viewerId = await getUserId(request)
+  const ownerAccess = await getOwnerAccess(viewerId)
 
   return data({
     allowIndexing: env.ALLOW_INDEXING,
@@ -47,6 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       SENTRY_TRACES_SAMPLE_RATE: env.SENTRY_TRACES_SAMPLE_RATE?.toString(),
     },
     isAuthenticated: Boolean(viewerId),
+    ownerAccess,
     requestInfo: {
       hints: getHints(request),
       origin: getDomainUrl(request),

@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-react"
 import type { ReactNode } from "react"
 import { useEffect, useRef, useState } from "react"
-import { Form, NavLink, useNavigate } from "react-router"
+import { Form, NavLink, useNavigate, useRouteLoaderData } from "react-router"
 
 import * as s from "./app-shell.css"
 import { Badge } from "~/components/ui/badge"
@@ -151,12 +151,19 @@ function SupportLink({
 }
 
 function AppShell({
-  canClaimOwner = false,
+  canClaimOwner,
   chatUnreadCount = 0,
   children,
-  isOwner = false,
+  isOwner,
   userEmail,
 }: AppShellProps) {
+  const rootData = useRouteLoaderData<{
+    ownerAccess?: { canClaimOwner: boolean; isOwner: boolean }
+  }>("root")
+  const effectiveCanClaimOwner =
+    canClaimOwner ?? rootData?.ownerAccess?.canClaimOwner ?? false
+  const effectiveIsOwner = isOwner ?? rootData?.ownerAccess?.isOwner ?? false
+
   return (
     <div className={s.shell}>
       <a className={s.skipLink} href="#main-content">
@@ -175,7 +182,10 @@ function AppShell({
           <span className={s.accountEmail} title={userEmail}>
             {userEmail}
           </span>
-          <SupportLink chatUnreadCount={chatUnreadCount} isOwner={isOwner} />
+          <SupportLink
+            chatUnreadCount={chatUnreadCount}
+            isOwner={effectiveIsOwner}
+          />
           <NavLink className={s.accountLink} to="/settings">
             <IconSettings aria-hidden="true" />
             <span>Settings</span>
@@ -195,7 +205,10 @@ function AppShell({
             <span className={s.mobileAccountEmail} title={userEmail}>
               {userEmail}
             </span>
-            <SupportLink chatUnreadCount={chatUnreadCount} isOwner={isOwner} />
+            <SupportLink
+              chatUnreadCount={chatUnreadCount}
+              isOwner={effectiveIsOwner}
+            />
             <NavLink className={s.accountLink} to="/settings">
               <IconSettings aria-hidden="true" />
               <span>Settings</span>
@@ -209,7 +222,7 @@ function AppShell({
           </div>
         </details>
       </header>
-      {canClaimOwner ? (
+      {effectiveCanClaimOwner ? (
         <div className={s.ownerPrompt}>
           <span>Your account can claim the owner support seat.</span>
           <NavLink to="/owner/claim">Set up owner access</NavLink>
