@@ -35,6 +35,53 @@
       "document": {
         "format": "lineage.corpus",
         "formatVersion": 1,
+        "corpusId": "polypan",
+        "prompts": [
+          {
+            "id": "identity-types",
+            "revision": 1,
+            "challenge": [
+              "What do identity types internalize?"
+            ],
+            "withheld": [
+              "equality"
+            ],
+            "resolution": [
+              "Equality."
+            ],
+            "response": "text"
+          }
+        ],
+        "collections": [
+          {
+            "id": "mathematics",
+            "title": "Mathematics"
+          },
+          {
+            "id": "type-theory",
+            "title": "Type theory",
+            "parentId": "mathematics"
+          }
+        ],
+        "collectionMemberships": [
+          {
+            "collectionId": "mathematics",
+            "promptId": "identity-types"
+          },
+          {
+            "collectionId": "type-theory",
+            "promptId": "identity-types"
+          }
+        ]
+      },
+      "fileName": "collections.json",
+      "kind": "valid",
+      "summary": "Nested identity-neutral Prompt organization."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
         "corpusId": "example-cloze",
         "prompts": [
           {
@@ -206,6 +253,55 @@
       "document": {
         "format": "lineage.corpus",
         "formatVersion": 1,
+        "corpusId": "polypan",
+        "prompts": [
+          {
+            "id": "identity-types",
+            "revision": 1,
+            "challenge": [
+              "What do identity types internalize?"
+            ],
+            "withheld": [
+              "equality"
+            ],
+            "resolution": [
+              "Equality."
+            ],
+            "response": "text"
+          }
+        ],
+        "collections": [
+          {
+            "id": "mathematics",
+            "title": "Mathematics"
+          },
+          {
+            "id": "type-theory",
+            "title": "Type theory",
+            "parentId": "mathematics"
+          }
+        ],
+        "collectionMemberships": [
+          {
+            "collectionId": "mathematics",
+            "promptId": "identity-types"
+          },
+          {
+            "collectionId": "type-theory",
+            "promptId": "identity-types"
+          }
+        ]
+      },
+      "expectation": {
+        "kind": "valid"
+      },
+      "fileName": "collections.json",
+      "summary": "Valid nested collections and multi-membership."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
         "corpusId": "example-history",
         "prompts": [
           {
@@ -239,6 +335,106 @@
       },
       "fileName": "history.json",
       "summary": "Valid append-oriented review history."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-collection-cycle",
+        "prompts": [],
+        "collections": [
+          {
+            "id": "a",
+            "title": "A",
+            "parentId": "b"
+          },
+          {
+            "id": "b",
+            "title": "B",
+            "parentId": "a"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "collection.parent-cycle",
+        "kind": "invalid",
+        "path": "/collections/0/parentId"
+      },
+      "fileName": "collection-parent-cycle.json",
+      "summary": "Collection parent links form a cycle."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-collection-membership",
+        "prompts": [],
+        "collections": [
+          {
+            "id": "mathematics",
+            "title": "Mathematics"
+          }
+        ],
+        "collectionMemberships": [
+          {
+            "collectionId": "mathematics",
+            "promptId": "missing"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "collection.prompt-unresolved",
+        "kind": "invalid",
+        "path": "/collectionMemberships/0/promptId"
+      },
+      "fileName": "unresolved-collection-membership.json",
+      "summary": "Collection membership references an absent Prompt."
+    },
+    {
+      "document": {
+        "format": "lineage.corpus",
+        "formatVersion": 1,
+        "corpusId": "invalid-duplicate-membership",
+        "prompts": [
+          {
+            "id": "p",
+            "revision": 1,
+            "challenge": [
+              "Question"
+            ],
+            "withheld": [
+              "Answer"
+            ],
+            "resolution": [
+              "Answer"
+            ],
+            "response": "text"
+          }
+        ],
+        "collections": [
+          {
+            "id": "mathematics",
+            "title": "Mathematics"
+          }
+        ],
+        "collectionMemberships": [
+          {
+            "collectionId": "mathematics",
+            "promptId": "p"
+          },
+          {
+            "collectionId": "mathematics",
+            "promptId": "p"
+          }
+        ]
+      },
+      "expectation": {
+        "code": "collection.duplicate-membership",
+        "kind": "invalid",
+        "path": "/collectionMemberships/1"
+      },
+      "fileName": "duplicate-collection-membership.json",
+      "summary": "Collection membership is duplicated."
     },
     {
       "document": {
@@ -1388,6 +1584,130 @@
       ],
       "name": "Material",
       "summary": "Material version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Organization never changes Prompt identity or review history.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable collection identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Titles need not be unique.",
+          "name": "title",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Human-readable collection title."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Describes the organizational view.",
+          "name": "description",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Optional collection description."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve and must not introduce a cycle.",
+          "name": "parentId",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              "Collection"
+            ],
+            "kind": "reference"
+          },
+          "summary": "Optional parent collection."
+        }
+      ],
+      "name": "Collection",
+      "summary": "Collection version-1 wire object."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve locally.",
+          "name": "collectionId",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "Collection"
+            ],
+            "kind": "reference"
+          },
+          "summary": "Containing collection."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Membership does not partition scheduling.",
+          "name": "promptId",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "Prompt"
+            ],
+            "kind": "reference"
+          },
+          "summary": "Organized Prompt identity."
+        }
+      ],
+      "name": "CollectionMembership",
+      "summary": "CollectionMembership version-1 wire object."
     },
     {
       "fields": [
@@ -3147,6 +3467,50 @@
             "args": [],
             "kind": "defaultEmptyArray"
           },
+          "explanation": "Defaults to empty for backward compatibility.",
+          "name": "collections",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Collection"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Identity-neutral organization."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Memories may belong to multiple collections.",
+          "name": "collectionMemberships",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "CollectionMembership"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Prompt membership in collections."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
           "explanation": "Defaults to empty.",
           "name": "assets",
           "requirement": "optional",
@@ -3735,6 +4099,41 @@
       "explanation": "All references resolve inside the local dependency closure.",
       "severity": "error",
       "summary": "A referenced entity is absent."
+    },
+    {
+      "appliesTo": "collection",
+      "code": "collection.unresolved",
+      "explanation": "Membership collections resolve locally.",
+      "severity": "error",
+      "summary": "A collection membership references an absent collection."
+    },
+    {
+      "appliesTo": "collection",
+      "code": "collection.prompt-unresolved",
+      "explanation": "Membership Prompts resolve locally by stable identity.",
+      "severity": "error",
+      "summary": "A collection membership references an absent Prompt."
+    },
+    {
+      "appliesTo": "collection",
+      "code": "collection.parent-unresolved",
+      "explanation": "Parent collections resolve locally.",
+      "severity": "error",
+      "summary": "A collection parent is absent."
+    },
+    {
+      "appliesTo": "collection",
+      "code": "collection.parent-cycle",
+      "explanation": "Collection nesting is acyclic.",
+      "severity": "error",
+      "summary": "Collection parent links form a cycle."
+    },
+    {
+      "appliesTo": "collection",
+      "code": "collection.duplicate-membership",
+      "explanation": "Each collection and Prompt pair occurs at most once.",
+      "severity": "error",
+      "summary": "A Prompt membership is duplicated."
     },
     {
       "appliesTo": "prompt",

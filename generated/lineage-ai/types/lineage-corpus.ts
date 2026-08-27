@@ -116,6 +116,28 @@ export interface Material {
 
 }
 
+/** Collection version-1 wire object. */
+export interface Collection {
+  /** Stable collection identity. Organization never changes Prompt identity or review history. */
+  "id": string
+  /** Human-readable collection title. Titles need not be unique. */
+  "title": string
+  /** Optional collection description. Describes the organizational view. */
+  "description"?: string
+  /** Optional parent collection. Must resolve and must not introduce a cycle. */
+  "parentId"?: string
+
+}
+
+/** CollectionMembership version-1 wire object. */
+export interface CollectionMembership {
+  /** Containing collection. Must resolve locally. */
+  "collectionId": string
+  /** Organized Prompt identity. Membership does not partition scheduling. */
+  "promptId": string
+
+}
+
 /** Asset version-1 wire object. */
 export interface Asset {
   /** Stable asset identity. Referenced by Prompts, Sources, and Materials. */
@@ -339,6 +361,10 @@ export interface CorpusDocument {
   "sources"?: Array<Source>
   /** Material revisions. Defaults to empty. */
   "materials"?: Array<Material>
+  /** Identity-neutral organization. Defaults to empty for backward compatibility. */
+  "collections"?: Array<Collection>
+  /** Prompt membership in collections. Memories may belong to multiple collections. */
+  "collectionMemberships"?: Array<CollectionMembership>
   /** Asset declarations. Defaults to empty. */
   "assets"?: Array<Asset>
   /** Typed relationships. Defaults to empty. */

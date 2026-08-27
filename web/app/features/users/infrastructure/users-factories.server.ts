@@ -17,7 +17,9 @@ export const createPopulatedUser: Factory<User> = ({
   lastSeenAt = null,
   updatedAt = faker.date.recent({ days: 10 }),
   createdAt = faker.date.past({ refDate: updatedAt, years: 3 }),
+  activeLineageCorpusId = null,
 } = {}) => ({
+  activeLineageCorpusId,
   createdAt,
   email,
   emailVerifiedAt,

@@ -91,7 +91,23 @@ Material version-1 wire object.
 - `assets` (optional; array): Asset references. All references resolve.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.11 Asset
+### 2.11 Collection
+
+Collection version-1 wire object.
+
+- `id` (required; scalar; nonEmpty): Stable collection identity. Organization never changes Prompt identity or review history.
+- `title` (required; scalar; nonEmpty): Human-readable collection title. Titles need not be unique.
+- `description` (optional; scalar): Optional collection description. Describes the organizational view.
+- `parentId` (optional; reference): Optional parent collection. Must resolve and must not introduce a cycle.
+
+### 2.12 CollectionMembership
+
+CollectionMembership version-1 wire object.
+
+- `collectionId` (required; reference): Containing collection. Must resolve locally.
+- `promptId` (required; reference): Organized Prompt identity. Membership does not partition scheduling.
+
+### 2.13 Asset
 
 Asset version-1 wire object.
 
@@ -102,14 +118,14 @@ Asset version-1 wire object.
 - `path` (required; scalar): Safe archive-relative path. Must begin assets/ and cannot traverse.
 - `accessibleDescription` (optional; scalar): Accessible media equivalent. Required when media conveys review meaning.
 
-### 2.12 ExtensionSet
+### 2.14 ExtensionSet
 
 ExtensionSet version-1 wire object.
 
 - `required` (optional; array): Required extensions. Renderer support is mandatory.
 - `optional` (optional; array): Optional extensions. Portable fallback is mandatory.
 
-### 2.13 Prompt
+### 2.15 Prompt
 
 Prompt version-1 wire object.
 
@@ -131,7 +147,7 @@ Prompt version-1 wire object.
 - `extensions` (optional; objectRef): Prompt extension requirements. Required and optional capabilities are explicit.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.14 Relationship
+### 2.16 Relationship
 
 Relationship version-1 wire object.
 
@@ -140,7 +156,7 @@ Relationship version-1 wire object.
 - `source` (required; objectRef): Source endpoint. Must resolve.
 - `target` (required; objectRef): Target endpoint. Must resolve.
 
-### 2.15 SchedulerObservation
+### 2.17 SchedulerObservation
 
 SchedulerObservation version-1 wire object.
 
@@ -151,7 +167,7 @@ SchedulerObservation version-1 wire object.
 - `nextIntervalMinutes` (optional; scalar): Resulting interval. Historical observation.
 - `dueAt` (optional; scalar; semanticFormat): Resulting due timestamp. Derived state captured for audit.
 
-### 2.16 Repetition
+### 2.18 Repetition
 
 Repetition version-1 wire object.
 
@@ -167,7 +183,7 @@ Repetition version-1 wire object.
 - `scheduler` (optional; objectRef): Historical scheduler observation. Replaceable current state is not corpus meaning.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.17 RepetitionCorrection
+### 2.19 RepetitionCorrection
 
 RepetitionCorrection version-1 wire object.
 
@@ -179,7 +195,7 @@ RepetitionCorrection version-1 wire object.
 - `replacementResponse` (optional; scalar): Replacement response. Original event remains unchanged.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.18 Provenance
+### 2.20 Provenance
 
 Provenance version-1 wire object.
 
@@ -192,7 +208,7 @@ Provenance version-1 wire object.
 - `note` (optional; scalar): Origin note. Optional explanatory text.
 - `sources` (optional; array): Prior provenance records. Forms append-only derivation chains.
 
-### 2.19 Extension
+### 2.21 Extension
 
 Extension version-1 wire object.
 
@@ -201,7 +217,7 @@ Extension version-1 wire object.
 - `requirement` (required; enumeration): Requirement level. Required extensions need support.
 - `fallback` (optional; scalar): Portable fallback. Required for optional extensions.
 
-### 2.20 Migration
+### 2.22 Migration
 
 Migration version-1 wire object.
 
@@ -212,7 +228,7 @@ Migration version-1 wire object.
 - `tool` (required; scalar): Migration tool. Must be non-empty.
 - `toolVersion` (required; scalar): Tool version. Must be non-empty.
 
-### 2.21 InteroperabilityReport
+### 2.23 InteroperabilityReport
 
 InteroperabilityReport version-1 wire object.
 
@@ -223,7 +239,7 @@ InteroperabilityReport version-1 wire object.
 - `losses` (optional; array): Declared losses. Non-empty when status is lossy.
 - `preservedArtifacts` (optional; array): Preserved original artifact IDs. Supports faithful round trips.
 
-### 2.22 CorpusDocument
+### 2.24 CorpusDocument
 
 CorpusDocument version-1 wire object.
 
@@ -233,6 +249,8 @@ CorpusDocument version-1 wire object.
 - `prompts` (required; array): Prompt revisions. Identity/revision keys are unique.
 - `sources` (optional; array): Source revisions. Defaults to empty.
 - `materials` (optional; array): Material revisions. Defaults to empty.
+- `collections` (optional; array): Identity-neutral organization. Defaults to empty for backward compatibility.
+- `collectionMemberships` (optional; array): Prompt membership in collections. Memories may belong to multiple collections.
 - `assets` (optional; array): Asset declarations. Defaults to empty.
 - `relationships` (optional; array): Typed relationships. Defaults to empty.
 - `repetitions` (optional; array): Review history. Append-oriented.
@@ -242,7 +260,7 @@ CorpusDocument version-1 wire object.
 - `migrations` (optional; array): Forward migration history. Defaults to empty.
 - `interoperability` (optional; array): Conversion reports. Defaults to empty.
 
-### 2.23 ArchiveEntry
+### 2.25 ArchiveEntry
 
 ArchiveEntry version-1 wire object.
 
@@ -253,7 +271,7 @@ ArchiveEntry version-1 wire object.
 - `role` (required; enumeration): Entry role. Determines closure requirements.
 - `required` (required; scalar): Dependency requirement. Required entries must be present.
 
-### 2.24 Manifest
+### 2.26 Manifest
 
 Manifest version-1 wire object.
 
@@ -313,121 +331,151 @@ A revision is not positive. Version-1 revisions begin at one.
 
 A referenced entity is absent. All references resolve inside the local dependency closure.
 
-### 3.8 `disclosure.withheld-empty`
+### 3.8 `collection.unresolved`
+
+**Severity:** error. **Applies to:** collection.
+
+A collection membership references an absent collection. Membership collections resolve locally.
+
+### 3.9 `collection.prompt-unresolved`
+
+**Severity:** error. **Applies to:** collection.
+
+A collection membership references an absent Prompt. Membership Prompts resolve locally by stable identity.
+
+### 3.10 `collection.parent-unresolved`
+
+**Severity:** error. **Applies to:** collection.
+
+A collection parent is absent. Parent collections resolve locally.
+
+### 3.11 `collection.parent-cycle`
+
+**Severity:** error. **Applies to:** collection.
+
+Collection parent links form a cycle. Collection nesting is acyclic.
+
+### 3.12 `collection.duplicate-membership`
+
+**Severity:** error. **Applies to:** collection.
+
+A Prompt membership is duplicated. Each collection and Prompt pair occurs at most once.
+
+### 3.13 `disclosure.withheld-empty`
 
 **Severity:** error. **Applies to:** prompt.
 
 A Prompt has no withheld material. Every active-recall Prompt conceals at least one answer.
 
-### 3.9 `disclosure.answer-leaked`
+### 3.14 `disclosure.answer-leaked`
 
 **Severity:** error. **Applies to:** prompt.
 
 Challenge content contains withheld material. No withheld answer may appear in challenge or accessible fallback content.
 
-### 3.10 `disclosure.answer-missing`
+### 3.15 `disclosure.answer-missing`
 
 **Severity:** error. **Applies to:** prompt.
 
 Resolution omits withheld material. Every withheld item appears in the resolution.
 
-### 3.11 `response.invalid-self-check`
+### 3.16 `response.invalid-self-check`
 
 **Severity:** error. **Applies to:** prompt.
 
 Self-check response configuration is invalid. Self-check mode uses capture none.
 
-### 3.12 `cloze.targets-required`
+### 3.17 `cloze.targets-required`
 
 **Severity:** error. **Applies to:** prompt.
 
 A cloze Prompt has no targets. Cloze Prompts require stable targets.
 
-### 3.13 `occlusion.source-required`
+### 3.18 `occlusion.source-required`
 
 **Severity:** error. **Applies to:** prompt.
 
 Image occlusion has no source asset. Image occlusion requires a declared image asset.
 
-### 3.14 `occlusion.regions-required`
+### 3.19 `occlusion.regions-required`
 
 **Severity:** error. **Applies to:** prompt.
 
 Image occlusion has no regions. At least one stable normalized region is required.
 
-### 3.15 `asset.unresolved`
+### 3.20 `asset.unresolved`
 
 **Severity:** error. **Applies to:** asset.
 
 A Prompt references an undeclared asset. Asset references resolve in the corpus.
 
-### 3.16 `asset.integrity-host-required`
+### 3.21 `asset.integrity-host-required`
 
 **Severity:** error. **Applies to:** asset.
 
 Media integrity is not host-established. AI must not invent bytes, sizes, or digests.
 
-### 3.17 `asset.path-unsafe`
+### 3.22 `asset.path-unsafe`
 
 **Severity:** error. **Applies to:** asset.
 
 An asset path is unsafe. Paths are relative, normalized, unique, and cannot traverse.
 
-### 3.18 `history.prompt-unresolved`
+### 3.23 `history.prompt-unresolved`
 
 **Severity:** error. **Applies to:** repetition.
 
 A repetition references an absent Prompt revision. History resolves to exact served Prompt revisions.
 
-### 3.19 `history.correction-invalid`
+### 3.24 `history.correction-invalid`
 
 **Severity:** error. **Applies to:** correction.
 
 A correction target is missing or self-referential. Corrections are distinct append-only events.
 
-### 3.20 `migration.chain-invalid`
+### 3.25 `migration.chain-invalid`
 
 **Severity:** error. **Applies to:** migration.
 
 Migration history is not forward and contiguous. Each step starts at the preceding version and advances.
 
-### 3.21 `extension.required-unsupported`
+### 3.26 `extension.required-unsupported`
 
 **Severity:** error. **Applies to:** extension.
 
 A required extension is unsupported. Required capabilities must be understood by the renderer.
 
-### 3.22 `extension.optional-fallback-missing`
+### 3.27 `extension.optional-fallback-missing`
 
 **Severity:** error. **Applies to:** extension.
 
 An optional extension lacks a fallback. Portable fallback content keeps the Prompt reviewable.
 
-### 3.23 `interoperability.loss-unreported`
+### 3.28 `interoperability.loss-unreported`
 
 **Severity:** error. **Applies to:** interoperability.
 
 A lossy conversion has no loss report. Losses must be explicit and inspectable.
 
-### 3.24 `manifest.corpus-mismatch`
+### 3.29 `manifest.corpus-mismatch`
 
 **Severity:** error. **Applies to:** manifest.
 
 Manifest and corpus identities differ. The archive manifest names the enclosed corpus.
 
-### 3.25 `archive.entry-missing`
+### 3.30 `archive.entry-missing`
 
 **Severity:** error. **Applies to:** archive.
 
 A declared archive entry is missing. All manifest entries must have actual bytes.
 
-### 3.26 `archive.digest-mismatch`
+### 3.31 `archive.digest-mismatch`
 
 **Severity:** error. **Applies to:** archive.
 
 Archive entry digest does not match bytes. Hosts compute and verify SHA-256 over actual bytes.
 
-### 3.27 `archive.duplicate-path`
+### 3.32 `archive.duplicate-path`
 
 **Severity:** error. **Applies to:** archive.
 
@@ -436,6 +484,7 @@ Archive paths are duplicated. Each normalized entry path occurs once.
 ## 4. Generated examples
 
 - `basic.json`: Basic self-check Prompt. (valid)
+- `collections.json`: Nested identity-neutral Prompt organization. (valid)
 - `cloze.json`: Stable cloze targets. (valid)
 - `image-occlusion.json`: Normalized stable regions. (host-media-required)
 - `media.json`: Host-verified media reference. (host-media-required)

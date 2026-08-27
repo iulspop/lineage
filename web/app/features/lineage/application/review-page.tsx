@@ -22,7 +22,6 @@ type ReviewActionData =
   | undefined
 
 type ReviewLoaderData = {
-  corpora: Array<{ corpusId: string; formatVersion: number }>
   corpusId: string
   due: boolean
   dueAt: string | null
@@ -94,7 +93,6 @@ export function ReviewPage({
   const nextCompleted = loaderData.sessionCompleted + 1
   const continueSearch = new URLSearchParams({
     completed: String(nextCompleted),
-    corpusId: loaderData.corpusId,
   })
   if (loaderData.sessionLimit !== null) {
     continueSearch.set("limit", String(loaderData.sessionLimit))
@@ -189,21 +187,6 @@ export function ReviewPage({
 
         <Form className={s.corpusPicker} method="get">
           <div className={s.pickerField}>
-            <FieldLabel htmlFor="review-corpus">Corpus</FieldLabel>
-            <select
-              className={s.corpusSelect}
-              defaultValue={loaderData.corpusId}
-              id="review-corpus"
-              name="corpusId"
-            >
-              {loaderData.corpora.map((corpus) => (
-                <option key={corpus.corpusId} value={corpus.corpusId}>
-                  {corpus.corpusId} · format {corpus.formatVersion}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={s.pickerField}>
             <FieldLabel htmlFor="review-limit">Session length</FieldLabel>
             <select
               className={s.corpusSelect}
@@ -235,10 +218,7 @@ export function ReviewPage({
                   Return to Today
                 </Link>
                 {loaderData.dueCount > 0 && (
-                  <Link
-                    className={s.continueLink}
-                    to={`/review?corpusId=${encodeURIComponent(loaderData.corpusId)}`}
-                  >
+                  <Link className={s.continueLink} to="/review">
                     Continue reviewing
                   </Link>
                 )}

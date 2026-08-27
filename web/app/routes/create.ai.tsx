@@ -2,6 +2,7 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/create.ai"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import { AssistedAuthoringPage } from "~/features/lineage/application/assisted-authoring-page"
 import { validateCorpusCandidate } from "~/features/lineage/application/author-corpus.server"
 import type { AssistedAuthoringInput } from "~/features/lineage/application/generate-corpus-candidate.server"
@@ -78,15 +79,15 @@ async function generate(ownerId: string, input: AssistedAuthoringInput) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const ownerId = await requireUserId(request)
-  const [snapshots, user] = await Promise.all([
-    corpusSnapshotStore.listLatest(ownerId),
+  const [resolution, user] = await Promise.all([
+    resolveActiveCorpus(ownerId),
     retrieveUserFromDatabaseById(ownerId),
   ])
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
   const url = new URL(request.url)
   return {
-    corpora: snapshots.map(({ corpusId }) => corpusId),
     initialInput: {
-      corpusId: url.searchParams.get("corpusId") ?? "",
+      corpusId: resolution.corpusId,
       intent: (url.searchParams.get("intent") ??
         "topic") as AssistedAuthoringInput["intent"],
       promptId: url.searchParams.get("promptId") ?? undefined,
@@ -98,15 +99,18 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const ownerId = await requireUserId(request)
+  const resolution = await resolveActiveCorpus(ownerId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
   const formData = await request.formData()
+  formData.set("corpusId", resolution.corpusId)
   const action = String(formData.get("action") ?? "generate")
 
   if (action === "generate") return generate(ownerId, parseInput(formData))
   if (action === "regenerate") {
-    return generate(
-      ownerId,
-      JSON.parse(String(formData.get("inputJson") ?? "{}")),
-    )
+    return generate(ownerId, {
+      ...JSON.parse(String(formData.get("inputJson") ?? "{}")),
+      corpusId: resolution.corpusId,
+    })
   }
 
   if (action === "accept") {
@@ -218,7 +222,6 @@ export default function CreateAiRoute({
   return (
     <AssistedAuthoringPage
       actionData={actionData}
-      corpora={loaderData.corpora}
       initialInput={loaderData.initialInput}
       userEmail={loaderData.userEmail}
     />

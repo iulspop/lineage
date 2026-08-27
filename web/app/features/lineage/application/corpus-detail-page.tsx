@@ -14,7 +14,15 @@ import { PageHeader } from "~/components/ui/page-header"
 const tabs = ["overview", "memories", "sources", "history", "advanced"] as const
 
 type CorpusDetailPageProps = CorpusBrowseProjection & {
+  collectionMemberships: Array<{ collectionId: string; promptId: string }>
+  collections: Array<{
+    description?: string
+    id: string
+    parentId?: string
+    title: string
+  }>
   filters: {
+    collection: string
     due: string
     kind: string
     query: string
@@ -37,6 +45,13 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
     ? props.tab
     : "overview"
   const query = props.filters.query.toLocaleLowerCase()
+  const membershipsByPrompt = new Map<string, Set<string>>()
+  for (const membership of props.collectionMemberships) {
+    const memberships =
+      membershipsByPrompt.get(membership.promptId) ?? new Set()
+    memberships.add(membership.collectionId)
+    membershipsByPrompt.set(membership.promptId, memberships)
+  }
   const memories = props.memories.filter((memory) => {
     if (
       query &&
@@ -61,6 +76,15 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
     if (
       props.filters.source !== "all" &&
       !memory.sourceIds.includes(props.filters.source)
+    )
+      return false
+    const memberships = membershipsByPrompt.get(memory.promptId) ?? new Set()
+    if (props.filters.collection === "unfiled" && memberships.size > 0)
+      return false
+    if (
+      props.filters.collection !== "all" &&
+      props.filters.collection !== "unfiled" &&
+      !memberships.has(props.filters.collection)
     )
       return false
     return true
@@ -90,10 +114,10 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
             </div>
           }
           description={`${props.corpus.memoryCount} memories · ${props.corpus.sourceCount} sources · ${props.corpus.assetCount} assets`}
-          eyebrow="Corpus"
+          eyebrow="Workspace"
           title={props.corpus.corpusId.replaceAll(/[-_]+/g, " ")}
         />
-        <nav aria-label="Corpus sections" className={s.tabs}>
+        <nav aria-label="Workspace sections" className={s.tabs}>
           {tabs.map((tab) => (
             <Link
               aria-current={activeTab === tab ? "page" : undefined}
@@ -125,6 +149,36 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                 <span>Compatibility</span>
                 <strong>{props.compatibility.status}</strong>
               </div>
+            </section>
+            <section className={s.panel}>
+              <h2>Collections</h2>
+              {props.collections.length === 0 ? (
+                <p className={s.muted}>
+                  No collections yet. Memories remain available in the Unfiled
+                  view.
+                </p>
+              ) : (
+                <ul className={s.cleanList}>
+                  {props.collections.map((collection) => (
+                    <li key={collection.id}>
+                      <Link
+                        to={`?tab=memories&collection=${encodeURIComponent(collection.id)}`}
+                      >
+                        {collection.title}
+                      </Link>
+                      <span>
+                        {collection.parentId
+                          ? `Nested under ${collection.parentId}`
+                          : collection.description || "Top-level collection"}
+                      </span>
+                    </li>
+                  ))}
+                  <li>
+                    <Link to="?tab=memories&collection=unfiled">Unfiled</Link>
+                    <span>Memories not assigned to a collection</span>
+                  </li>
+                </ul>
+              )}
             </section>
             <div className={s.twoColumn}>
               <section className={s.panel}>
@@ -171,7 +225,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
             <div className={s.toolbar}>
               <div>
                 <span className={s.eyebrow}>Memories</span>
-                <h2>Browse this corpus</h2>
+                <h2>Browse this workspace</h2>
               </div>
             </div>
             <Form className={s.filters} method="get" role="search">
@@ -224,6 +278,19 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                 {props.sources.map((source) => (
                   <option key={source.id} value={source.id}>
                     {source.title}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Collection"
+                defaultValue={props.filters.collection}
+                name="collection"
+              >
+                <option value="all">All collections</option>
+                <option value="unfiled">Unfiled</option>
+                {props.collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.title}
                   </option>
                 ))}
               </select>

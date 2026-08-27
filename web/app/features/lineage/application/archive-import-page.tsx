@@ -6,9 +6,16 @@ import { PageHeader } from "~/components/ui/page-header"
 
 export function ArchiveImportPage({
   actionData,
+  hasWorkspace,
   userEmail,
 }: {
-  actionData?: { corpusId?: string; error?: string; promptCount?: number }
+  actionData?: {
+    activated?: boolean
+    corpusId?: string
+    error?: string
+    promptCount?: number
+  }
+  hasWorkspace: boolean
   userEmail: string
 }) {
   return (
@@ -30,11 +37,16 @@ export function ArchiveImportPage({
               <h2>Corpus imported</h2>
               <p>
                 {actionData.promptCount} memories and their referenced media are
-                now durable.
+                now durable.{" "}
+                {actionData.activated
+                  ? "It is now your active workspace."
+                  : "Your current workspace was not changed."}
               </p>
             </div>
-            <Link to={`/library/${encodeURIComponent(actionData.corpusId)}`}>
-              Open corpus
+            <Link
+              to={actionData.activated ? "/library" : "/settings/workspace"}
+            >
+              {actionData.activated ? "Open workspace" : "Manage workspaces"}
             </Link>
           </section>
         ) : null}
@@ -57,9 +69,39 @@ export function ArchiveImportPage({
                 type="file"
               />
             </label>
+            {hasWorkspace ? (
+              <fieldset>
+                <legend>After import</legend>
+                <label className={s.confirm}>
+                  <input
+                    name="activation"
+                    required
+                    type="radio"
+                    value="keep-inactive"
+                  />
+                  Keep it as an inactive workspace. My current working context
+                  stays unchanged.
+                </label>
+                <label className={s.confirm}>
+                  <input
+                    name="activation"
+                    required
+                    type="radio"
+                    value="activate"
+                  />
+                  Switch my entire working context to the imported workspace.
+                </label>
+              </fieldset>
+            ) : (
+              <p>
+                This will become your active workspace because your account is
+                empty.
+              </p>
+            )}
             <label className={s.confirm}>
               <input name="confirmed" required type="checkbox" />
-              Import this archive after all checks pass.
+              Import this archive after all checks pass without merging it into
+              another workspace.
             </label>
             <button type="submit">Verify and import</button>
           </form>

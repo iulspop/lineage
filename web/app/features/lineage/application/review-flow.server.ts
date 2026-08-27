@@ -15,19 +15,6 @@ import {
   scheduleReview,
 } from "./review-scheduling"
 
-export async function listReviewCorpora({
-  snapshotStore,
-  userId,
-}: {
-  snapshotStore: CorpusSnapshotStore
-  userId: string
-}) {
-  return (await snapshotStore.listLatest(userId)).map((snapshot) => ({
-    corpusId: snapshot.corpusId,
-    formatVersion: snapshot.formatVersion,
-  }))
-}
-
 export async function loadReview({
   core,
   corpusId,
@@ -118,11 +105,12 @@ export async function loadReviewProgress({
   userId: string
 }) {
   const [history, latest, reviewCount] = await Promise.all([
-    store.recentForUser(userId, 10),
+    store.recentForCorpus?.({ corpusId, limit: 10, userId }) ??
+      store.recentForUser(userId, 10),
     promptId
       ? store.latestForPrompt({ corpusId, promptId, userId })
       : Promise.resolve(null),
-    store.countForUser(userId),
+    store.countForCorpus?.({ corpusId, userId }) ?? store.countForUser(userId),
   ])
   return {
     due: promptId ? isDue(latest) : false,

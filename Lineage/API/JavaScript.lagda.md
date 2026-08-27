@@ -27,7 +27,7 @@ open Wire using
   ; ProvenanceKind; ConversionStatus; ResponseInteraction; OcclusionGeometry
   ; EntityReference; ExtensionSet; NormalizedPoint; RectangleGeometry; PolygonGeometry
   ; AssetReference; ClozeTarget; OcclusionRegion; SourceRevision; MaterialRevision
-  ; Prompt; SchedulerObservation; Repetition; RepetitionCorrection; Relationship
+  ; Collection; CollectionMembership; Prompt; SchedulerObservation; Repetition; RepetitionCorrection; Relationship
   ; ProvenanceRecord; ExtensionDeclaration; MigrationRecord; InteroperabilityReport
   ; CorpusDocument; v1Description
   )
@@ -169,6 +169,12 @@ sourceRevision = Wire.sourceRevision
 materialRevision : String → ℕ → List String → List String → List String → List String → MaterialRevision
 materialRevision = Wire.materialRevision
 
+collection : String → String → Maybe String → Maybe String → Collection
+collection = Wire.collection
+
+collectionMembership : String → String → CollectionMembership
+collectionMembership = Wire.collectionMembership
+
 prompt :
   String → ℕ → Lifecycle → PromptKind → List String → List String → List String →
   ResponseInteraction → List String → List String → List String → Maybe (List ClozeTarget) →
@@ -209,9 +215,9 @@ interoperabilityReport = Wire.interoperabilityReport
 
 corpusDocument :
   String → ℕ → String → List Prompt → List SourceRevision → List MaterialRevision →
-  List AssetReference → List Relationship → List Repetition → List RepetitionCorrection →
-  List ProvenanceRecord → List ExtensionDeclaration → List MigrationRecord →
-  List InteroperabilityReport → CorpusDocument
+  List Collection → List CollectionMembership → List AssetReference → List Relationship →
+  List Repetition → List RepetitionCorrection → List ProvenanceRecord →
+  List ExtensionDeclaration → List MigrationRecord → List InteroperabilityReport → CorpusDocument
 corpusDocument = Wire.corpusDocument
 
 validateCorpus : CorpusDocument → List Diagnostic

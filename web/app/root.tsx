@@ -22,6 +22,7 @@ import { authMiddleware } from "./features/auth/application/auth-middleware.serv
 import { getUserId } from "./features/auth/application/auth-session.server"
 import { ChatNotificationProvider } from "./features/chat/application/chat-notification-provider"
 import { getOwnerAccess } from "./features/chat/application/owner-access.server"
+import { resolveActiveCorpus } from "./features/lineage/application/active-corpus.server"
 import * as s from "./root.css"
 import { ChatStoreProviderComponent } from "./store/store-provider"
 import { ClientHintCheck, getHints } from "./utils/client-hints"
@@ -35,9 +36,18 @@ export const middleware = [securityMiddleware, authMiddleware]
 export async function loader({ request }: Route.LoaderArgs) {
   const env = getServerEnv()
   const viewerId = await getUserId(request)
-  const ownerAccess = await getOwnerAccess(viewerId)
+  const [ownerAccess, activeCorpus] = await Promise.all([
+    getOwnerAccess(viewerId),
+    viewerId
+      ? resolveActiveCorpus(viewerId)
+      : Promise.resolve({ status: "empty" as const }),
+  ])
 
   return data({
+    activeWorkspace:
+      activeCorpus.status === "ready"
+        ? { corpusId: activeCorpus.corpusId }
+        : null,
     allowIndexing: env.ALLOW_INDEXING,
     ENV: {
       MODE: env.NODE_ENV,

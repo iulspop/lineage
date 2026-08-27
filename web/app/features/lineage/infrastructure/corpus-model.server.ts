@@ -1,4 +1,5 @@
 import type {
+  ActiveCorpusPreferenceStore,
   CorpusSnapshot,
   CorpusSnapshotStore,
 } from "../domain/corpus-ports"
@@ -18,6 +19,33 @@ export async function listCorpusSnapshotRevisions(
     },
     where: { corpusId, ownerId },
   })
+}
+
+export const activeCorpusPreferenceStore: ActiveCorpusPreferenceStore = {
+  async getActiveCorpusId(ownerId) {
+    const user = await prisma.user.findUnique({
+      select: { activeLineageCorpusId: true },
+      where: { id: ownerId },
+    })
+    return user?.activeLineageCorpusId ?? null
+  },
+
+  async listCorpusIdsByRecentActivity(ownerId) {
+    const snapshots = await prisma.lineageCorpusSnapshot.findMany({
+      distinct: ["corpusId"],
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { corpusId: true },
+      where: { ownerId },
+    })
+    return snapshots.map((snapshot) => snapshot.corpusId)
+  },
+
+  async setActiveCorpusId(ownerId, corpusId) {
+    await prisma.user.update({
+      data: { activeLineageCorpusId: corpusId },
+      where: { id: ownerId },
+    })
+  },
 }
 
 export const corpusSnapshotStore: CorpusSnapshotStore = {

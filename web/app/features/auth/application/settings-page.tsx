@@ -1,6 +1,7 @@
 import { startRegistration } from "@simplewebauthn/browser"
 import {
   IconBell,
+  IconDatabase,
   IconDatabaseExport,
   IconKey,
   IconMessageCircle,
@@ -80,6 +81,7 @@ export function SettingsPageComponent({
       <div className={s.layout}>
         <nav aria-label="Settings sections" className={s.sectionNav}>
           <a href="#appearance">Appearance</a>
+          <a href="#workspace">Workspace</a>
           <a href="#account">Account</a>
           <a href="#passkeys">Passkeys</a>
           <a href="#data">Data portability</a>
@@ -101,6 +103,30 @@ export function SettingsPageComponent({
                 </span>
               </div>
               <AppearanceControl />
+            </div>
+          </section>
+
+          <section className={s.section} id="workspace">
+            <div className={s.sectionHeading}>
+              <h2>Workspace</h2>
+              <p>Choose the single corpus used throughout ordinary work.</p>
+            </div>
+            <div className={s.settingRow}>
+              <IconDatabase
+                aria-hidden="true"
+                className={s.rowIcon}
+                size={17}
+              />
+              <div className={s.settingCopy}>
+                <span className={s.settingTitle}>Active workspace</span>
+                <span className={s.settingDescription}>
+                  Switching changes Today, Library, Create, Review, and Insights
+                  together.
+                </span>
+              </div>
+              <Link className={s.rowLink} to="/settings/workspace">
+                Manage workspace
+              </Link>
             </div>
           </section>
 

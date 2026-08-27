@@ -9,7 +9,13 @@ import { Input } from "~/components/ui/input"
 import { Textarea } from "~/components/ui/textarea"
 
 type CorpusActionData =
-  | { corpusId: string; digest: string; imported: true; promptCount: number }
+  | {
+      activated: boolean
+      corpusId: string
+      digest: string
+      imported: true
+      promptCount: number
+    }
   | {
       valid: true
       preview: {
@@ -29,9 +35,11 @@ type CorpusActionData =
 
 export function CorpusPage({
   actionData,
+  hasWorkspace,
   userEmail,
 }: {
   actionData: CorpusActionData
+  hasWorkspace: boolean
   userEmail: string
 }) {
   return (
@@ -56,7 +64,11 @@ export function CorpusPage({
           <p className={s.success} role="status">
             Imported {actionData.promptCount} prompt
             {actionData.promptCount === 1 ? "" : "s"} into {actionData.corpusId}
-            . Digest: <code>{actionData.digest}</code>
+            .{" "}
+            {actionData.activated
+              ? "It is now your active workspace."
+              : "Your current workspace was not changed."}{" "}
+            Digest: <code>{actionData.digest}</code>
           </p>
         ) : null}
         {actionData &&
@@ -128,6 +140,34 @@ export function CorpusPage({
                   type="hidden"
                   value={actionData.preview.canonicalJson}
                 />
+                {hasWorkspace ? (
+                  <fieldset>
+                    <legend>After import</legend>
+                    <label>
+                      <input
+                        name="activation"
+                        required
+                        type="radio"
+                        value="keep-inactive"
+                      />
+                      Keep it inactive and preserve my current working context.
+                    </label>
+                    <label>
+                      <input
+                        name="activation"
+                        required
+                        type="radio"
+                        value="activate"
+                      />
+                      Switch my entire working context to this workspace.
+                    </label>
+                  </fieldset>
+                ) : (
+                  <p>
+                    This will become your active workspace because your account
+                    is empty.
+                  </p>
+                )}
                 <Button name="intent" type="submit" value="accept-candidate">
                   Accept and persist canonical corpus
                 </Button>
@@ -150,6 +190,34 @@ export function CorpusPage({
                 required
                 rows={16}
               />
+              {hasWorkspace ? (
+                <fieldset>
+                  <legend>After import</legend>
+                  <label>
+                    <input
+                      name="activation"
+                      required
+                      type="radio"
+                      value="keep-inactive"
+                    />
+                    Keep it inactive and preserve my current working context.
+                  </label>
+                  <label>
+                    <input
+                      name="activation"
+                      required
+                      type="radio"
+                      value="activate"
+                    />
+                    Switch my entire working context to this workspace.
+                  </label>
+                </fieldset>
+              ) : (
+                <p>
+                  This will become your active workspace because your account is
+                  empty.
+                </p>
+              )}
               <Button name="intent" type="submit" value="import">
                 Validate and import
               </Button>

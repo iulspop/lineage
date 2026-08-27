@@ -2,6 +2,11 @@ import { data } from "react-router"
 
 import type { Route } from "./+types/create.import"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import type { ImportedWorkspaceActivation } from "~/features/lineage/application/active-corpus.server"
+import {
+  activateImportedCorpus,
+  resolveActiveCorpus,
+} from "~/features/lineage/application/active-corpus.server"
 import { validateCorpusCandidate } from "~/features/lineage/application/author-corpus.server"
 import { CorpusPage } from "~/features/lineage/application/corpus-page"
 import {
@@ -16,8 +21,14 @@ import { getErrorMessage } from "~/utils/get-error-message"
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
-  const user = await retrieveUserFromDatabaseById(userId)
-  return { userEmail: user?.email ?? "" }
+  const [user, activeWorkspace] = await Promise.all([
+    retrieveUserFromDatabaseById(userId),
+    resolveActiveCorpus(userId),
+  ])
+  return {
+    hasWorkspace: activeWorkspace.status === "ready",
+    userEmail: user?.email ?? "",
+  }
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -35,6 +46,20 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "import" || intent === "accept-candidate") {
     try {
+      const activeWorkspace = await resolveActiveCorpus(ownerId)
+      const hadWorkspace = activeWorkspace.status === "ready"
+      const activation = formData.get(
+        "activation",
+      ) as ImportedWorkspaceActivation | null
+      if (
+        hadWorkspace &&
+        activation !== "activate" &&
+        activation !== "keep-inactive"
+      )
+        return data(
+          { error: "Choose whether to switch to the imported workspace." },
+          { status: 400 },
+        )
       const input = JSON.parse(
         String(
           formData.get(
@@ -48,8 +73,16 @@ export async function action({ request }: Route.ActionArgs) {
         store: corpusSnapshotStore,
         validator: lineageRuntime,
       })
+      const corpusId = imported.document.corpusId
+      const activated = await activateImportedCorpus({
+        activation,
+        corpusId,
+        hadWorkspace,
+        ownerId,
+      })
       return data({
-        corpusId: imported.document.corpusId,
+        activated,
+        corpusId,
         digest: imported.digest,
         imported: true as const,
         promptCount: imported.document.prompts.length,
@@ -93,5 +126,11 @@ export default function ImportRoute({
   actionData,
   loaderData,
 }: Route.ComponentProps) {
-  return <CorpusPage actionData={actionData} userEmail={loaderData.userEmail} />
+  return (
+    <CorpusPage
+      actionData={actionData}
+      hasWorkspace={loaderData.hasWorkspace}
+      userEmail={loaderData.userEmail}
+    />
+  )
 }

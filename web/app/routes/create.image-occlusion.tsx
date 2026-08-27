@@ -2,6 +2,7 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/create.image-occlusion"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import type { ImageOcclusionDraft } from "~/features/lineage/application/image-occlusion-draft"
 import {
   MAX_IMAGE_BYTES,
@@ -59,16 +60,20 @@ async function readDraft(formData: FormData): Promise<ImageOcclusionDraft> {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const ownerId = await requireUserId(request)
-  const [snapshots, user] = await Promise.all([
-    corpusSnapshotStore.listLatest(ownerId),
+  const [resolution, user] = await Promise.all([
+    resolveActiveCorpus(ownerId),
     retrieveUserFromDatabaseById(ownerId),
   ])
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
   const url = new URL(request.url)
-  const corpusId = url.searchParams.get("corpusId") ?? ""
+  const requestedCorpusId = url.searchParams.get("corpusId")
+  if (requestedCorpusId && requestedCorpusId !== resolution.corpusId)
+    throw data("Memory does not belong to the active workspace", {
+      status: 409,
+    })
+  const corpusId = resolution.corpusId
   const promptId = url.searchParams.get("promptId") ?? ""
-  const snapshot = corpusId
-    ? await corpusSnapshotStore.latest(ownerId, corpusId)
-    : null
+  const snapshot = resolution.snapshot
   const document = snapshot
     ? parseCorpusDocument(JSON.parse(snapshot.canonicalJson))
     : null
@@ -88,8 +93,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       })()
     : null
   return {
-    baseDigest: snapshot?.digest,
-    corpora: snapshots.map(({ corpusId: id }) => id),
+    baseDigest: snapshot.digest,
     initialDraft:
       prompt && asset
         ? {
@@ -129,10 +133,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const ownerId = await requireUserId(request)
+  const resolution = await resolveActiveCorpus(ownerId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
   const formData = await request.formData()
+  formData.set("corpusId", resolution.corpusId)
   if (formData.get("intent") === "accept") {
     const candidateJson = String(formData.get("candidateJson") ?? "")
     const document = parseCorpusDocument(JSON.parse(candidateJson))
+    if (document.corpusId !== resolution.corpusId)
+      throw data("Workspace changed", { status: 409 })
     const baseDigest = String(formData.get("baseDigest") ?? "")
     const latest = await corpusSnapshotStore.latest(ownerId, document.corpusId)
     if (baseDigest && latest?.digest !== baseDigest)
@@ -231,7 +240,6 @@ export default function ImageOcclusionRoute({
     <ImageOcclusionPage
       actionData={actionData?.draft ? actionData : undefined}
       baseDigest={loaderData.baseDigest}
-      corpora={loaderData.corpora}
       initialDraft={loaderData.initialDraft}
       userEmail={loaderData.userEmail}
     />

@@ -6,6 +6,8 @@ import { validateKnowledgeDraft } from "./source-material-draft"
 
 const corpus: CorpusDocument = {
   assets: [],
+  collectionMemberships: [],
+  collections: [],
   corpusId: "calculus",
   extensions: [],
   format: "lineage.corpus",

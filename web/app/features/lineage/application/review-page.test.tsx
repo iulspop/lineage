@@ -7,7 +7,6 @@ import { render, screen } from "~/test/react-test-utils"
 const loaderData = {
   assessmentPreviews: { again: 1, easy: 8640, good: 10, hard: 6 },
   captureResponse: true,
-  corpora: [{ corpusId: "lineage-demo", formatVersion: 1 }],
   corpusId: "lineage-demo",
   due: true,
   dueAt: null,
@@ -42,7 +41,10 @@ describe("ReviewPage", () => {
     expect(
       screen.getByRole("button", { name: "Show answer" }),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText("Corpus")).toHaveValue("lineage-demo")
+    expect(screen.queryByLabelText("Corpus")).not.toBeInTheDocument()
+    expect(container.querySelector('input[name="corpusId"]')).toHaveValue(
+      "lineage-demo",
+    )
     expect(container.querySelector('input[name="promptId"]')).toHaveValue(
       "capital-of-france",
     )

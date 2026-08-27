@@ -10,7 +10,11 @@ function renderPage(
   const Router = createRoutesStub([
     {
       Component: () => (
-        <CorpusPage actionData={actionData} userEmail="learner@example.com" />
+        <CorpusPage
+          actionData={actionData}
+          hasWorkspace
+          userEmail="learner@example.com"
+        />
       ),
       path: "/corpora",
     },
@@ -34,6 +38,7 @@ describe("CorpusPage", () => {
 
   test("reports a successful validated import", () => {
     renderPage({
+      activated: false,
       corpusId: "language-learning",
       digest: "abc123",
       imported: true,

@@ -68,6 +68,16 @@ const materialSchema = z.object({
   revision,
   sources: z.array(id).optional().default([]),
 })
+const collectionSchema = z.object({
+  description: z.string().optional(),
+  id,
+  parentId: id.optional(),
+  title: z.string().min(1),
+})
+const collectionMembershipSchema = z.object({
+  collectionId: id,
+  promptId: id,
+})
 
 export const reviewContractSchema = z.object({
   assets: z.array(id).optional().default([]),
@@ -179,6 +189,11 @@ const interoperabilitySchema = z.object({
 
 export const corpusDocumentSchema = z.object({
   assets: z.array(assetSchema).optional().default([]),
+  collectionMemberships: z
+    .array(collectionMembershipSchema)
+    .optional()
+    .default([]),
+  collections: z.array(collectionSchema).optional().default([]),
   corpusId: id,
   extensions: z.array(extensionSchema).optional().default([]),
   format: z.literal("lineage.corpus"),

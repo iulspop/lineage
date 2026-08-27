@@ -2,9 +2,9 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/review"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import {
   completeReview,
-  listReviewCorpora,
   loadReview,
   loadReviewProgress,
   loadReviewPrompt,
@@ -18,14 +18,10 @@ import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/us
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
-  const corpora = await listReviewCorpora({
-    snapshotStore: corpusSnapshotStore,
-    userId,
-  })
-  if (corpora.length === 0) throw redirect("/library")
+  const resolution = await resolveActiveCorpus(userId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
 
   const searchParams = new URL(request.url).searchParams
-  const requestedCorpusId = searchParams.get("corpusId")
   const requestedLimit = Number(searchParams.get("limit"))
   const sessionLimit = [10, 20, 50].includes(requestedLimit)
     ? requestedLimit
@@ -35,11 +31,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     Number.isInteger(requestedCompleted) && requestedCompleted > 0
       ? requestedCompleted
       : 0
-  const corpusId = corpora.some(
-    (corpus) => corpus.corpusId === requestedCorpusId,
-  )
-    ? (requestedCorpusId as string)
-    : corpora[0].corpusId
+  const corpusId = resolution.corpusId
   const review = await loadReview({
     core: reviewCore,
     corpusId,
@@ -60,7 +52,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   return {
     ...review,
     ...progress,
-    corpora,
     sessionCompleted,
     sessionLimit,
     userEmail: user?.email ?? "",
@@ -69,11 +60,21 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const userId = await requireUserId(request)
+  const resolution = await resolveActiveCorpus(userId)
+  if (resolution.status === "empty") {
+    return data({ error: "No active workspace is available" }, { status: 409 })
+  }
   const formData = await request.formData()
   const intent = formData.get("intent")
   const corpusId = formData.get("corpusId")
   if (typeof corpusId !== "string" || !corpusId) {
-    return data({ error: "A review corpus is required" }, { status: 400 })
+    return data({ error: "A review workspace is required" }, { status: 400 })
+  }
+  if (corpusId !== resolution.corpusId) {
+    return data(
+      { error: "Your active workspace changed. Reload review to continue." },
+      { status: 409 },
+    )
   }
   const promptId = formData.get("promptId")
   const promptRevision = Number(formData.get("promptRevision"))

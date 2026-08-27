@@ -27,6 +27,12 @@ export type CorpusSnapshotStore = {
   listLatest(ownerId: string): Promise<CorpusSnapshot[]>
 }
 
+export type ActiveCorpusPreferenceStore = {
+  getActiveCorpusId(ownerId: string): Promise<string | null>
+  listCorpusIdsByRecentActivity(ownerId: string): Promise<string[]>
+  setActiveCorpusId(ownerId: string, corpusId: string): Promise<void>
+}
+
 export type ImportedCorpus = {
   document: CorpusDocument
   digest: string

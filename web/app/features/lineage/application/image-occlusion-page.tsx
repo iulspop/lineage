@@ -21,13 +21,11 @@ type ActionData =
 export function ImageOcclusionPage({
   actionData,
   baseDigest,
-  corpora,
   initialDraft,
   userEmail,
 }: {
   actionData: ActionData
   baseDigest?: string
-  corpora: string[]
   initialDraft?: Partial<ImageOcclusionDraft>
   userEmail: string
 }) {
@@ -42,7 +40,9 @@ export function ImageOcclusionPage({
           description="Upload an image, define a stable normalized region, and approve the exact concealed and revealed presentation before saving."
           eyebrow="Create · Image occlusion"
           title={
-            baseDigest ? "Revise image occlusion" : "Create image occlusion"
+            initialDraft?.promptId
+              ? "Revise image occlusion"
+              : "Create image occlusion"
           }
         />
         <div className={s.layout}>
@@ -81,27 +81,17 @@ export function ImageOcclusionPage({
             <h2>
               <IconPhoto aria-hidden="true" /> Image and memory
             </h2>
-            <label className={s.field}>
-              <span>Corpus</span>
-              <input
-                defaultValue={draft?.corpusId}
-                list="image-corpora"
-                name="corpusId"
-                readOnly={Boolean(baseDigest)}
-                required
-              />
-            </label>
-            <datalist id="image-corpora">
-              {corpora.map((id) => (
-                <option key={id} value={id} />
-              ))}
-            </datalist>
+            <input
+              name="corpusId"
+              type="hidden"
+              value={draft?.corpusId ?? ""}
+            />
             <label className={s.field}>
               <span>Stable memory ID</span>
               <input
                 defaultValue={draft?.promptId}
                 name="promptId"
-                readOnly={Boolean(baseDigest)}
+                readOnly={Boolean(initialDraft?.promptId)}
                 required
               />
             </label>

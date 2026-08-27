@@ -6,16 +6,19 @@ export type DataPortabilityPageProps = {
   actionData?: {
     error?: string
     restored?: {
+      activeLineageCorpusId: string | null
       assetCount: number
       reviewCount: number
       snapshotCount: number
     }
   }
+  hasWorkspace: boolean
   userEmail: string
 }
 
 export function DataPortabilityPage({
   actionData,
+  hasWorkspace,
   userEmail,
 }: DataPortabilityPageProps) {
   return (
@@ -36,6 +39,9 @@ export function DataPortabilityPage({
             Recovered {actionData.restored.snapshotCount} snapshots,{" "}
             {actionData.restored.reviewCount} reviews, and{" "}
             {actionData.restored.assetCount} assets.
+            {actionData.restored.activeLineageCorpusId
+              ? ` Active workspace: ${actionData.restored.activeLineageCorpusId}.`
+              : " No active workspace was present in the export."}
           </p>
         ) : null}
         <section className={s.card}>
@@ -53,8 +59,8 @@ export function DataPortabilityPage({
             <h2>Recover from an export</h2>
             <p>
               Lineage verifies snapshot digests, Prompt revision references, and
-              asset dependency closure before writing anything. Existing data
-              causes the restore to stop rather than overwrite history.
+              asset dependency closure before writing anything. Recovery
+              restores the exported active-workspace preference when possible.
             </p>
           </div>
           <form encType="multipart/form-data" method="post">
@@ -68,9 +74,27 @@ export function DataPortabilityPage({
                 type="file"
               />
             </label>
+            {hasWorkspace ? (
+              <label className={s.confirm}>
+                <input
+                  name="recoveryMode"
+                  required
+                  type="radio"
+                  value="replace"
+                />
+                Replace every existing Lineage workspace, review, and asset with
+                this complete recovery export. This cannot be merged safely.
+              </label>
+            ) : (
+              <p>
+                Your empty account will adopt the active workspace recorded in
+                the export.
+              </p>
+            )}
             <label className={s.confirm}>
               <input name="confirmed" required type="checkbox" />I understand
-              that recovery is append-only and rejects conflicts.
+              that complete recovery replaces existing Lineage data when
+              present.
             </label>
             <button type="submit">Verify and recover</button>
           </form>

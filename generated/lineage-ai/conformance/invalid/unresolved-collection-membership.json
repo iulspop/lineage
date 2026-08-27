@@ -1,0 +1,24 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-collection-membership",
+    "prompts": [],
+    "collections": [
+      {
+        "id": "mathematics",
+        "title": "Mathematics"
+      }
+    ],
+    "collectionMemberships": [
+      {
+        "collectionId": "mathematics",
+        "promptId": "missing"
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "collection.prompt-unresolved",
+    "path": "/collectionMemberships/0/promptId"
+  }
+}

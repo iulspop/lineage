@@ -77,6 +77,10 @@ export const reviewRecordStore: ReviewRecordStore = {
     await prisma.lineageReview.create({ data: record })
   },
 
+  countForCorpus({ corpusId, userId }) {
+    return prisma.lineageReview.count({ where: { corpusId, userId } })
+  },
+
   countForUser(userId) {
     return prisma.lineageReview.count({ where: { userId } })
   },
@@ -98,6 +102,16 @@ export const reviewRecordStore: ReviewRecordStore = {
       where: { corpusId, promptId, userId },
     })
     return review ? toHistoryEntry(review) : null
+  },
+
+  async recentForCorpus({ corpusId, limit, userId }) {
+    const reviews = await prisma.lineageReview.findMany({
+      orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+      select: reviewSelect,
+      take: limit,
+      where: { corpusId, userId },
+    })
+    return reviews.map(toHistoryEntry)
   },
 
   async recentForUser(userId, limit) {

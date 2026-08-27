@@ -2,6 +2,7 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/library.$corpusId.knowledge"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import { importCorpus } from "~/features/lineage/application/import-corpus.server"
 import type { KnowledgeDraft } from "~/features/lineage/application/source-material-draft"
 import { validateKnowledgeDraft } from "~/features/lineage/application/source-material-draft"
@@ -37,11 +38,13 @@ function readDraft(formData: FormData): KnowledgeDraft {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const ownerId = await requireUserId(request)
-  const [snapshot, user] = await Promise.all([
-    corpusSnapshotStore.latest(ownerId, params.corpusId),
+  const [resolution, user] = await Promise.all([
+    resolveActiveCorpus(ownerId),
     retrieveUserFromDatabaseById(ownerId),
   ])
-  if (!snapshot) throw data("Corpus not found", { status: 404 })
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
+  if (params.corpusId !== resolution.corpusId) throw redirect("/library")
+  const snapshot = resolution.snapshot
   return {
     corpus: parseCorpusDocument(JSON.parse(snapshot.canonicalJson)),
     snapshotDigest: snapshot.digest,
@@ -51,9 +54,13 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export async function action({ params, request }: Route.ActionArgs) {
   const ownerId = await requireUserId(request)
+  const resolution = await resolveActiveCorpus(ownerId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
+  if (params.corpusId !== resolution.corpusId)
+    throw data("Workspace changed", { status: 409 })
   const formData = await request.formData()
   const baseDigest = String(formData.get("baseDigest") ?? "")
-  const latest = await corpusSnapshotStore.latest(ownerId, params.corpusId)
+  const latest = await corpusSnapshotStore.latest(ownerId, resolution.corpusId)
   if (!latest) throw data("Corpus not found", { status: 404 })
   if (latest.digest !== baseDigest)
     return data(

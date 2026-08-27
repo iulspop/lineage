@@ -212,7 +212,7 @@ describe("review flow", () => {
       previousIntervalMinutes: 0,
       promptId: first.prompt.id,
       promptRevision: first.prompt.revision,
-      reviewedAt: new Date("2026-08-26T00:00:00.000Z"),
+      reviewedAt: new Date(),
       scheduler: "lineage-prototype",
       schedulerVersion: "1",
       userId: "user-1",

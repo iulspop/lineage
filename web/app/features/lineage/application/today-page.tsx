@@ -20,7 +20,6 @@ import { PageHeader } from "~/components/ui/page-header"
 
 export type TodayPageProps = {
   summary: {
-    corpora: Array<{ corpusId: string; dueCount: number; promptCount: number }>
     dueCount: number
     nextReviewAt: string | null
     recentReviews: Array<{
@@ -30,16 +29,17 @@ export type TodayPageProps = {
       reviewedAt: string
     }>
     totalMemories: number
+    workspace: {
+      collectionCount: number
+      corpusId: string
+      sourceCount: number
+    } | null
   }
   userEmail: string
 }
 
-function formatCorpusName(corpusId: string) {
-  return corpusId.replaceAll(/[-_]+/g, " ")
-}
-
 export function TodayPage({ summary, userEmail }: TodayPageProps) {
-  const hasLibrary = summary.corpora.length > 0
+  const workspace = summary.workspace
 
   return (
     <AppShell userEmail={userEmail}>
@@ -48,13 +48,13 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
           description="Your learning workspace, ready for the next useful step."
           eyebrow="Today"
           title={
-            hasLibrary
+            workspace
               ? "Keep your knowledge in motion"
-              : "Start your memory library"
+              : "Create your first workspace"
           }
         />
 
-        {!hasLibrary ? (
+        {!workspace ? (
           <section className={s.onboarding}>
             <div className={s.onboardingIcon}>
               <IconBrain aria-hidden="true" />
@@ -62,18 +62,18 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
             <div className={s.onboardingCopy}>
               <h2>Create knowledge you can keep</h2>
               <p>
-                Add your first corpus manually, generate a candidate with AI, or
-                import an existing Lineage document. You will always preview and
-                approve content before it becomes durable.
+                Create a workspace for your long-lived knowledge, or import an
+                existing Lineage archive. Everyday capture, review, and browsing
+                will stay inside that active workspace.
               </p>
             </div>
             <div className={s.actions}>
-              <Link className={s.primaryAction} to="/create">
+              <Link className={s.primaryAction} to="/settings/workspace">
                 <IconPlus aria-hidden="true" />
-                Create memories
+                Create workspace
               </Link>
               <Link className={s.secondaryAction} to="/create/archive">
-                Import a corpus
+                Import workspace
               </Link>
             </div>
           </section>
@@ -107,14 +107,16 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
               )}
             </section>
 
-            <section aria-label="Library summary" className={s.stats}>
+            <section aria-label="Workspace summary" className={s.stats}>
               <Card>
                 <CardHeader>
-                  <CardDescription>Library</CardDescription>
-                  <CardTitle>{summary.corpora.length} corpora</CardTitle>
+                  <CardDescription>Active workspace</CardDescription>
+                  <CardTitle>{workspace.corpusId}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {summary.totalMemories} active memories
+                  {summary.totalMemories} active memories ·{" "}
+                  {workspace.collectionCount} collections ·{" "}
+                  {workspace.sourceCount} sources
                 </CardContent>
               </Card>
               <Card>
@@ -122,9 +124,7 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
                   <CardDescription>Recent activity</CardDescription>
                   <CardTitle>{summary.recentReviews.length} reviews</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  Most recent sessions across your library
-                </CardContent>
+                <CardContent>Most recent reviews in this workspace</CardContent>
               </Card>
             </section>
 
@@ -132,27 +132,11 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
               <div className={s.sectionHeading}>
                 <div>
                   <span className={s.eyebrow}>Library</span>
-                  <h2>Continue learning</h2>
+                  <h2>Browse your workspace</h2>
                 </div>
                 <Link className={s.textLink} to="/library">
-                  View library <IconArrowRight aria-hidden="true" />
+                  Open library <IconArrowRight aria-hidden="true" />
                 </Link>
-              </div>
-              <div className={s.corpusGrid}>
-                {summary.corpora.slice(0, 3).map((corpus) => (
-                  <Link
-                    className={s.corpusCard}
-                    key={corpus.corpusId}
-                    to={`/library/${encodeURIComponent(corpus.corpusId)}`}
-                  >
-                    <span className={s.corpusTitle}>
-                      {formatCorpusName(corpus.corpusId)}
-                    </span>
-                    <span className={s.corpusMeta}>
-                      {corpus.promptCount} memories · {corpus.dueCount} due
-                    </span>
-                  </Link>
-                ))}
               </div>
             </section>
 

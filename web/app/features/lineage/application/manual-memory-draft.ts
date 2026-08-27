@@ -10,6 +10,7 @@ import { validateCorpusCandidate } from "./author-corpus.server"
 export type ManualMemoryDraft = {
   answer: string
   challenge: string
+  collectionIds?: string[]
   corpusId: string
   hint?: string
   kind: "basic" | "cloze"
@@ -35,6 +36,8 @@ function lines(value: string) {
 function baseDocument(corpusId: string): CorpusDocument {
   return {
     assets: [],
+    collectionMemberships: [],
+    collections: [],
     corpusId,
     extensions: [],
     format: "lineage.corpus",
@@ -163,6 +166,15 @@ export function validateQuickMemoryCapture({
   const result = validateCorpusCandidate({
     candidateJson: JSON.stringify({
       ...document,
+      collectionMemberships: [
+        ...document.collectionMemberships,
+        ...drafts.flatMap((draft) =>
+          (draft.collectionIds ?? []).map((collectionId) => ({
+            collectionId,
+            promptId: draft.promptId,
+          })),
+        ),
+      ],
       prompts: [...document.prompts, ...drafts.map(draftToPrompt)],
     }),
     maxRepairs: 0,
@@ -225,6 +237,13 @@ export function validateManualMemoryDraft({
   const result = validateCorpusCandidate({
     candidateJson: JSON.stringify({
       ...document,
+      collectionMemberships: [
+        ...document.collectionMemberships,
+        ...(draft.collectionIds ?? []).map((collectionId) => ({
+          collectionId,
+          promptId: draft.promptId,
+        })),
+      ],
       prompts: [...document.prompts, draftToPrompt(draft)],
     }),
     maxRepairs: 0,

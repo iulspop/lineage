@@ -93,6 +93,8 @@ describe("generated Lineage runtime", () => {
     if (!result.valid) throw new Error("Expected valid corpus")
     expect(result.document).toMatchObject({
       assets: [],
+      collectionMemberships: [],
+      collections: [],
       extensions: [],
       interoperability: [],
       materials: [],
@@ -115,6 +117,78 @@ describe("generated Lineage runtime", () => {
       repetitions: [],
       sources: [],
     })
+  })
+
+  test("given: nested collections and Prompt memberships, should: preserve identity-neutral organization", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      collectionMemberships: [
+        { collectionId: "type-theory", promptId: contract.id },
+        { collectionId: "mathematics", promptId: contract.id },
+      ],
+      collections: [
+        {
+          description: "Formal foundations",
+          id: "mathematics",
+          title: "Mathematics",
+        },
+        {
+          id: "type-theory",
+          parentId: "mathematics",
+          title: "Type theory",
+        },
+      ],
+      corpusId: "polypan",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [contract],
+    })
+    if (!result) throw new Error("Structured validation is unavailable")
+
+    expect(result.valid).toBe(true)
+    if (!result.valid) throw new Error("Expected valid corpus")
+    expect(result.document.collections).toHaveLength(2)
+    expect(result.document.collectionMemberships).toHaveLength(2)
+    expect(result.document.prompts).toHaveLength(1)
+  })
+
+  test("given: invalid collection organization, should: report stable localized diagnostics", () => {
+    const result = lineageRuntime.validateCorpus?.({
+      collectionMemberships: [
+        { collectionId: "missing", promptId: "missing" },
+        { collectionId: "mathematics", promptId: contract.id },
+        { collectionId: "mathematics", promptId: contract.id },
+      ],
+      collections: [
+        { id: "mathematics", parentId: "type-theory", title: "Mathematics" },
+        { id: "type-theory", parentId: "mathematics", title: "Type theory" },
+      ],
+      corpusId: "polypan",
+      format: "lineage.corpus",
+      formatVersion: 1,
+      prompts: [contract],
+    })
+
+    expect(result?.valid).toBe(false)
+    expect(result?.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "collection.parent-cycle",
+          path: "/collections/0/parentId",
+        }),
+        expect.objectContaining({
+          code: "collection.unresolved",
+          path: "/collectionMemberships/0/collectionId",
+        }),
+        expect.objectContaining({
+          code: "collection.prompt-unresolved",
+          path: "/collectionMemberships/0/promptId",
+        }),
+        expect.objectContaining({
+          code: "collection.duplicate-membership",
+          path: "/collectionMemberships/2",
+        }),
+      ]),
+    )
   })
 
   test("given: embedded case-varied disclosure, should: enforce normalized containment", () => {

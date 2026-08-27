@@ -72,6 +72,46 @@ export const brandName = style({
   letterSpacing: theme.font.letterSpacing.tight,
 })
 
+export const workspaceIdentity = style({
+  "@media": {
+    "screen and (max-width: 64rem)": {
+      marginLeft: theme.space[2],
+      maxWidth: "10rem",
+      minHeight: theme.layout.controlHeightCompact,
+      padding: `${theme.space[1]} ${theme.space[2]}`,
+    },
+  },
+  alignItems: "center",
+  border: `1px solid ${theme.color.border.subtle}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.secondary,
+  display: "flex",
+  gap: theme.space[2],
+  marginTop: theme.space[3],
+  minWidth: 0,
+  padding: `${theme.space[2]} ${theme.space[3]}`,
+  textDecoration: "none",
+})
+globalStyle(`${workspaceIdentity} > svg`, {
+  flex: "0 0 auto",
+  height: "1rem",
+  width: "1rem",
+})
+globalStyle(`${workspaceIdentity} > span`, {
+  display: "flex",
+  flexDirection: "column",
+  minWidth: 0,
+})
+globalStyle(`${workspaceIdentity} small`, {
+  color: theme.color.text.muted,
+  fontSize: theme.font.role.metadata,
+})
+globalStyle(`${workspaceIdentity} strong`, {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+})
+
 export const desktopNavigation = style({
   "@media": { "screen and (max-width: 64rem)": { display: "none" } },
   marginTop: theme.space[6],

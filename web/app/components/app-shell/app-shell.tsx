@@ -2,6 +2,7 @@ import {
   IconBooks,
   IconBrain,
   IconChartBar,
+  IconDatabase,
   IconHelpCircle,
   IconHome2,
   IconLogout,
@@ -20,6 +21,7 @@ import { Button } from "~/components/ui/button"
 import { cx } from "~/utils/class-name"
 
 type AppShellProps = {
+  activeWorkspace?: { corpusId: string } | null
   canClaimOwner?: boolean
   children: ReactNode
   chatUnreadCount?: number
@@ -151,6 +153,7 @@ function SupportLink({
 }
 
 function AppShell({
+  activeWorkspace,
   canClaimOwner,
   chatUnreadCount = 0,
   children,
@@ -158,8 +161,11 @@ function AppShell({
   userEmail,
 }: AppShellProps) {
   const rootData = useRouteLoaderData<{
+    activeWorkspace?: { corpusId: string } | null
     ownerAccess?: { canClaimOwner: boolean; isOwner: boolean }
   }>("root")
+  const effectiveActiveWorkspace =
+    activeWorkspace === undefined ? rootData?.activeWorkspace : activeWorkspace
   const effectiveCanClaimOwner =
     canClaimOwner ?? rootData?.ownerAccess?.canClaimOwner ?? false
   const effectiveIsOwner = isOwner ?? rootData?.ownerAccess?.isOwner ?? false
@@ -173,6 +179,15 @@ function AppShell({
         <NavLink aria-label="Lineage home" className={s.brand} to="/today">
           <IconBrain aria-hidden="true" className={s.brandMark} />
           <span className={s.brandName}>Lineage</span>
+        </NavLink>
+        <NavLink className={s.workspaceIdentity} to="/settings/workspace">
+          <IconDatabase aria-hidden="true" />
+          <span>
+            <small>Workspace</small>
+            <strong>
+              {effectiveActiveWorkspace?.corpusId ?? "Not set up"}
+            </strong>
+          </span>
         </NavLink>
         <div className={s.desktopNavigation}>
           <PrimaryNavigation />

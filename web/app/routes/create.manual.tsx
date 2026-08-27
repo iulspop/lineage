@@ -2,6 +2,7 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/create.manual"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import { importCorpus } from "~/features/lineage/application/import-corpus.server"
 import type { ManualMemoryDraft } from "~/features/lineage/application/manual-memory-draft"
 import {
@@ -19,6 +20,7 @@ function readDraft(formData: FormData): ManualMemoryDraft {
   return {
     answer: String(formData.get("answer") ?? ""),
     challenge: String(formData.get("challenge") ?? ""),
+    collectionIds: formData.getAll("collectionIds").map(String).filter(Boolean),
     corpusId: String(formData.get("corpusId") ?? "").trim(),
     hint: String(formData.get("hint") ?? ""),
     kind: formData.get("kind") === "cloze" ? "cloze" : "basic",
@@ -30,28 +32,36 @@ function readDraft(formData: FormData): ManualMemoryDraft {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const ownerId = await requireUserId(request)
-  const [snapshots, user] = await Promise.all([
-    corpusSnapshotStore.listLatest(ownerId),
+  const [resolution, user] = await Promise.all([
+    resolveActiveCorpus(ownerId),
     retrieveUserFromDatabaseById(ownerId),
   ])
-  const url = new URL(request.url)
-  const corpora = snapshots.map(({ corpusId }) => corpusId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
+  const document = parseCorpusDocument(
+    JSON.parse(resolution.snapshot.canonicalJson),
+  )
   return {
-    corpora,
-    selectedCorpusId: url.searchParams.get("corpusId") ?? corpora[0] ?? "inbox",
+    collections: document.collections,
+    selectedCorpusId: resolution.corpusId,
     userEmail: user?.email ?? "",
   }
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const ownerId = await requireUserId(request)
+  const resolution = await resolveActiveCorpus(ownerId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
   const formData = await request.formData()
+  formData.set("corpusId", resolution.corpusId)
   const intent = formData.get("intent")
 
   if (intent === "accept") {
     const candidateJson = String(formData.get("candidateJson") ?? "")
+    const candidate = parseCorpusDocument(JSON.parse(candidateJson))
+    if (candidate.corpusId !== resolution.corpusId)
+      throw data("Workspace changed", { status: 409 })
     const imported = await importCorpus({
-      input: JSON.parse(candidateJson),
+      input: candidate,
       ownerId,
       store: corpusSnapshotStore,
       validator: lineageRuntime,
@@ -131,7 +141,7 @@ export default function ManualCreateRoute({
   return (
     <ManualMemoryPage
       actionData={actionData}
-      corpora={loaderData.corpora}
+      collections={loaderData.collections}
       selectedCorpusId={loaderData.selectedCorpusId}
       userEmail={loaderData.userEmail}
     />

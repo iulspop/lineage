@@ -10,7 +10,11 @@ describe("AppShell", () => {
     const RoutesStub = createRoutesStub([
       {
         Component: () => (
-          <AppShell chatUnreadCount={3} userEmail="user@example.com">
+          <AppShell
+            activeWorkspace={{ corpusId: "polypan" }}
+            chatUnreadCount={3}
+            userEmail="user@example.com"
+          >
             <h1>Workspace</h1>
           </AppShell>
         ),
@@ -32,6 +36,9 @@ describe("AppShell", () => {
       screen.getAllByRole("link", { name: "Help & feedback 3" }),
     ).toHaveLength(2)
     expect(screen.getAllByText("user@example.com")).toHaveLength(2)
+    expect(
+      screen.getByRole("link", { name: "Workspace polypan" }),
+    ).toHaveAttribute("href", "/settings/workspace")
     expect(screen.getByLabelText("Open account menu")).toBeInTheDocument()
     expect(
       screen.getByRole("heading", { name: "Workspace" }),

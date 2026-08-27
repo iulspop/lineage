@@ -1,34 +1,32 @@
+import { redirect } from "react-router"
+
 import type { Route } from "./+types/library"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
-import { LibraryPage } from "~/features/lineage/application/library-page"
-import { loadWorkspaceSummary } from "~/features/lineage/application/workspace-summary.server"
-import { corpusSnapshotStore } from "~/features/lineage/infrastructure/corpus-model.server"
-import { reviewRecordStore } from "~/features/lineage/infrastructure/review-model.server"
-import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/users-model.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
-  const query = new URL(request.url).searchParams.get("q")?.trim() ?? ""
-  const [user, summary] = await Promise.all([
-    retrieveUserFromDatabaseById(userId),
-    loadWorkspaceSummary({
-      ownerId: userId,
-      reviewStore: reviewRecordStore,
-      snapshotStore: corpusSnapshotStore,
-    }),
-  ])
-  const normalizedQuery = query.toLocaleLowerCase()
-  const corpora = normalizedQuery
-    ? summary.corpora.filter((corpus) =>
-        corpus.corpusId.toLocaleLowerCase().includes(normalizedQuery),
-      )
-    : summary.corpora
+  const active = await resolveActiveCorpus(userId)
+  if (active.status === "empty") return redirect("/settings/workspace")
 
-  return { corpora, query, userEmail: user?.email ?? "" }
+  const sourceUrl = new URL(request.url)
+  const target = new URL(
+    `/library/${encodeURIComponent(active.corpusId)}`,
+    sourceUrl.origin,
+  )
+  target.searchParams.set(
+    "tab",
+    sourceUrl.searchParams.get("tab") ?? "memories",
+  )
+  for (const name of ["q", "kind", "status", "due", "source", "collection"]) {
+    const value = sourceUrl.searchParams.get(name)
+    if (value) target.searchParams.set(name, value)
+  }
+  return redirect(`${target.pathname}${target.search}`)
 }
 
 export const meta: Route.MetaFunction = () => [{ title: "Library | Lineage" }]
 
-export default function LibraryRoute({ loaderData }: Route.ComponentProps) {
-  return <LibraryPage {...loaderData} />
+export default function LibraryRoute() {
+  return null
 }

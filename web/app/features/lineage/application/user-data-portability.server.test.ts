@@ -54,10 +54,14 @@ async function clearLineageData() {
 afterEach(clearLineageData)
 
 describe("complete Lineage user-data recovery", () => {
-  test("reconstructs reviewable snapshots, immutable history, reviews, and assets", async () => {
+  test("reconstructs reviewable snapshots, immutable history, reviews, assets, and the active workspace", async () => {
     await clearLineageData()
     await prisma.user.create({
       data: { email: "recovery@example.com", id: ownerId },
+    })
+    await prisma.user.update({
+      data: { activeLineageCorpusId: "recovery-corpus" },
+      where: { id: ownerId },
     })
     await prisma.lineageCorpusSnapshot.create({
       data: {
@@ -112,20 +116,26 @@ describe("complete Lineage user-data recovery", () => {
     await prisma.lineageReview.deleteMany({ where: { userId: ownerId } })
     await prisma.lineageCorpusSnapshot.deleteMany({ where: { ownerId } })
 
-    await restoreUserData({
+    await prisma.user.update({
+      data: { activeLineageCorpusId: null },
+      where: { id: ownerId },
+    })
+    const restored = await restoreUserData({
       bytes: exported,
       conflict: "reject",
       ownerId,
       validator: lineageRuntime,
     })
+    expect(restored.activeLineageCorpusId).toBe("recovery-corpus")
 
-    const [snapshots, reviews, assets] = await Promise.all([
+    const [snapshots, reviews, assets, user] = await Promise.all([
       prisma.lineageCorpusSnapshot.findMany({ where: { ownerId } }),
       prisma.lineageReview.findMany({ where: { userId: ownerId } }),
       prisma.lineageCorpusAsset.findMany({
         include: { blob: true },
         where: { ownerId },
       }),
+      prisma.user.findUnique({ where: { id: ownerId } }),
     ])
     expect(snapshots).toHaveLength(1)
     expect(lineageRuntime.validateCorpus).toBeDefined()
@@ -139,6 +149,7 @@ describe("complete Lineage user-data recovery", () => {
       promptRevision: 1,
     })
     expect(new Uint8Array(assets[0]!.blob.bytes)).toEqual(assetBytes)
+    expect(user?.activeLineageCorpusId).toBe("recovery-corpus")
   })
 
   test("rejects recovery when review history references a missing revision", async () => {

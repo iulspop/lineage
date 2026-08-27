@@ -44,6 +44,8 @@ function lines(value: string) {
 function baseDocument(corpusId: string): CorpusDocument {
   return {
     assets: [],
+    collectionMemberships: [],
+    collections: [],
     corpusId,
     extensions: [],
     format: "lineage.corpus",

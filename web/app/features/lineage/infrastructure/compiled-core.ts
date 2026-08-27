@@ -42,6 +42,8 @@ type CompiledLineageApi = {
   occlusionRegion: AgdaConstructor
   sourceRevision: AgdaConstructor
   materialRevision: AgdaConstructor
+  collection: AgdaConstructor
+  collectionMembership: AgdaConstructor
   prompt: AgdaConstructor
   schedulerObservation: AgdaConstructor
   repetition: AgdaConstructor
@@ -204,6 +206,18 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
       value.provenance,
     ),
   )
+  const collections = document.collections.map((value) =>
+    apply(
+      api.collection,
+      value.id,
+      value.title,
+      maybe(value.description),
+      maybe(value.parentId),
+    ),
+  )
+  const collectionMemberships = document.collectionMemberships.map((value) =>
+    apply(api.collectionMembership, value.collectionId, value.promptId),
+  )
   const assets = document.assets.map((value) =>
     apply(
       api.assetReference,
@@ -335,6 +349,8 @@ function toAgdaCorpus(api: CompiledLineageApi, document: CorpusDocument) {
     prompts,
     sources,
     materials,
+    collections,
+    collectionMemberships,
     assets,
     relationships,
     repetitions,

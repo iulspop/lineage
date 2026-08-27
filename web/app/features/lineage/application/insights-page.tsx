@@ -13,8 +13,9 @@ import {
 import { PageHeader } from "~/components/ui/page-header"
 
 export type InsightsPageProps = {
+  collections: Array<{ id: string; title: string }>
   insights: InsightsProjection
-  query: { assessment: string; corpusId: string }
+  query: { assessment: string; collectionId: string }
   userEmail: string
 }
 
@@ -29,14 +30,13 @@ function interval(minutes: number) {
 }
 
 export function InsightsPage({
+  collections,
   insights,
   query,
   userEmail,
 }: InsightsPageProps) {
   const timeline = insights.timeline.filter(
-    (review) =>
-      (!query.corpusId || review.corpusId === query.corpusId) &&
-      (!query.assessment || review.assessment === query.assessment),
+    (review) => !query.assessment || review.assessment === query.assessment,
   )
   const maxDay = Math.max(1, ...insights.dailyActivity.map((day) => day.count))
 
@@ -134,7 +134,7 @@ export function InsightsPage({
             <div className={s.panelHeading}>
               <div>
                 <span className={s.eyebrow}>Workload</span>
-                <h2>By corpus</h2>
+                <h2>Active workspace</h2>
               </div>
             </div>
             <div className={s.stack}>
@@ -197,12 +197,12 @@ export function InsightsPage({
           </div>
           <form className={s.filters} method="get">
             <label>
-              Corpus
-              <select defaultValue={query.corpusId} name="corpusId">
-                <option value="">All corpora</option>
-                {insights.corpusWorkload.map((corpus) => (
-                  <option key={corpus.corpusId} value={corpus.corpusId}>
-                    {label(corpus.corpusId)}
+              Collection
+              <select defaultValue={query.collectionId} name="collectionId">
+                <option value="">All memories</option>
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.title}
                   </option>
                 ))}
               </select>

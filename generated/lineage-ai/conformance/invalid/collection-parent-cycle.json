@@ -1,0 +1,24 @@
+{
+  "document": {
+    "format": "lineage.corpus",
+    "formatVersion": 1,
+    "corpusId": "invalid-collection-cycle",
+    "prompts": [],
+    "collections": [
+      {
+        "id": "a",
+        "title": "A",
+        "parentId": "b"
+      },
+      {
+        "id": "b",
+        "title": "B",
+        "parentId": "a"
+      }
+    ]
+  },
+  "expectedDiagnostic": {
+    "code": "collection.parent-cycle",
+    "path": "/collections/0/parentId"
+  }
+}

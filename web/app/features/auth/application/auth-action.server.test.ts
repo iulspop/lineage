@@ -84,6 +84,7 @@ describe("authAction verify code", () => {
 
   test("given: an existing signup email, should: verify it and create a user session", async () => {
     vi.mocked(retrieveUserFromDatabaseByEmail).mockResolvedValueOnce({
+      activeLineageCorpusId: null,
       createdAt: new Date("2026-05-30T00:00:00.000Z"),
       email: "user@example.com",
       emailVerifiedAt: null,

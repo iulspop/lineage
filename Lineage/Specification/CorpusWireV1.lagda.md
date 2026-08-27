@@ -115,6 +115,17 @@ record MaterialRevision : Set where
     content : List String
     sourceIds assetIds provenanceIds : List String
 
+record Collection : Set where
+  constructor collection
+  field
+    collectionId title : String
+    description parentCollectionId : Maybe String
+
+record CollectionMembership : Set where
+  constructor collectionMembership
+  field
+    collectionId promptId : String
+
 record Prompt : Set where
   constructor prompt
   field
@@ -232,6 +243,8 @@ record CorpusDocument : Set where
     prompts : List Prompt
     sources : List SourceRevision
     materials : List MaterialRevision
+    collections : List Collection
+    collectionMemberships : List CollectionMembership
     assets : List AssetReference
     relationships : List Relationship
     repetitions : List Repetition
@@ -358,6 +371,24 @@ extensionSetFields =
     "Required extensions." "Renderer support is mandatory." ∷
   describeField "optional" optional (array (reference "Extension"))
     "Optional extensions." "Portable fallback is mandatory." ∷ []
+
+collectionFields : List Field
+collectionFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable collection identity." "Organization never changes Prompt identity or review history." ∷
+  describeConstrainedField "title" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Human-readable collection title." "Titles need not be unique." ∷
+  describeField "description" optional (scalar text)
+    "Optional collection description." "Describes the organizational view." ∷
+  describeField "parentId" optional (reference "Collection")
+    "Optional parent collection." "Must resolve and must not introduce a cycle." ∷ []
+
+collectionMembershipFields : List Field
+collectionMembershipFields =
+  describeField "collectionId" required (reference "Collection")
+    "Containing collection." "Must resolve locally." ∷
+  describeField "promptId" required (reference "Prompt")
+    "Organized Prompt identity." "Membership does not partition scheduling." ∷ []
 
 promptFields : List Field
 promptFields =
@@ -538,6 +569,10 @@ corpusDocumentFields =
     "Source revisions." "Defaults to empty." ∷
   describeDefaultedField "materials" optional (array (objectRef "Material")) defaultEmptyArray
     "Material revisions." "Defaults to empty." ∷
+  describeDefaultedField "collections" optional (array (objectRef "Collection")) defaultEmptyArray
+    "Identity-neutral organization." "Defaults to empty for backward compatibility." ∷
+  describeDefaultedField "collectionMemberships" optional (array (objectRef "CollectionMembership")) defaultEmptyArray
+    "Prompt membership in collections." "Memories may belong to multiple collections." ∷
   describeDefaultedField "assets" optional (array (objectRef "Asset")) defaultEmptyArray
     "Asset declarations." "Defaults to empty." ∷
   describeDefaultedField "relationships" optional (array (objectRef "Relationship")) defaultEmptyArray
@@ -604,6 +639,11 @@ v1Rules =
   rule "identity.duplicate-prompt-revision" error "A Prompt identity and revision are duplicated." "Each immutable Prompt revision key occurs once." "prompt" ∷
   rule "revision.non-positive" error "A revision is not positive." "Version-1 revisions begin at one." "revision" ∷
   rule "reference.unresolved" error "A referenced entity is absent." "All references resolve inside the local dependency closure." "reference" ∷
+  rule "collection.unresolved" error "A collection membership references an absent collection." "Membership collections resolve locally." "collection" ∷
+  rule "collection.prompt-unresolved" error "A collection membership references an absent Prompt." "Membership Prompts resolve locally by stable identity." "collection" ∷
+  rule "collection.parent-unresolved" error "A collection parent is absent." "Parent collections resolve locally." "collection" ∷
+  rule "collection.parent-cycle" error "Collection parent links form a cycle." "Collection nesting is acyclic." "collection" ∷
+  rule "collection.duplicate-membership" error "A Prompt membership is duplicated." "Each collection and Prompt pair occurs at most once." "collection" ∷
   rule "disclosure.withheld-empty" error "A Prompt has no withheld material." "Every active-recall Prompt conceals at least one answer." "prompt" ∷
   rule "disclosure.answer-leaked" error "Challenge content contains withheld material." "No withheld answer may appear in challenge or accessible fallback content." "prompt" ∷
   rule "disclosure.answer-missing" error "Resolution omits withheld material." "Every withheld item appears in the resolution." "prompt" ∷
@@ -640,6 +680,9 @@ mediaJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"e
 historyJSON : String
 historyJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"example-history\",\"prompts\":[{\"id\":\"capital-of-france\",\"revision\":1,\"kind\":\"basic\",\"challenge\":[\"What is the capital of France?\"],\"withheld\":[\"Paris\"],\"resolution\":[\"Paris\"],\"response\":\"text\"}],\"repetitions\":[{\"id\":\"review-1\",\"promptId\":\"capital-of-france\",\"promptRevision\":1,\"reviewedAt\":\"2026-08-26T12:00:00Z\",\"assessment\":\"good\"}]}"
 
+collectionsJSON : String
+collectionsJSON = "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"polypan\",\"prompts\":[{\"id\":\"identity-types\",\"revision\":1,\"challenge\":[\"What do identity types internalize?\"],\"withheld\":[\"equality\"],\"resolution\":[\"Equality.\"],\"response\":\"text\"}],\"collections\":[{\"id\":\"mathematics\",\"title\":\"Mathematics\"},{\"id\":\"type-theory\",\"title\":\"Type theory\",\"parentId\":\"mathematics\"}],\"collectionMemberships\":[{\"collectionId\":\"mathematics\",\"promptId\":\"identity-types\"},{\"collectionId\":\"type-theory\",\"promptId\":\"identity-types\"}]}"
+
 v1Description : FormatDescription
 v1Description = format "lineage.corpus" 1
   "Portable, locally complete version-1 Lineage corpus and archive format."
@@ -654,6 +697,8 @@ v1Description = format "lineage.corpus" 1
    object "OcclusionRegion" "OcclusionRegion version-1 wire object." occlusionRegionFields ∷
    object "Source" "Source version-1 wire object." sourceFields ∷
    object "Material" "Material version-1 wire object." materialFields ∷
+   object "Collection" "Collection version-1 wire object." collectionFields ∷
+   object "CollectionMembership" "CollectionMembership version-1 wire object." collectionMembershipFields ∷
    object "Asset" "Asset version-1 wire object." assetFields ∷
    object "ExtensionSet" "ExtensionSet version-1 wire object." extensionSetFields ∷
    object "Prompt" "Prompt version-1 wire object." promptFields ∷
@@ -670,11 +715,16 @@ v1Description = format "lineage.corpus" 1
    object "Manifest" "Manifest version-1 wire object." manifestFields ∷ [])
   v1Rules
   (example "basic.json" "Basic self-check Prompt." "valid" basicJSON ∷
+   example "collections.json" "Nested identity-neutral Prompt organization." "valid" collectionsJSON ∷
    example "cloze.json" "Stable cloze targets." "valid" clozeJSON ∷
    example "image-occlusion.json" "Normalized stable regions." "host-media-required" imageOcclusionJSON ∷
    example "media.json" "Host-verified media reference." "host-media-required" mediaJSON ∷ [])
   (fixture "basic.json" "Canonical minimal valid corpus." basicJSON valid ∷
+   fixture "collections.json" "Valid nested collections and multi-membership." collectionsJSON valid ∷
    fixture "history.json" "Valid append-oriented review history." historyJSON valid ∷
+   fixture "collection-parent-cycle.json" "Collection parent links form a cycle." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-collection-cycle\",\"prompts\":[],\"collections\":[{\"id\":\"a\",\"title\":\"A\",\"parentId\":\"b\"},{\"id\":\"b\",\"title\":\"B\",\"parentId\":\"a\"}]}" (invalid "collection.parent-cycle" "/collections/0/parentId") ∷
+   fixture "unresolved-collection-membership.json" "Collection membership references an absent Prompt." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-collection-membership\",\"prompts\":[],\"collections\":[{\"id\":\"mathematics\",\"title\":\"Mathematics\"}],\"collectionMemberships\":[{\"collectionId\":\"mathematics\",\"promptId\":\"missing\"}]}" (invalid "collection.prompt-unresolved" "/collectionMemberships/0/promptId") ∷
+   fixture "duplicate-collection-membership.json" "Collection membership is duplicated." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-duplicate-membership\",\"prompts\":[{\"id\":\"p\",\"revision\":1,\"challenge\":[\"Question\"],\"withheld\":[\"Answer\"],\"resolution\":[\"Answer\"],\"response\":\"text\"}],\"collections\":[{\"id\":\"mathematics\",\"title\":\"Mathematics\"}],\"collectionMemberships\":[{\"collectionId\":\"mathematics\",\"promptId\":\"p\"},{\"collectionId\":\"mathematics\",\"promptId\":\"p\"}]}" (invalid "collection.duplicate-membership" "/collectionMemberships/1") ∷
    fixture "disclosure-leak.json" "Challenge leaks withheld material." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-leak\",\"prompts\":[{\"id\":\"p\",\"revision\":1,\"challenge\":[\"Paris\"],\"withheld\":[\"Paris\"],\"resolution\":[\"Paris\"],\"response\":\"text\"}]}" (invalid "disclosure.answer-leaked" "/prompts/0/challenge/0") ∷
    fixture "non-positive-revision.json" "Prompt revision is zero." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-revision\",\"prompts\":[{\"id\":\"p\",\"revision\":0,\"challenge\":[\"Question\"],\"withheld\":[\"Answer\"],\"resolution\":[\"Answer\"],\"response\":\"text\"}]}" (invalid "revision.non-positive" "/prompts/0/revision") ∷
    fixture "unresolved-asset.json" "Prompt references an absent asset." "{\"format\":\"lineage.corpus\",\"formatVersion\":1,\"corpusId\":\"invalid-asset\",\"prompts\":[{\"id\":\"p\",\"revision\":1,\"challenge\":[\"Question\"],\"withheld\":[\"Answer\"],\"resolution\":[\"Answer\"],\"response\":\"text\",\"assets\":[\"missing\"]}]}" (invalid "asset.unresolved" "/prompts/0/assets/0") ∷

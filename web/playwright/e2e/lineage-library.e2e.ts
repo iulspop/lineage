@@ -4,6 +4,26 @@ import { expect, test } from "@playwright/test"
 import { loginAsTestUser, setupLineageCorpus } from "../auth-utils"
 import { getPath } from "../utils"
 
+async function createWorkspace(
+  page: import("@playwright/test").Page,
+  corpusId: string,
+) {
+  await page.goto("/settings/workspace")
+  await expect(
+    page.getByRole("heading", { exact: true, name: "Workspace" }),
+  ).toBeVisible()
+  await page.getByLabel("Workspace ID").fill(corpusId)
+  await page
+    .getByLabel(
+      "I understand this creates and activates a separate empty workspace.",
+    )
+    .check()
+  await page.getByRole("button", { name: "Create workspace" }).click()
+  await expect(page.getByRole("status")).toContainText(
+    `${corpusId} is now your active workspace.`,
+  )
+}
+
 test.describe("Lineage daily workspace", () => {
   test("given: an empty account, should: show first-run guidance on Today and Library", async ({
     page,
@@ -13,7 +33,7 @@ test.describe("Lineage daily workspace", () => {
     await page.goto("/today")
     await expect(page.getByRole("progressbar")).toBeHidden()
     await expect(
-      page.getByRole("heading", { name: "Start your memory library" }),
+      page.getByRole("heading", { name: "Create your first workspace" }),
     ).toBeVisible()
 
     const libraryHref = await page
@@ -22,9 +42,9 @@ test.describe("Lineage daily workspace", () => {
       .getAttribute("href")
     expect(libraryHref).toBe("/library")
     await page.goto(libraryHref as string)
-    await expect(page).toHaveURL(/\/library$/)
+    await expect(page).toHaveURL(/\/settings\/workspace$/)
     await expect(
-      page.getByRole("heading", { name: "Your library is empty" }),
+      page.getByRole("heading", { exact: true, name: "Workspace" }),
     ).toBeVisible()
   })
 
@@ -36,14 +56,9 @@ test.describe("Lineage daily workspace", () => {
 
     await page.goto("/library")
     await expect(page.getByRole("progressbar")).toBeHidden()
-    const corpusHref = await page
-      .getByRole("link", { name: /powers of i/i })
-      .getAttribute("href")
-    expect(corpusHref).toBe("/library/powers-of-i")
-    await page.goto(corpusHref as string)
-    await expect(page).toHaveURL(/\/library\/powers-of-i$/)
+    await expect(page).toHaveURL(/\/library\/powers-of-i\?tab=memories$/)
 
-    expect(getPath(page)).toBe("/library/powers-of-i")
+    expect(getPath(page)).toBe("/library/powers-of-i?tab=memories")
     await expect(
       page.getByRole("heading", { name: "powers of i" }),
     ).toBeVisible()
@@ -67,7 +82,7 @@ test.describe("Lineage daily workspace", () => {
         archiveInput.evaluate((input: HTMLInputElement) => input.files?.length),
       )
       .toBe(1)
-    await page.getByLabel("Import this archive after all checks pass.").check()
+    await page.getByLabel(/Import this archive after all checks pass/).check()
     const importResponse = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
@@ -100,8 +115,9 @@ test.describe("Lineage daily workspace", () => {
     page,
   }) => {
     await loginAsTestUser(page)
+    await createWorkspace(page, "polypan")
 
-    await page.goto("/create/manual?corpusId=calculus")
+    await page.goto("/create/manual?corpusId=ignored")
     await expect(page.getByRole("progressbar")).toBeHidden()
     await page.waitForTimeout(250)
     await page
@@ -109,11 +125,11 @@ test.describe("Lineage daily workspace", () => {
       .fill("What is a derivative? >> The instantaneous rate of change.")
     await page.getByRole("button", { name: "Create memory" }).click()
     await expect(page).toHaveURL(
-      /\/library\/calculus\/memories\/what-is-a-derivative$/,
+      /\/library\/polypan\/memories\/what-is-a-derivative$/,
     )
     await expect(page.getByText("What is a derivative?")).toBeVisible()
 
-    await page.goto("/create/manual?corpusId=calculus")
+    await page.goto("/create/manual?corpusId=ignored")
     await expect(page.getByRole("progressbar")).toBeHidden()
     await page.waitForTimeout(250)
     await page
@@ -121,7 +137,7 @@ test.describe("Lineage daily workspace", () => {
       .fill("The derivative of {{x²}} is {{2x}}.")
     await page.getByRole("button", { name: "Create memory" }).click()
     await expect(page).toHaveURL(/cloze-1$/)
-    await page.goto("/library/calculus?tab=memories")
+    await page.goto("/library/polypan?tab=memories")
     await expect(page.getByText("The derivative of […] is 2x.")).toBeVisible()
     await expect(page.getByText("The derivative of x² is […].")).toBeVisible()
   })
@@ -130,14 +146,15 @@ test.describe("Lineage daily workspace", () => {
     page,
   }) => {
     await loginAsTestUser(page)
+    await createWorkspace(page, "polypan")
 
     await page.goto("/create/manual")
     await expect(
       page.getByRole("heading", { name: "Create a memory" }),
     ).toBeVisible()
     await page.waitForTimeout(250)
+    await expect(page.getByLabel("Corpus")).toHaveCount(0)
     await page.getByText("More options").click()
-    await page.getByLabel("Corpus").fill("calculus")
     await page.getByLabel("Stable memory ID").fill("derivative")
     await page.getByLabel("Challenge").fill("What is a derivative?")
     await page
@@ -149,7 +166,7 @@ test.describe("Lineage daily workspace", () => {
     ).toBeVisible()
     await page.getByRole("button", { name: "Approve and save memory" }).click()
 
-    await expect(page).toHaveURL(/\/library\/calculus\/memories\/derivative$/)
+    await expect(page).toHaveURL(/\/library\/polypan\/memories\/derivative$/)
     await expect(
       page.getByRole("heading", { name: "derivative" }),
     ).toBeVisible()
@@ -168,6 +185,7 @@ test.describe("Lineage daily workspace", () => {
     page,
   }) => {
     await loginAsTestUser(page)
+    await createWorkspace(page, "polypan")
 
     await page.goto("/create/image-occlusion")
     await expect(page.getByRole("progressbar")).toBeHidden()
@@ -175,7 +193,7 @@ test.describe("Lineage daily workspace", () => {
     await expect(
       page.getByRole("heading", { name: "Create image occlusion" }),
     ).toBeVisible()
-    await page.getByLabel("Corpus").fill("anatomy")
+    await expect(page.getByLabel("Corpus")).toHaveCount(0)
     await page.getByLabel("Stable memory ID").fill("heart-location")
     await page.locator('input[name="image"]').setInputFiles({
       buffer: Buffer.from(
@@ -201,7 +219,7 @@ test.describe("Lineage daily workspace", () => {
     await page.getByRole("button", { name: "Approve and save" }).click()
 
     await expect(page).toHaveURL(
-      /\/library\/anatomy\/memories\/heart-location$/,
+      /\/library\/polypan\/memories\/heart-location$/,
     )
     await expect(page.getByText("image-occlusion")).toBeVisible()
   })
@@ -249,6 +267,7 @@ test.describe("Lineage daily workspace", () => {
     page,
   }) => {
     await loginAsTestUser(page)
+    await createWorkspace(page, "polypan")
 
     await page.goto("/create/ai")
     await expect(page.getByRole("progressbar")).toBeHidden()
@@ -256,17 +275,14 @@ test.describe("Lineage daily workspace", () => {
     await expect(
       page.getByRole("heading", { name: "Generate memories with AI" }),
     ).toBeVisible()
-    await page
-      .getByRole("combobox", { exact: true, name: "Corpus" })
-      .fill("calculus-ai")
+    await expect(
+      page.getByRole("combobox", { exact: true, name: "Corpus" }),
+    ).toHaveCount(0)
     await page.getByLabel("Topic or learning goal").fill("derivatives")
     await page
       .getByLabel("Source text (optional)")
       .fill("A derivative is the instantaneous rate of change of a function.")
     await page.getByLabel("Memory count").selectOption("1")
-    await expect(
-      page.getByRole("combobox", { exact: true, name: "Corpus" }),
-    ).toHaveValue("calculus-ai")
     await expect(page.getByLabel("Topic or learning goal")).toHaveValue(
       "derivatives",
     )
@@ -283,7 +299,7 @@ test.describe("Lineage daily workspace", () => {
       .fill("What does a derivative measure?")
     await page.getByRole("button", { name: "Accept selected memories" }).click()
 
-    await expect(page).toHaveURL(/\/library\/calculus-ai\?tab=memories$/)
+    await expect(page).toHaveURL(/\/library\/polypan\?tab=memories$/)
     await expect(
       page.getByText("What does a derivative measure?"),
     ).toBeVisible()

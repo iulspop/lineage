@@ -1,77 +1,90 @@
 import { describe, expect, test } from "vitest"
 
-import type { CorpusSnapshotStore } from "../domain/corpus-ports"
 import type { ReviewRecordStore } from "../domain/review"
 import { loadWorkspaceSummary } from "./workspace-summary.server"
 
-const corpus = (corpusId: string) => ({
+const snapshot = {
   canonicalJson: JSON.stringify({
-    corpusId,
+    collections: [{ id: "math", title: "Mathematics" }],
+    corpusId: "polypan",
     format: "lineage.corpus",
     formatVersion: 1,
     prompts: [
       {
         challenge: ["Question"],
-        id: `${corpusId}-prompt`,
+        id: "prompt",
         resolution: ["Answer"],
         response: { capture: "none", mode: "self-check" },
         revision: 1,
         withheld: ["Answer"],
       },
     ],
+    sources: [
+      { content: "Source", id: "source", revision: 1, title: "Source" },
+    ],
   }),
-  corpusId,
-  digest: `${corpusId}-digest`,
+  corpusId: "polypan",
+  digest: "digest",
   formatVersion: 1,
-})
+}
 
 describe("loadWorkspaceSummary", () => {
-  test("given: a new and a future-scheduled memory, should: count only the new memory as due", async () => {
-    const snapshotStore: CorpusSnapshotStore = {
-      append: async () => undefined,
-      find: async () => null,
-      latest: async () => null,
-      listLatest: async () => [corpus("new"), corpus("scheduled")],
-    }
+  test("counts only the active workspace and excludes reviews from inactive workspaces", async () => {
     const reviewStore: ReviewRecordStore = {
       append: async () => undefined,
-      countForUser: async () => 1,
-      latestForCorpus: async ({ corpusId }) =>
-        corpusId === "scheduled"
-          ? [
-              {
-                assessment: "good",
-                attemptedResponse: null,
-                corpusId,
-                fsrsDueAt: new Date("2026-08-27T12:00:00.000Z"),
-                id: 1,
-                nextIntervalMinutes: 1440,
-                previousIntervalMinutes: 0,
-                promptId: "scheduled-prompt",
-                promptRevision: 1,
-                reviewedAt: new Date("2026-08-26T12:00:00.000Z"),
-                scheduler: "fsrs",
-                schedulerVersion: "6",
-                userId: "user-id",
-              },
-            ]
-          : [],
+      countForUser: async () => 2,
+      latestForCorpus: async () => [],
       latestForPrompt: async () => null,
-      recentForUser: async () => [],
+      recentForUser: async () => [
+        {
+          assessment: "good",
+          attemptedResponse: null,
+          corpusId: "polypan",
+          id: 1,
+          nextIntervalMinutes: 10,
+          previousIntervalMinutes: 0,
+          promptId: "prompt",
+          promptRevision: 1,
+          reviewedAt: new Date("2026-08-27T12:00:00.000Z"),
+          scheduler: "fsrs",
+          schedulerVersion: "6",
+          userId: "user-id",
+        },
+        {
+          assessment: "again",
+          attemptedResponse: null,
+          corpusId: "archive",
+          id: 2,
+          nextIntervalMinutes: 1,
+          previousIntervalMinutes: 0,
+          promptId: "other",
+          promptRevision: 1,
+          reviewedAt: new Date("2026-08-27T11:00:00.000Z"),
+          scheduler: "fsrs",
+          schedulerVersion: "6",
+          userId: "user-id",
+        },
+      ],
     }
 
     const summary = await loadWorkspaceSummary({
-      now: new Date("2026-08-26T13:00:00.000Z"),
+      now: new Date("2026-08-27T13:00:00.000Z"),
       ownerId: "user-id",
+      resolveActive: async () => ({
+        corpusId: "polypan",
+        snapshot,
+        status: "ready",
+      }),
       reviewStore,
-      snapshotStore,
     })
 
     expect(summary.dueCount).toBe(1)
-    expect(summary.totalMemories).toBe(2)
-    expect(summary.corpora).toEqual([
-      { corpusId: "new", dueCount: 1, promptCount: 1 },
-      { corpusId: "scheduled", dueCount: 0, promptCount: 1 },
-    ])
+    expect(summary.totalMemories).toBe(1)
+    expect(summary.workspace).toEqual({
+      collectionCount: 1,
+      corpusId: "polypan",
+      sourceCount: 1,
+    })
+    expect(summary.recentReviews).toHaveLength(1)
   })
 })

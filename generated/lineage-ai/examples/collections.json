@@ -1,0 +1,42 @@
+{
+  "format": "lineage.corpus",
+  "formatVersion": 1,
+  "corpusId": "polypan",
+  "prompts": [
+    {
+      "id": "identity-types",
+      "revision": 1,
+      "challenge": [
+        "What do identity types internalize?"
+      ],
+      "withheld": [
+        "equality"
+      ],
+      "resolution": [
+        "Equality."
+      ],
+      "response": "text"
+    }
+  ],
+  "collections": [
+    {
+      "id": "mathematics",
+      "title": "Mathematics"
+    },
+    {
+      "id": "type-theory",
+      "title": "Type theory",
+      "parentId": "mathematics"
+    }
+  ],
+  "collectionMemberships": [
+    {
+      "collectionId": "mathematics",
+      "promptId": "identity-types"
+    },
+    {
+      "collectionId": "type-theory",
+      "promptId": "identity-types"
+    }
+  ]
+}

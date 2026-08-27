@@ -2,6 +2,7 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/library.$corpusId.memories.$promptId"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import { MemoryDetailPage } from "~/features/lineage/application/memory-detail-page"
 import { projectMemoryDetail } from "~/features/lineage/application/memory-detail-projection"
 import {
@@ -20,8 +21,10 @@ import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/us
 export async function loader({ params, request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
   const { corpusId, promptId } = params
-  const snapshot = await corpusSnapshotStore.latest(userId, corpusId)
-  if (!snapshot) throw data("Corpus not found", { status: 404 })
+  const resolution = await resolveActiveCorpus(userId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
+  if (corpusId !== resolution.corpusId) throw redirect("/library")
+  const snapshot = resolution.snapshot
 
   const [reviews, snapshots, user] = await Promise.all([
     listCorpusReviewHistory({ corpusId, promptId, userId }),
@@ -42,6 +45,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export async function action({ params, request }: Route.ActionArgs) {
   const ownerId = await requireUserId(request)
+  const resolution = await resolveActiveCorpus(ownerId)
+  if (resolution.status === "empty") throw redirect("/settings/workspace")
+  if (params.corpusId !== resolution.corpusId)
+    return data({ error: "Workspace changed" }, { status: 409 })
   const formData = await request.formData()
   const status = formData.get("status")
   const baseDigest = formData.get("baseDigest")

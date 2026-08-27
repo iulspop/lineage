@@ -56,6 +56,7 @@ export type ReviewHistoryEntry = ReviewRecord & {
 
 export type ReviewRecordStore = {
   append(record: ReviewRecord): Promise<void>
+  countForCorpus?(input: { corpusId: string; userId: string }): Promise<number>
   countForUser(userId: string): Promise<number>
   latestForCorpus(input: {
     corpusId: string
@@ -66,5 +67,10 @@ export type ReviewRecordStore = {
     promptId: string
     userId: string
   }): Promise<ReviewHistoryEntry | null>
+  recentForCorpus?(input: {
+    corpusId: string
+    limit: number
+    userId: string
+  }): Promise<ReviewHistoryEntry[]>
   recentForUser(userId: string, limit: number): Promise<ReviewHistoryEntry[]>
 }

@@ -22,7 +22,6 @@ function renderPage(
       Component: () => (
         <AssistedAuthoringPage
           actionData={actionData}
-          corpora={["calculus"]}
           initialInput={input}
           userEmail="learner@example.com"
         />
@@ -41,7 +40,9 @@ describe("AssistedAuthoringPage", () => {
       screen.getByRole("heading", { name: "Generate memories with AI" }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText("Mode")).toHaveValue("topic")
-    expect(screen.getByLabelText("Corpus")).toHaveValue("calculus")
+    expect(document.querySelector('input[name="corpusId"]')).toHaveValue(
+      "calculus",
+    )
     expect(
       screen.getByRole("button", { name: "Generate candidate memories" }),
     ).toBeInTheDocument()

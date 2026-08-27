@@ -77,6 +77,15 @@ export async function previewMemoryRevision(input: {
   }
   const candidate = {
     ...document,
+    collectionMemberships: [
+      ...document.collectionMemberships.filter(
+        ({ promptId }) => promptId !== input.promptId,
+      ),
+      ...(input.draft.collectionIds ?? []).map((collectionId) => ({
+        collectionId,
+        promptId: input.promptId,
+      })),
+    ],
     prompts: document.prompts.map((prompt, index) =>
       index === promptIndex ? next : prompt,
     ),

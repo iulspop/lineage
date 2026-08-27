@@ -2,6 +2,7 @@ import { data } from "react-router"
 
 import type { Route } from "./+types/settings.data"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
+import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
 import { DataPortabilityPage } from "~/features/lineage/application/data-portability-page"
 import {
   exportUserData,
@@ -13,8 +14,14 @@ import { getErrorMessage } from "~/utils/get-error-message"
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
-  const user = await retrieveUserFromDatabaseById(userId)
-  return { userEmail: user?.email ?? "" }
+  const [user, activeWorkspace] = await Promise.all([
+    retrieveUserFromDatabaseById(userId),
+    resolveActiveCorpus(userId),
+  ])
+  return {
+    hasWorkspace: activeWorkspace.status === "ready",
+    userEmail: user?.email ?? "",
+  }
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -33,6 +40,17 @@ export async function action({ request }: Route.ActionArgs) {
       })
     }
     if (intent === "restore") {
+      const activeWorkspace = await resolveActiveCorpus(ownerId)
+      const hasWorkspace = activeWorkspace.status === "ready"
+      const recoveryMode = formData.get("recoveryMode")
+      if (hasWorkspace && recoveryMode !== "replace")
+        return data(
+          {
+            error:
+              "Choose the destructive replacement option to recover into an established account.",
+          },
+          { status: 400 },
+        )
       if (formData.get("confirmed") !== "on")
         return data(
           { error: "Confirm recovery before continuing." },
@@ -46,7 +64,7 @@ export async function action({ request }: Route.ActionArgs) {
         )
       const restored = await restoreUserData({
         bytes: new Uint8Array(await archive.arrayBuffer()),
-        conflict: "reject",
+        conflict: hasWorkspace ? "replace" : "reject",
         ownerId,
         validator: lineageRuntime,
       })
@@ -67,6 +85,7 @@ export default function DataSettingsRoute({
   return (
     <DataPortabilityPage
       actionData={actionData}
+      hasWorkspace={loaderData.hasWorkspace}
       userEmail={loaderData.userEmail}
     />
   )

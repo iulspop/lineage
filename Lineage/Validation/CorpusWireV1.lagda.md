@@ -261,6 +261,13 @@ sourceIds = map SourceRevision.sourceId
 materialIds : List MaterialRevision → List String
 materialIds = map MaterialRevision.materialId
 
+collectionIds : List Collection → List String
+collectionIds = map Collection.collectionId
+
+membershipKeys : List CollectionMembership → List String
+membershipKeys = map (λ value →
+  CollectionMembership.collectionId value <> "#" <> CollectionMembership.promptId value)
+
 provenanceIds : List ProvenanceRecord → List String
 provenanceIds = map ProvenanceRecord.provenanceId
 
@@ -298,6 +305,7 @@ allEntityIds document =
   map Prompt.promptId (CorpusDocument.prompts document) ++
   sourceIds (CorpusDocument.sources document) ++
   materialIds (CorpusDocument.materials document) ++
+  collectionIds (CorpusDocument.collections document) ++
   assetIds (CorpusDocument.assets document) ++
   relationshipIds (CorpusDocument.relationships document) ++
   repetitionIds (CorpusDocument.repetitions document) ++
@@ -306,6 +314,80 @@ allEntityIds document =
   extensionIds (CorpusDocument.extensions document) ++
   migrationIds (CorpusDocument.migrations document) ++
   reportIds (CorpusDocument.interoperability document)
+
+findCollectionParent : String → List Collection → Maybe String
+findCollectionParent wanted [] = nothing
+findCollectionParent wanted (value ∷ values) =
+  if stringEq wanted (Collection.collectionId value)
+    then Collection.parentCollectionId value
+    else findCollectionParent wanted values
+
+collectionParentCycleFuel : List Collection → List Collection → String → List String → Bool
+collectionParentCycleFuel [] collections current visited = containsString current visited
+collectionParentCycleFuel (_ ∷ fuel) collections current visited =
+  if containsString current visited then true else
+  follow (findCollectionParent current collections)
+  where
+  follow : Maybe String → Bool
+  follow nothing = false
+  follow (just parent) =
+    collectionParentCycleFuel fuel collections parent (current ∷ visited)
+
+collectionParentCycle : List Collection → String → List String → Bool
+collectionParentCycle collections = collectionParentCycleFuel collections collections
+
+collectionDiagnostics : List String → ℕ → List Collection → List Collection → List Diagnostic
+collectionDiagnostics known index allCollections [] = []
+collectionDiagnostics known index allCollections (value ∷ values) =
+  parentDiagnostics ++ cycleDiagnostics ++
+  collectionDiagnostics known (suc index) allCollections values
+  where
+  base = indexPath "/collections" index
+  parentDiagnostics : List Diagnostic
+  parentDiagnostics with Collection.parentCollectionId value
+  ... | nothing = []
+  ... | just parent =
+    if stringEq parent ""
+      then errorAt "identity.empty" (base <> "/parentId")
+        "Parent collection identities must be non-empty." ∷ []
+      else if containsString parent known
+        then []
+        else errorAt "collection.parent-unresolved" (base <> "/parentId")
+          "Parent collection must resolve locally." ∷ []
+  cycleDiagnostics : List Diagnostic
+  cycleDiagnostics =
+    if collectionParentCycle allCollections (Collection.collectionId value) []
+      then errorAt "collection.parent-cycle" (base <> "/parentId")
+        "Collection parent links must be acyclic." ∷ []
+      else []
+
+membershipDiagnostics : List String → List String → ℕ → List CollectionMembership → List Diagnostic
+membershipDiagnostics collections prompts index [] = []
+membershipDiagnostics collections prompts index (value ∷ values) =
+  collectionDiagnostic ++ promptDiagnostic ++
+  membershipDiagnostics collections prompts (suc index) values
+  where
+  base = indexPath "/collectionMemberships" index
+  collectionId = CollectionMembership.collectionId value
+  promptId = CollectionMembership.promptId value
+  collectionDiagnostic : List Diagnostic
+  collectionDiagnostic =
+    if stringEq collectionId ""
+      then errorAt "identity.empty" (base <> "/collectionId")
+        "Collection membership identities must be non-empty." ∷ []
+      else if containsString collectionId collections
+        then []
+        else errorAt "collection.unresolved" (base <> "/collectionId")
+          "Membership collection must resolve locally." ∷ []
+  promptDiagnostic : List Diagnostic
+  promptDiagnostic =
+    if stringEq promptId ""
+      then errorAt "identity.empty" (base <> "/promptId")
+        "Collection membership identities must be non-empty." ∷ []
+      else if containsString promptId prompts
+        then []
+        else errorAt "collection.prompt-unresolved" (base <> "/promptId")
+          "Membership Prompt must resolve locally." ∷ []
 
 kindDiagnostics :
   String → PromptKind → Maybe (List ClozeTarget) → Maybe String →
@@ -685,6 +767,9 @@ validateCorpus document =
     (CorpusDocument.prompts document) ++
   materialDiagnostics assets sources provenance zero (CorpusDocument.materials document) ++
   sourceDiagnostics assets provenance zero (CorpusDocument.sources document) ++
+  collectionDiagnostics collections zero (CorpusDocument.collections document)
+    (CorpusDocument.collections document) ++
+  membershipDiagnostics collections promptIds zero (CorpusDocument.collectionMemberships document) ++
   relationshipDiagnostics entityIds revisionEntityKeys zero (CorpusDocument.relationships document) ++
   provenanceLinkDiagnostics provenance zero (CorpusDocument.provenance document) ++
   repetitionProvenanceDiagnostics provenance zero (CorpusDocument.repetitions document) ++
@@ -698,6 +783,9 @@ validateCorpus document =
   assets = assetIds (CorpusDocument.assets document)
   sources = sourceIds (CorpusDocument.sources document)
   materials = materialIds (CorpusDocument.materials document)
+  collections = collectionIds (CorpusDocument.collections document)
+  promptIds = map Prompt.promptId (CorpusDocument.prompts document)
+  memberships = membershipKeys (CorpusDocument.collectionMemberships document)
   provenance = provenanceIds (CorpusDocument.provenance document)
   extensions = extensionIds (CorpusDocument.extensions document)
   prompts = promptKeys (CorpusDocument.prompts document)
@@ -729,6 +817,8 @@ validateCorpus document =
     emptyIdentityDiagnostics "/prompts" "id" (map Prompt.promptId (CorpusDocument.prompts document)) ++
     emptyIdentityDiagnostics "/sources" "id" sources ++
     emptyIdentityDiagnostics "/materials" "id" materials ++
+    emptyIdentityDiagnostics "/collections" "id" collections ++
+    emptyIdentityDiagnostics "/collections" "title" (map Collection.title (CorpusDocument.collections document)) ++
     emptyIdentityDiagnostics "/assets" "id" assets ++
     emptyIdentityDiagnostics "/relationships" "id" relationships ++
     emptyIdentityDiagnostics "/repetitions" "id" repetitions ++
@@ -740,6 +830,8 @@ validateCorpus document =
     duplicateStrings "identity.duplicate-prompt-revision" "/prompts" prompts ++
     duplicateStrings "identity.duplicate" "/sources" (revisionKeys sourceRevisions) ++
     duplicateStrings "identity.duplicate" "/materials" (revisionKeys materialRevisions) ++
+    duplicateStrings "identity.duplicate" "/collections" collections ++
+    duplicateStrings "collection.duplicate-membership" "/collectionMemberships" memberships ++
     duplicateStrings "identity.duplicate" "/assets" assets ++
     duplicateStrings "identity.duplicate" "/relationships" relationships ++
     duplicateStrings "identity.duplicate" "/repetitions" repetitions ++

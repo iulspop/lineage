@@ -38,12 +38,12 @@ Produce only a candidate `lineage.corpus` document.
 - `identity.duplicate-prompt-revision`: A Prompt identity and revision are duplicated.
 - `revision.non-positive`: A revision is not positive.
 - `reference.unresolved`: A referenced entity is absent.
+- `collection.unresolved`: A collection membership references an absent collection.
+- `collection.prompt-unresolved`: A collection membership references an absent Prompt.
+- `collection.parent-unresolved`: A collection parent is absent.
+- `collection.parent-cycle`: Collection parent links form a cycle.
+- `collection.duplicate-membership`: A Prompt membership is duplicated.
 - `disclosure.withheld-empty`: A Prompt has no withheld material.
 - `disclosure.answer-leaked`: Challenge content contains withheld material.
-- `disclosure.answer-missing`: Resolution omits withheld material.
-- `response.invalid-self-check`: Self-check response configuration is invalid.
-- `cloze.targets-required`: A cloze Prompt has no targets.
-- `occlusion.source-required`: Image occlusion has no source asset.
-- `occlusion.regions-required`: Image occlusion has no regions.
 
 Never invent asset bytes, sizes, paths, or digests. Preserve unrelated identities and revisions during repair. Require human preview and explicit acceptance before persistence.

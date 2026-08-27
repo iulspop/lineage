@@ -328,6 +328,60 @@
       ],
       "type": "object"
     },
+    "Collection": {
+      "additionalProperties": false,
+      "description": "Collection version-1 wire object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable collection identity. Organization never changes Prompt identity or review history."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable collection title. Titles need not be unique."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional collection description. Describes the organizational view."
+        },
+        "parentId": {
+          "minLength": 1,
+          "type": "string",
+          "x-lineage-reference": "Collection",
+          "description": "Optional parent collection. Must resolve and must not introduce a cycle."
+        }
+      },
+      "required": [
+        "id",
+        "title"
+      ],
+      "type": "object"
+    },
+    "CollectionMembership": {
+      "additionalProperties": false,
+      "description": "CollectionMembership version-1 wire object.",
+      "properties": {
+        "collectionId": {
+          "minLength": 1,
+          "type": "string",
+          "x-lineage-reference": "Collection",
+          "description": "Containing collection. Must resolve locally."
+        },
+        "promptId": {
+          "minLength": 1,
+          "type": "string",
+          "x-lineage-reference": "Prompt",
+          "description": "Organized Prompt identity. Membership does not partition scheduling."
+        }
+      },
+      "required": [
+        "collectionId",
+        "promptId"
+      ],
+      "type": "object"
+    },
     "Asset": {
       "additionalProperties": false,
       "description": "Asset version-1 wire object.",
@@ -967,6 +1021,22 @@
           },
           "type": "array",
           "description": "Material revisions. Defaults to empty.",
+          "default": []
+        },
+        "collections": {
+          "items": {
+            "$ref": "#/$defs/Collection"
+          },
+          "type": "array",
+          "description": "Identity-neutral organization. Defaults to empty for backward compatibility.",
+          "default": []
+        },
+        "collectionMemberships": {
+          "items": {
+            "$ref": "#/$defs/CollectionMembership"
+          },
+          "type": "array",
+          "description": "Prompt membership in collections. Memories may belong to multiple collections.",
           "default": []
         },
         "assets": {

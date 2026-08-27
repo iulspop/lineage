@@ -34,12 +34,10 @@ type GeneratedActionData =
 
 export function AssistedAuthoringPage({
   actionData,
-  corpora,
   initialInput,
   userEmail,
 }: {
   actionData: GeneratedActionData
-  corpora: string[]
   initialInput: Partial<AssistedAuthoringInput>
   userEmail: string
 }) {
@@ -85,21 +83,7 @@ export function AssistedAuthoringPage({
               </select>
             </label>
 
-            <label className={s.field}>
-              <span>Corpus</span>
-              <input
-                defaultValue={input.corpusId}
-                list="ai-corpus-options"
-                name="corpusId"
-                placeholder="e.g. calculus"
-                required
-              />
-            </label>
-            <datalist id="ai-corpus-options">
-              {corpora.map((corpusId) => (
-                <option key={corpusId} value={corpusId} />
-              ))}
-            </datalist>
+            <input name="corpusId" type="hidden" value={input.corpusId} />
 
             <label className={s.field}>
               <span>Topic or learning goal</span>

@@ -32,7 +32,7 @@ type ActionData =
 export function ManualMemoryPage({
   actionData,
   baseDigest,
-  corpora,
+  collections,
   initialDraft,
   mode = "create",
   selectedCorpusId,
@@ -40,7 +40,7 @@ export function ManualMemoryPage({
 }: {
   actionData: ActionData
   baseDigest?: string
-  corpora: string[]
+  collections: Array<{ id: string; title: string }>
   initialDraft?: ManualMemoryDraft
   mode?: "create" | "edit"
   selectedCorpusId: string
@@ -132,25 +132,33 @@ export function ManualMemoryPage({
                 </div>
               </div>
 
-              <label className={s.field}>
-                <span>Corpus</span>
-                <input
-                  defaultValue={draft?.corpusId ?? selectedCorpusId}
-                  list="corpus-options"
-                  name="corpusId"
-                  placeholder="e.g. powers-of-i"
-                  readOnly={editing}
-                  required
-                />
-                <small>
-                  Choose an existing corpus or enter a new durable corpus ID.
-                </small>
-              </label>
-              <datalist id="corpus-options">
-                {corpora.map((corpusId) => (
-                  <option key={corpusId} value={corpusId} />
-                ))}
-              </datalist>
+              <input
+                name="corpusId"
+                type="hidden"
+                value={draft?.corpusId ?? selectedCorpusId}
+              />
+              {collections.length > 0 && !editing && (
+                <fieldset className={s.field}>
+                  <legend>Collections</legend>
+                  {collections.map((collection) => (
+                    <label key={collection.id}>
+                      <input
+                        defaultChecked={draft?.collectionIds?.includes(
+                          collection.id,
+                        )}
+                        name="collectionIds"
+                        type="checkbox"
+                        value={collection.id}
+                      />{" "}
+                      {collection.title}
+                    </label>
+                  ))}
+                  <small>
+                    Optional. Collections organize memories without changing
+                    their scheduling or identity.
+                  </small>
+                </fieldset>
+              )}
 
               <div className={s.twoColumns}>
                 <label className={s.field}>

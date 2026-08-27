@@ -37,6 +37,8 @@ type LineageApi = {
   occlusionRegion: AgdaConstructor
   sourceRevision: AgdaConstructor
   materialRevision: AgdaConstructor
+  collection: AgdaConstructor
+  collectionMembership: AgdaConstructor
   prompt: AgdaConstructor
   schedulerObservation: AgdaConstructor
   repetition: AgdaConstructor

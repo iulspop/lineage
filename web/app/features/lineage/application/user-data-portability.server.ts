@@ -51,6 +51,7 @@ const portableAssetSchema = z.object({
   sha256: digestSchema,
 })
 const portableDataSchema = z.object({
+  activeLineageCorpusId: z.string().min(1).nullable().optional(),
   assets: z.array(portableAssetSchema),
   exportedAt: z.iso.datetime(),
   format: z.literal("lineage.user-data"),
@@ -74,7 +75,11 @@ function decodeExport(bytes: Uint8Array) {
 }
 
 export async function exportUserData(ownerId: string) {
-  const [snapshots, reviews, assets] = await Promise.all([
+  const [user, snapshots, reviews, assets] = await Promise.all([
+    prisma.user.findUnique({
+      select: { activeLineageCorpusId: true },
+      where: { id: ownerId },
+    }),
     prisma.lineageCorpusSnapshot.findMany({
       orderBy: [{ corpusId: "asc" }, { createdAt: "asc" }, { id: "asc" }],
       where: { ownerId },
@@ -90,6 +95,7 @@ export async function exportUserData(ownerId: string) {
     }),
   ])
   const data = portableDataSchema.parse({
+    activeLineageCorpusId: user?.activeLineageCorpusId ?? null,
     assets: assets.map(
       ({ accessibilityDescription, archivePath, assetId, blob, corpusId }) => ({
         accessibilityDescription,
@@ -145,6 +151,11 @@ export async function restoreUserData(input: {
 }) {
   const { data, files } = decodeExport(input.bytes)
   validateRecoveryData(data, files, input.validator)
+  const corpusIds = new Set(data.snapshots.map(({ corpusId }) => corpusId))
+  const activeLineageCorpusId =
+    (data.activeLineageCorpusId && corpusIds.has(data.activeLineageCorpusId)
+      ? data.activeLineageCorpusId
+      : data.snapshots.at(-1)?.corpusId) ?? null
 
   await prisma.$transaction(async (tx) => {
     const existing = await Promise.all([
@@ -183,6 +194,10 @@ export async function restoreUserData(input: {
         },
       })
     }
+    await tx.user.update({
+      data: { activeLineageCorpusId },
+      where: { id: input.ownerId },
+    })
     for (const asset of data.assets) {
       const bytes = files.get(`assets/${asset.corpusId}/${asset.archivePath}`)!
       await tx.lineageAssetBlob.upsert({
@@ -207,7 +222,10 @@ export async function restoreUserData(input: {
       })
     }
   })
-  return inspectUserDataExport(input.bytes)
+  return {
+    ...inspectUserDataExport(input.bytes),
+    activeLineageCorpusId,
+  }
 }
 
 function validateRecoveryData(
