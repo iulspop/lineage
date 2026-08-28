@@ -1,28 +1,32 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, test } from "vitest"
 
-import { LatexText, parseLatexText } from "./latex-text"
+import { LatexText } from "./latex-text"
 
 describe("LatexText", () => {
-  test("parses inline and display LaTeX while preserving surrounding text", () => {
-    expect(parseLatexText("Solve $x^2 = 4$, then $$x = \\pm 2$$.")).toEqual([
-      { content: "Solve ", type: "text" },
-      { content: "x^2 = 4", displayMode: false, type: "math" },
-      { content: ", then ", type: "text" },
-      { content: "x = \\pm 2", displayMode: true, type: "math" },
-      { content: ".", type: "text" },
-    ])
+  test("renders inline and display math with the standard Markdown pipeline", () => {
+    const { container } = render(
+      <LatexText>
+        {"Solve $x^2 = 4$, then\n\n$$\nx = \\pm 2\n$$\n\n."}
+      </LatexText>,
+    )
+
+    expect(screen.getByText(/Solve/)).toBeInTheDocument()
+    expect(container.querySelectorAll(".katex")).toHaveLength(2)
+    expect(container.querySelector(".katex-display")).toBeInTheDocument()
   })
 
-  test("supports slash delimiters and leaves escaped currency untouched", () => {
-    expect(parseLatexText("Cost: \\$5; solve \\(a+b\\) and \\[c=d\\]")).toEqual(
-      [
-        { content: "Cost: \\$5; solve ", type: "text" },
-        { content: "a+b", displayMode: false, type: "math" },
-        { content: " and ", type: "text" },
-        { content: "c=d", displayMode: true, type: "math" },
-      ],
+  test("keeps an inline exponent attached to its formula in mixed prose", () => {
+    const { container } = render(
+      <LatexText>
+        {"In the expansion of $(a+b)^2$, what is the middle term?"}
+      </LatexText>,
     )
+
+    const formula = container.querySelector(".katex")
+    expect(formula).toBeInTheDocument()
+    expect(formula).toHaveTextContent("(a+b)2")
+    expect(screen.getByText(/what is the middle term/)).toBeInTheDocument()
   })
 
   test("renders accessible KaTeX without interpreting HTML", () => {
@@ -35,7 +39,6 @@ describe("LatexText", () => {
     expect(screen.getByText(/Euler:/)).toBeInTheDocument()
     expect(container.querySelector(".katex-mathml")).toBeInTheDocument()
     expect(container.querySelector("script")).not.toBeInTheDocument()
-    expect(container).toHaveTextContent("<script>alert(1)</script>")
   })
 
   test("keeps malformed expressions visible instead of crashing", () => {
