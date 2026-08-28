@@ -1,3 +1,5 @@
+import { createId } from "@paralleldrive/cuid2"
+
 import type {
   CorpusDocument,
   LineageDiagnostic,
@@ -10,6 +12,7 @@ import { validateCorpusCandidate } from "./author-corpus.server"
 export type ManualMemoryDraft = {
   answer: string
   challenge: string
+  clozeTargetId?: string
   collectionIds?: string[]
   corpusId: string
   hint?: string
@@ -54,24 +57,9 @@ function baseDocument(corpusId: string): CorpusDocument {
   }
 }
 
-function slug(value: string) {
-  return (
-    value
-      .normalize("NFKD")
-      .toLocaleLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 48) || "memory"
-  )
-}
-
-function availablePromptId(baseId: string, usedIds: Set<string>) {
-  let candidate = baseId
-  let suffix = 2
-  while (usedIds.has(candidate)) {
-    candidate = `${baseId}-${suffix}`
-    suffix += 1
-  }
+function availablePromptId(usedIds: Set<string>) {
+  let candidate = createId()
+  while (usedIds.has(candidate)) candidate = createId()
   usedIds.add(candidate)
   return candidate
 }
@@ -87,9 +75,7 @@ function parseQuickMemoryLine({
 }): QuickMemoryCaptureResult {
   const clozes = [...value.matchAll(/\{\{([^{}]+)\}\}/g)]
   if (clozes.length > 0) {
-    const plainText = value.replace(/\{\{([^{}]+)\}\}/g, "$1")
-    const baseId = slug(plainText)
-    const drafts = clozes.flatMap((match, index) => {
+    const drafts = clozes.flatMap((match) => {
       const answer = match[1]?.trim() ?? ""
       if (!answer || match.index === undefined) return []
       const before = value
@@ -102,12 +88,10 @@ function parseQuickMemoryLine({
         {
           answer,
           challenge: `${before}[…]${after}`,
+          clozeTargetId: createId(),
           corpusId,
           kind: "cloze" as const,
-          promptId: availablePromptId(
-            clozes.length === 1 ? baseId : `${baseId}-cloze-${index + 1}`,
-            usedIds,
-          ),
+          promptId: availablePromptId(usedIds),
           responseMode: "self-check" as const,
         },
       ]
@@ -139,7 +123,7 @@ function parseQuickMemoryLine({
         challenge,
         corpusId,
         kind: "basic",
-        promptId: availablePromptId(slug(challenge), usedIds),
+        promptId: availablePromptId(usedIds),
         responseMode: "self-check",
       },
     ],
@@ -232,7 +216,7 @@ export function draftToPrompt(draft: ManualMemoryDraft): ReviewContract {
         {
           answer,
           ...(hint ? { hints: [hint] } : {}),
-          id: `${draft.promptId}-target-1`,
+          id: draft.clozeTargetId ?? createId(),
         },
       ],
       id: draft.promptId.trim(),

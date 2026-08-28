@@ -1,3 +1,4 @@
+import { isCuid } from "@paralleldrive/cuid2"
 import { describe, expect, it } from "vitest"
 
 import { DeterministicAuthoringProvider } from "./deterministic-authoring-provider.server"
@@ -23,8 +24,12 @@ describe("DeterministicAuthoringProvider", () => {
     expect(result.provider).toBe("lineage")
     expect(candidate.corpusId).toBe("calculus")
     expect(candidate.prompts).toHaveLength(2)
+    expect(
+      candidate.prompts.every(({ id }: { id: string }) => isCuid(id)),
+    ).toBe(true)
     expect(candidate.prompts[1].kind).toBe("cloze")
     expect(candidate.prompts[1].challenge[0]).toContain("[…]")
+    expect(isCuid(candidate.prompts[1].clozeTargets[0].id)).toBe(true)
   })
 
   it("treats prompt-injection text as source content rather than instructions", async () => {

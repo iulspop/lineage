@@ -1,3 +1,4 @@
+import { isCuid } from "@paralleldrive/cuid2"
 import { describe, expect, test } from "vitest"
 
 import { lineageRuntime } from "../infrastructure/lineage-runtime.server"
@@ -30,26 +31,24 @@ describe("manual memory drafts", () => {
     })
   })
 
-  test("parses a one-line basic memory and creates a stable collision-free ID", () => {
-    expect(
-      parseQuickMemoryCapture({
-        corpusId: "math",
-        existingPromptIds: ["what-is-i"],
-        input: "What is i? >> √−1",
-      }),
-    ).toEqual({
-      drafts: [
-        {
-          answer: "√−1",
-          challenge: "What is i?",
-          corpusId: "math",
-          kind: "basic",
-          promptId: "what-is-i-2",
-          responseMode: "self-check",
-        },
-      ],
-      valid: true,
+  test("parses a one-line basic memory with a Cuid2 identity", () => {
+    const parsed = parseQuickMemoryCapture({
+      corpusId: "math",
+      input: "What is i? >> √−1",
     })
+
+    expect(parsed.valid).toBe(true)
+    if (!parsed.valid) throw new Error("Expected valid quick capture")
+    expect(parsed.drafts).toMatchObject([
+      {
+        answer: "√−1",
+        challenge: "What is i?",
+        corpusId: "math",
+        kind: "basic",
+        responseMode: "self-check",
+      },
+    ])
+    expect(isCuid(parsed.drafts[0]?.promptId ?? "")).toBe(true)
   })
 
   test("parses bulk basic memories from lines and Markdown fences", () => {
@@ -83,6 +82,7 @@ In quadratic standard form, what symbol is the constant term? >> c`,
       },
     ])
     expect(new Set(parsed.drafts.map(({ promptId }) => promptId)).size).toBe(3)
+    expect(parsed.drafts.every(({ promptId }) => isCuid(promptId))).toBe(true)
 
     const result = validateQuickMemoryCapture({
       base: null,
@@ -120,15 +120,19 @@ In quadratic standard form, what symbol is the constant term? >> c`,
         answer: "Paris",
         challenge: "[…] is the capital of France.",
         kind: "cloze",
-        promptId: "paris-is-the-capital-of-france-cloze-1",
       },
       {
         answer: "France",
         challenge: "Paris is the capital of […].",
         kind: "cloze",
-        promptId: "paris-is-the-capital-of-france-cloze-2",
       },
     ])
+    expect(
+      parsed.drafts.every(
+        ({ clozeTargetId, promptId }) =>
+          isCuid(promptId) && isCuid(clozeTargetId ?? ""),
+      ),
+    ).toBe(true)
 
     const result = validateQuickMemoryCapture({
       base: null,
@@ -162,11 +166,13 @@ In quadratic standard form, what symbol is the constant term? >> c`,
         {
           answer: "Paris",
           hints: ["A European capital"],
-          id: "capital-of-france-target-1",
         },
       ],
       kind: "cloze",
     })
+    expect(
+      isCuid(result.preview.document.prompts[0]?.clozeTargets?.[0]?.id ?? ""),
+    ).toBe(true)
   })
 
   test("does not treat a symbolic answer inside another word as disclosed", () => {

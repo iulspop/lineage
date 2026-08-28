@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2"
 import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/create.manual"
@@ -42,6 +43,14 @@ export async function loader({ request }: Route.LoaderArgs) {
   )
   return {
     collections: document.collections,
+    initialDraft: {
+      answer: "",
+      challenge: "",
+      corpusId: resolution.corpusId,
+      kind: "basic" as const,
+      promptId: createId(),
+      responseMode: "self-check" as const,
+    },
     selectedCorpusId: resolution.corpusId,
     userEmail: user?.email ?? "",
   }
@@ -142,6 +151,7 @@ export default function ManualCreateRoute({
     <ManualMemoryPage
       actionData={actionData}
       collections={loaderData.collections}
+      initialDraft={loaderData.initialDraft}
       selectedCorpusId={loaderData.selectedCorpusId}
       userEmail={loaderData.userEmail}
     />

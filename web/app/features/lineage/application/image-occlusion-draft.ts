@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto"
+import { createId } from "@paralleldrive/cuid2"
 
 import type { CorpusDocument, LineageDiagnostic } from "../domain/corpus"
 import type { ReviewContractValidator } from "../domain/corpus-ports"
@@ -85,9 +86,7 @@ export function validateImageOcclusionDraft({
     ? document.prompts.find((prompt) => prompt.id === existingPromptId)
     : null
   const assetId =
-    current && !draft.newImage && draft.assetId
-      ? draft.assetId
-      : `${draft.promptId.trim()}-image-r${current ? current.revision + 1 : 1}`
+    current && !draft.newImage && draft.assetId ? draft.assetId : createId()
   const extension = draft.imageMediaType === "image/jpeg" ? "jpg" : "png"
   const asset = {
     accessibleDescription: draft.accessibleDescription.trim(),
@@ -113,7 +112,7 @@ export function validateImageOcclusionDraft({
           x: draft.x,
           y: draft.y,
         },
-        id: `${current?.id ?? draft.promptId.trim()}-region-1`,
+        id: current?.occlusionRegions?.[0]?.id ?? createId(),
         label: draft.regionLabel.trim(),
       },
     ],

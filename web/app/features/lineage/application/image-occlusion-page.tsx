@@ -30,6 +30,7 @@ export function ImageOcclusionPage({
   userEmail: string
 }) {
   const draft = actionData?.draft ?? initialDraft
+  const isRevision = Boolean(initialDraft?.imageBase64)
   const imageUrl = draft?.imageBase64
     ? `data:${draft.imageMediaType};base64,${draft.imageBase64}`
     : null
@@ -40,9 +41,7 @@ export function ImageOcclusionPage({
           description="Upload an image, define a stable normalized region, and approve the exact concealed and revealed presentation before saving."
           eyebrow="Create · Image occlusion"
           title={
-            initialDraft?.promptId
-              ? "Revise image occlusion"
-              : "Create image occlusion"
+            isRevision ? "Revise image occlusion" : "Create image occlusion"
           }
         />
         <div className={s.layout}>
@@ -91,7 +90,7 @@ export function ImageOcclusionPage({
               <input
                 defaultValue={draft?.promptId}
                 name="promptId"
-                readOnly={Boolean(initialDraft?.promptId)}
+                readOnly={isRevision}
                 required
               />
             </label>

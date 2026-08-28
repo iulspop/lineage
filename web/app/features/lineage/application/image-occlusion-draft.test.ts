@@ -1,3 +1,4 @@
+import { isCuid } from "@paralleldrive/cuid2"
 import { describe, expect, test } from "vitest"
 
 import { lineageRuntime } from "../infrastructure/lineage-runtime.server"
@@ -30,13 +31,14 @@ describe("image occlusion drafts", () => {
 
     expect(result.valid).toBe(true)
     if (!result.valid) throw new Error("Expected valid image occlusion")
-    expect(result.preview.document.assets[0]).toMatchObject({
+    const asset = result.preview.document.assets[0]
+    expect(asset).toMatchObject({
       byteSize: 10,
-      id: "capital-of-france-map-image-r1",
       mediaType: "image/png",
-      path: "assets/capital-of-france-map-image-r1.png",
     })
-    expect(result.preview.document.assets[0]?.sha256).toMatch(/^[a-f0-9]{64}$/)
+    expect(isCuid(asset?.id ?? "")).toBe(true)
+    expect(asset?.path).toBe(`assets/${asset.id}.png`)
+    expect(asset?.sha256).toMatch(/^[a-f0-9]{64}$/)
     expect(result.preview.document.prompts[0]).toMatchObject({
       kind: "image-occlusion",
       occlusionRegions: [
@@ -48,11 +50,15 @@ describe("image occlusion drafts", () => {
             x: 0.4,
             y: 0.3,
           },
-          id: "capital-of-france-map-region-1",
         },
       ],
-      sourceAsset: "capital-of-france-map-image-r1",
+      sourceAsset: asset?.id,
     })
+    expect(
+      isCuid(
+        result.preview.document.prompts[0]?.occlusionRegions?.[0]?.id ?? "",
+      ),
+    ).toBe(true)
   })
 
   test("increments the immutable Prompt revision when editing", () => {
@@ -73,5 +79,8 @@ describe("image occlusion drafts", () => {
     if (!revised.valid) throw new Error("Expected revised candidate")
     expect(revised.preview.document.prompts).toHaveLength(1)
     expect(revised.preview.document.prompts[0]?.revision).toBe(2)
+    expect(revised.preview.document.prompts[0]?.occlusionRegions?.[0]?.id).toBe(
+      first.preview.document.prompts[0]?.occlusionRegions?.[0]?.id,
+    )
   })
 })

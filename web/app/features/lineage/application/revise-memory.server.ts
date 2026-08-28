@@ -65,6 +65,7 @@ export async function previewMemoryRevision(input: {
 
   const drafted = draftToPrompt({
     ...input.draft,
+    clozeTargetId: current.clozeTargets?.[0]?.id,
     corpusId: input.corpusId,
     promptId: input.promptId,
   })

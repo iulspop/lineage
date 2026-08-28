@@ -7,17 +7,6 @@ import type {
   AuthoringRequest,
 } from "../domain/authoring-provider"
 
-function slug(value: string) {
-  return (
-    value
-      .normalize("NFKD")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 48) || "memory"
-  )
-}
-
 function sentences(value: string) {
   return value
     .replace(/\s+/g, " ")
@@ -66,9 +55,7 @@ export class DeterministicAuthoringProvider implements AuthoringProvider {
       const sentence = seeds[index % seeds.length] ?? request.topic
       const answer = answerFromSentence(sentence)
       const kind = memoryKind(request, index)
-      const id = request.promptId
-        ? request.promptId
-        : `${slug(request.topic)}-${index + 1}`
+      const id = request.promptId ?? createId()
       const challenge =
         kind === "cloze"
           ? sentence.replace(answer, "[…]")
@@ -78,7 +65,7 @@ export class DeterministicAuthoringProvider implements AuthoringProvider {
         challenge: [challenge],
         ...(kind === "cloze"
           ? {
-              clozeTargets: [{ answer, id: `${id}-target-1` }],
+              clozeTargets: [{ answer, id: createId() }],
             }
           : {}),
         id,

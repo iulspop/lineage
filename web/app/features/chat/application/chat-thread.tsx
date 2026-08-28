@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2"
 import {
   IconArrowLeft,
   IconFile,
@@ -221,7 +222,7 @@ export function ChatThread({
             setSelectedFiles(
               Array.from(event.currentTarget.files ?? []).map((file) => ({
                 file,
-                id: crypto.randomUUID(),
+                id: createId(),
               })),
             )
           }

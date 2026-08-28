@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2"
 import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/create.image-occlusion"
@@ -126,7 +127,7 @@ export async function loader({ request }: Route.LoaderArgs) {
                 ? prompt.occlusionRegions[0].geometry.y
                 : 0.1,
           }
-        : { corpusId, promptId },
+        : { corpusId, promptId: promptId || createId() },
     userEmail: user?.email ?? "",
   }
 }
