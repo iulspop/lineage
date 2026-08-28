@@ -399,11 +399,16 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                         )}
                       </div>
                       <div className={s.memoryAside}>
-                        <span className={s.revision}>
-                          {memory.lastAssessment ?? "New"}
-                          <br />
-                          Revision {memory.revision}
-                        </span>
+                        <dl className={s.memoryMeta}>
+                          <div>
+                            <dt>Last rated</dt>
+                            <dd>{memory.lastAssessment ?? "New"}</dd>
+                          </div>
+                          <div>
+                            <dt>Version</dt>
+                            <dd>{memory.revision}</dd>
+                          </div>
+                        </dl>
                         {answer ? (
                           <button
                             aria-expanded="true"

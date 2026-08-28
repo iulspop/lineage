@@ -197,7 +197,7 @@ globalStyle(`${search} input`, {
   outline: 0,
   width: "100%",
 })
-export const memoryList = style({ display: "grid", gap: theme.space[3] })
+export const memoryList = style({ display: "grid", gap: theme.space[4] })
 export const memory = style({
   "@media": {
     "screen and (max-width: 36rem)": {
@@ -205,70 +205,124 @@ export const memory = style({
       flexDirection: "column",
     },
   },
-  alignItems: "start",
-  background: theme.color.background.canvas,
-  border: `1px solid ${theme.color.border.default}`,
+  alignItems: "stretch",
+  background: theme.color.background.card,
+  border: `1px solid ${theme.color.border.subtle}`,
   borderRadius: theme.radius.lg,
+  boxShadow: theme.shadow.xs,
   color: theme.color.text.primary,
   display: "flex",
-  gap: theme.space[4],
+  gap: theme.space[6],
   justifyContent: "space-between",
+  overflow: "hidden",
   padding: theme.space[5],
+  position: "relative",
+  selectors: {
+    "&::before": {
+      background: theme.color.accent.solid,
+      borderRadius: theme.radius.full,
+      content: '""',
+      inset: `${theme.space[4]} auto ${theme.space[4]} 0`,
+      opacity: 0,
+      position: "absolute",
+      transition: `opacity ${theme.duration.fast} ${theme.easing.standard}`,
+      width: "3px",
+    },
+    "&:focus-within": {
+      borderColor: theme.color.border.interactive,
+      boxShadow: theme.shadow.focus,
+    },
+    "&:hover": {
+      borderColor: theme.color.border.interactive,
+      boxShadow: theme.shadow.elevated,
+      transform: "translateY(-1px)",
+    },
+    "&:hover::before": { opacity: 1 },
+  },
+  transition: `border-color ${theme.duration.normal} ${theme.easing.standard}, box-shadow ${theme.duration.normal} ${theme.easing.standard}, transform ${theme.duration.fast} ${theme.easing.standard}`,
 })
 export const memoryMain = style({
+  alignContent: "start",
   display: "grid",
   flex: 1,
-  gap: theme.space[2],
+  gap: theme.space[3],
   minWidth: 0,
 })
-globalStyle(`${memoryMain} code`, {
-  color: theme.color.text.muted,
-  fontSize: theme.font.size.xs,
-})
 globalStyle(`${memoryMain} h3`, {
-  fontSize: theme.font.size.base,
+  fontSize: theme.font.size.lg,
   fontWeight: theme.font.weight.semibold,
+  lineHeight: theme.font.lineHeight.tight,
   margin: 0,
+  maxWidth: "48rem",
 })
 globalStyle(`${memoryMain} h3 a`, {
   color: theme.color.text.primary,
   textDecoration: "none",
+  textDecorationThickness: "1px",
+  textUnderlineOffset: "0.18em",
 })
 globalStyle(`${memoryMain} h3 a:hover`, {
   color: theme.color.text.link,
   textDecoration: "underline",
 })
 export const memoryResolution = style({
-  background: theme.color.background.subtle,
-  borderLeft: `3px solid ${theme.color.border.interactive}`,
+  background: theme.color.accent.subtle,
+  border: `1px solid ${theme.color.border.subtle}`,
+  borderRadius: theme.radius.md,
   display: "grid",
-  gap: theme.space[1],
-  marginTop: theme.space[2],
-  padding: theme.space[3],
+  gap: theme.space[2],
+  marginTop: theme.space[1],
+  padding: `${theme.space[3]} ${theme.space[4]}`,
 })
 globalStyle(`${memoryResolution} p`, {
   color: theme.color.text.primary,
   margin: 0,
 })
 export const memoryAside = style({
+  "@media": {
+    "screen and (max-width: 36rem)": {
+      alignItems: "center",
+      borderLeft: 0,
+      borderTop: `1px solid ${theme.color.border.subtle}`,
+      gridTemplateColumns: "1fr auto",
+      justifyItems: "stretch",
+      paddingLeft: 0,
+      paddingTop: theme.space[4],
+    },
+  },
+  alignContent: "space-between",
   alignItems: "end",
+  borderLeft: `1px solid ${theme.color.border.subtle}`,
   display: "grid",
   flexShrink: 0,
-  gap: theme.space[3],
+  gap: theme.space[4],
   justifyItems: "end",
+  minWidth: "10.5rem",
+  paddingLeft: theme.space[5],
 })
 globalStyle(`${memoryAside} button`, {
   alignItems: "center",
-  background: theme.color.background.canvas,
-  border: `1px solid ${theme.color.border.default}`,
-  borderRadius: theme.radius.md,
+  background: theme.color.background.subtle,
+  border: `1px solid ${theme.color.border.subtle}`,
+  borderRadius: theme.radius.full,
   color: theme.color.text.primary,
   cursor: "pointer",
   display: "inline-flex",
   font: "inherit",
+  fontSize: theme.font.size.sm,
+  fontWeight: theme.font.weight.semibold,
   gap: theme.space[2],
-  minHeight: "2.75rem",
-  padding: `${theme.space[2]} ${theme.space[3]}`,
+  minHeight: "2.5rem",
+  padding: `${theme.space[2]} ${theme.space[4]}`,
+  transition: `background ${theme.duration.fast} ${theme.easing.standard}, border-color ${theme.duration.fast} ${theme.easing.standard}`,
+})
+globalStyle(`${memoryAside} button:hover`, {
+  background: theme.color.accent.subtle,
+  borderColor: theme.color.border.interactive,
+})
+globalStyle(`${memoryAside} button:focus-visible`, {
+  boxShadow: theme.shadow.focus,
+  outline: 0,
 })
 globalStyle(`${memoryAside} button:disabled`, {
   cursor: "wait",
@@ -281,20 +335,40 @@ export const badges = style({
 })
 globalStyle(`${badges} span`, {
   background: theme.color.background.subtle,
+  border: `1px solid ${theme.color.border.subtle}`,
   borderRadius: theme.radius.full,
   color: theme.color.text.secondary,
   fontSize: theme.font.size.xs,
+  fontWeight: theme.font.weight.semibold,
+  letterSpacing: theme.font.letterSpacing.tracked,
   padding: `${theme.space[1]} ${theme.space[2]}`,
+  textTransform: "capitalize",
 })
 export const due = style({
   background: `${theme.color.intent.warning.subtle} !important`,
+  borderColor: `${theme.color.intent.warning.background} !important`,
   color: `${theme.color.text.warning} !important`,
 })
-export const revision = style({
-  color: theme.color.text.secondary,
-  flexShrink: 0,
-  fontSize: theme.font.size.sm,
+export const memoryMeta = style({
+  display: "flex",
+  gap: theme.space[4],
+  margin: 0,
+})
+globalStyle(`${memoryMeta} div`, {
+  display: "grid",
+  gap: theme.space[1],
   textAlign: "right",
+})
+globalStyle(`${memoryMeta} dt`, {
+  color: theme.color.text.muted,
+  fontSize: theme.font.size.xs,
+})
+globalStyle(`${memoryMeta} dd`, {
+  color: theme.color.text.secondary,
+  fontSize: theme.font.size.sm,
+  fontWeight: theme.font.weight.semibold,
+  margin: 0,
+  textTransform: "capitalize",
 })
 export const empty = style({
   background: theme.color.background.card,
