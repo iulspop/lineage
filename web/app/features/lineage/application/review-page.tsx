@@ -1,448 +1,555 @@
-import { useEffect, useState } from "react"
-import { Form, Link } from "react-router"
+import {
+  IconArrowLeft,
+  IconEdit,
+  IconKeyboard,
+  IconX,
+} from "@tabler/icons-react"
+import { useEffect, useRef, useState } from "react"
+import { Form, Link, useNavigate, useSearchParams } from "react-router"
 
 import * as s from "./review-page.css"
-import { AppShell } from "~/components/app-shell/app-shell"
 import { LatexText } from "~/components/latex-text/latex-text"
 import { Button } from "~/components/ui/button"
-import { FieldLabel } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { formatDateTime, useTimeZone } from "~/utils/time-zone"
+import { Label } from "~/components/ui/label"
+import type { ReviewContract } from "~/features/lineage/domain/corpus"
+import { useTimeZone } from "~/utils/time-zone"
 
 const assessments = ["again", "hard", "good", "easy"] as const
 
-type ReviewActionData =
-  | { completed: false; attempt: string | null; presentation: string[] }
-  | {
-      assessment: (typeof assessments)[number]
-      attempt: string | null
-      completed: true
-      nextIntervalMinutes: number
-      presentation: string[]
-    }
-  | { error: string }
-  | undefined
-
-type ReviewLoaderData = {
-  corpusId: string
-  due: boolean
-  dueAt: string | null
-  dueCount: number
-  history: Array<{
-    assessment: (typeof assessments)[number]
-    attemptedResponse: string | null
-    nextIntervalMinutes: number
-    promptId: string
-    reviewedAt: string
-  }>
-  reviewCount: number
-  reviewedAt: string
-  sessionCompleted: number
-  sessionLimit: number | null
-  snapshotDigest: string
-  userEmail: string
-} & (
-  | {
-      assessmentPreviews: null
-      captureResponse: boolean
-      presentation: string[]
-      prompt: null
-    }
-  | {
-      assessmentPreviews: Record<(typeof assessments)[number], number>
-      captureResponse: boolean
-      presentation: string[]
-      prompt: {
-        id: string
-        kind?: string
-        occlusionRegions?: Array<{
-          geometry:
-            | {
-                height: number
-                type: "rectangle"
-                width: number
-                x: number
-                y: number
-              }
-            | { points: Array<{ x: number; y: number }>; type: "polygon" }
-          id: string
-        }>
-        revision: number
-        sourceAsset?: string
-      }
-    }
-)
-
 function formatInterval(minutes: number) {
   if (minutes < 60) return `${minutes} min`
-  if (minutes < 24 * 60) return `${Math.round(minutes / 60)} hr`
-  return `${Math.round(minutes / (24 * 60))} days`
+  if (minutes < 1440) return `${Math.round(minutes / 60)} hr`
+  return `${Math.round(minutes / 1440)} d`
+}
+
+function formatDateTime(value: string, timeZone: string) {
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+  }).format(new Date(value))
 }
 
 export function ReviewPage({
   actionData,
   loaderData,
 }: {
-  actionData: ReviewActionData
-  loaderData: ReviewLoaderData
+  actionData:
+    | {
+        attempt?: string | null
+        completed: false
+        presentation: string[]
+      }
+    | {
+        assessment: string
+        completed: true
+        nextIntervalMinutes: number
+      }
+    | { error: string }
+    | undefined
+  loaderData: {
+    assessmentPreviews: Record<(typeof assessments)[number], number> | null
+    captureResponse: boolean
+    corpusId: string
+    due?: boolean
+    dueAt: string | null
+    dueCount: number
+    history: Array<{
+      assessment: string
+      attemptedResponse: string | null
+      nextIntervalMinutes: number
+      reviewedAt: string
+    }>
+    presentation: string[]
+    prompt:
+      | (Pick<ReviewContract, "id" | "revision"> & Partial<ReviewContract>)
+      | null
+    reviewedAt: string
+    reviewCount: number
+    sessionCompleted: number
+    sessionLimit: number | null
+    snapshotDigest: string
+    userEmail: string
+  }
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const editChallengeRef = useRef<HTMLTextAreaElement>(null)
+  const editingSnapshotDigest = useRef(loaderData.snapshotDigest)
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const timeZone = useTimeZone()
   const resolved = actionData && "completed" in actionData ? actionData : null
-  const presentation = resolved?.presentation ?? loaderData.presentation
+  const presentation =
+    resolved?.completed === false
+      ? resolved.presentation
+      : loaderData.presentation
+  const [primaryPresentation, ...supportingPresentation] = presentation
   const sessionFinished =
     loaderData.sessionLimit !== null &&
     loaderData.sessionCompleted >= loaderData.sessionLimit
   const nextCompleted = loaderData.sessionCompleted + 1
-  const continueSearch = new URLSearchParams({
-    completed: String(nextCompleted),
-  })
-  if (loaderData.sessionLimit !== null) {
+  const continueSearch = new URLSearchParams()
+  if (loaderData.sessionLimit !== null)
     continueSearch.set("limit", String(loaderData.sessionLimit))
-  }
+  continueSearch.set("completed", String(nextCompleted))
+  const continueTo = `/review?${continueSearch.toString()}`
+  const canQuickEdit =
+    loaderData.prompt?.kind === "basic" || loaderData.prompt?.kind === "cloze"
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      ) {
+    if (editing) editChallengeRef.current?.focus()
+  }, [editing])
+
+  useEffect(() => {
+    if (editingSnapshotDigest.current === loaderData.snapshotDigest) return
+    editingSnapshotDigest.current = loaderData.snapshotDigest
+    setEditing(false)
+  }, [loaderData.snapshotDigest])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const typing =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable
+
+      if (event.key === "Escape") {
+        if (editing) {
+          setEditing(false)
+          event.preventDefault()
+          return
+        }
+        if (showShortcuts) {
+          setShowShortcuts(false)
+          event.preventDefault()
+          return
+        }
+        navigate("/today")
         return
       }
+
+      if (typing) {
+        if (
+          editing &&
+          (event.metaKey || event.ctrlKey) &&
+          event.key === "Enter"
+        ) {
+          event.preventDefault()
+          document
+            .querySelector<HTMLButtonElement>(
+              '[data-review-shortcut="save-edit"]',
+            )
+            ?.click()
+        }
+        return
+      }
+
       if (event.key === "?") {
-        setShowShortcuts((visible) => !visible)
+        event.preventDefault()
+        setShowShortcuts((value) => !value)
         return
       }
-      const shortcut =
-        event.key === " " || event.key === "Enter" ? "reveal" : event.key
-      const control = document.querySelector<HTMLButtonElement>(
-        `[data-review-shortcut="${shortcut}"]`,
-      )
-      if (control && !control.disabled) {
+      if (event.key.toLowerCase() === "e" && canQuickEdit && !resolved) {
         event.preventDefault()
-        control.click()
+        setEditing(true)
+        return
+      }
+      if (event.key.toLowerCase() === "n" && resolved?.completed) {
+        event.preventDefault()
+        navigate(continueTo)
+        return
+      }
+      if (!resolved && (event.key === " " || event.key === "Enter")) {
+        event.preventDefault()
+        document
+          .querySelector<HTMLButtonElement>('[data-review-shortcut="reveal"]')
+          ?.click()
+        return
+      }
+      if (resolved?.completed === false && /^[1-4]$/.test(event.key)) {
+        event.preventDefault()
+        document
+          .querySelector<HTMLButtonElement>(
+            `[data-review-shortcut="${event.key}"]`,
+          )
+          ?.click()
       }
     }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [canQuickEdit, continueTo, editing, navigate, resolved, showShortcuts])
 
   return (
-    <AppShell userEmail={loaderData.userEmail}>
-      <div className={s.page}>
-        <header className={s.header}>
-          <div>
-            <p className={s.eyebrow}>
-              {loaderData.prompt
-                ? `Prompt ${loaderData.prompt.id}`
-                : "Review queue"}
-            </p>
-            <h1 className={s.title}>Review</h1>
-          </div>
-          <div className={s.progress}>
-            <p>{loaderData.reviewCount} reviews recorded</p>
-            <p>
-              {loaderData.sessionLimit
-                ? `${loaderData.sessionCompleted} of ${loaderData.sessionLimit} in this session`
-                : `${loaderData.dueCount} due in this corpus`}
-            </p>
-            <p>
-              {loaderData.due
-                ? "Due now"
-                : `Next review ${formatDateTime(loaderData.dueAt ?? "", timeZone)}`}
-            </p>
-            {loaderData.prompt && (
-              <Link
-                className={s.memoryLink}
-                to={`/library/${encodeURIComponent(loaderData.corpusId)}/memories/${encodeURIComponent(loaderData.prompt.id)}`}
-              >
-                Inspect or revise this memory
-              </Link>
-            )}
-          </div>
-        </header>
-
-        <div className={s.shortcutBar}>
-          <span>Space reveal · 1–4 assess</span>
+    <main className={s.shell}>
+      <header className={s.topbar}>
+        <Link aria-label="Exit review" className={s.iconLink} to="/today">
+          <IconArrowLeft aria-hidden="true" />
+        </Link>
+        <div className={s.sessionProgress}>
+          <span>
+            {loaderData.sessionLimit === null
+              ? `${loaderData.dueCount} due`
+              : `${Math.min(loaderData.sessionCompleted + 1, loaderData.sessionLimit)} / ${loaderData.sessionLimit}`}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>{loaderData.reviewCount} reviewed</span>
+        </div>
+        <div className={s.topbarActions}>
+          {canQuickEdit && loaderData.prompt && !resolved ? (
+            <button
+              aria-label="Quick edit memory"
+              className={s.iconButton}
+              onClick={() => setEditing(true)}
+              type="button"
+            >
+              <IconEdit aria-hidden="true" />
+            </button>
+          ) : null}
           <button
             aria-expanded={showShortcuts}
-            className={s.shortcutButton}
-            onClick={() => setShowShortcuts((visible) => !visible)}
+            aria-label="Keyboard shortcuts"
+            className={s.iconButton}
+            onClick={() => setShowShortcuts((value) => !value)}
             type="button"
           >
-            Keyboard help (?)
+            <IconKeyboard aria-hidden="true" />
           </button>
         </div>
-        {showShortcuts && (
-          <section
-            aria-label="Review keyboard shortcuts"
-            className={s.shortcutHelp}
-          >
+      </header>
+
+      {showShortcuts ? (
+        <aside className={s.shortcutHelp}>
+          <div className={s.shortcutHelpHeader}>
             <strong>Keyboard shortcuts</strong>
-            <p>
-              Space or Enter reveals the answer. Use 1–4 for Again, Hard, Good,
-              and Easy.
-            </p>
-          </section>
-        )}
-
-        <Form className={s.corpusPicker} method="get">
-          <div className={s.pickerField}>
-            <FieldLabel htmlFor="review-limit">Session length</FieldLabel>
-            <select
-              className={s.corpusSelect}
-              defaultValue={loaderData.sessionLimit ?? ""}
-              id="review-limit"
-              name="limit"
+            <button
+              aria-label="Close keyboard shortcuts"
+              className={s.iconButton}
+              onClick={() => setShowShortcuts(false)}
+              type="button"
             >
-              <option value="">All due</option>
-              <option value="10">10 memories</option>
-              <option value="20">20 memories</option>
-              <option value="50">50 memories</option>
-            </select>
+              <IconX aria-hidden="true" />
+            </button>
           </div>
-          <Button type="submit">Start session</Button>
-        </Form>
-
-        <section aria-live="polite" className={s.card}>
-          {sessionFinished ? (
-            <div className={s.sessionSummary}>
-              <p className={s.eyebrow}>Session complete</p>
-              <h2>{loaderData.sessionCompleted} memories reviewed</h2>
-              <p>
-                {loaderData.dueCount > 0
-                  ? `${loaderData.dueCount} memories remain due. Start another session whenever you are ready.`
-                  : "You cleared the due queue for this corpus."}
-              </p>
-              <div className={s.actions}>
-                <Link className={s.secondaryLink} to="/today">
-                  Return to Today
-                </Link>
-                {loaderData.dueCount > 0 && (
-                  <Link className={s.continueLink} to="/review">
-                    Continue reviewing
-                  </Link>
-                )}
-              </div>
+          <dl>
+            <div>
+              <dt>
+                <kbd>Space</kbd>
+              </dt>
+              <dd>Reveal answer</dd>
             </div>
-          ) : loaderData.prompt ? (
-            <>
-              <div className={s.content}>
-                {presentation.map((item) => (
-                  <p key={item}>
-                    <LatexText>{item}</LatexText>
-                  </p>
-                ))}
-                {loaderData.prompt.kind === "image-occlusion" &&
-                loaderData.prompt.sourceAsset ? (
-                  <div className={s.reviewImage}>
-                    <img
-                      alt="Visual with the target region concealed"
-                      src={`/library/${encodeURIComponent(loaderData.corpusId)}/assets/${encodeURIComponent(loaderData.prompt.sourceAsset)}`}
-                    />
-                    {!resolved
-                      ? loaderData.prompt.occlusionRegions?.map((region) =>
-                          region.geometry.type === "rectangle" ? (
-                            <span
-                              aria-hidden="true"
-                              className={s.reviewOcclusion}
-                              key={region.id}
-                              style={{
-                                height: `${region.geometry.height * 100}%`,
-                                left: `${region.geometry.x * 100}%`,
-                                top: `${region.geometry.y * 100}%`,
-                                width: `${region.geometry.width * 100}%`,
-                              }}
-                            />
-                          ) : null,
-                        )
-                      : null}
-                  </div>
-                ) : null}
-              </div>
+            <div>
+              <dt>
+                <kbd>1–4</kbd>
+              </dt>
+              <dd>Again · Hard · Good · Easy</dd>
+            </div>
+            <div>
+              <dt>
+                <kbd>E</kbd>
+              </dt>
+              <dd>Quick edit</dd>
+            </div>
+            <div>
+              <dt>
+                <kbd>N</kbd>
+              </dt>
+              <dd>Next memory</dd>
+            </div>
+            <div>
+              <dt>
+                <kbd>Esc</kbd>
+              </dt>
+              <dd>Close or exit review</dd>
+            </div>
+          </dl>
+        </aside>
+      ) : null}
 
-              {!resolved ? (
-                <Form className={s.form} method="post">
-                  <input
-                    name="corpusId"
-                    type="hidden"
-                    value={loaderData.corpusId}
+      <section aria-live="polite" className={s.stage}>
+        {sessionFinished ? (
+          <div className={s.centeredState}>
+            <p className={s.eyebrow}>Session complete</p>
+            <h1>{loaderData.sessionCompleted} memories reviewed</h1>
+            <p>
+              {loaderData.dueCount > 0
+                ? `${loaderData.dueCount} memories remain due.`
+                : "You cleared the due queue."}
+            </p>
+            <div className={s.actions}>
+              <Link className={s.secondaryLink} to="/today">
+                Return to Today
+              </Link>
+              {loaderData.dueCount > 0 ? (
+                <Link className={s.continueLink} to="/review">
+                  Continue reviewing
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        ) : loaderData.prompt ? (
+          <div className={s.reviewSurface}>
+            <div className={s.content}>
+              <h1>
+                <LatexText>{primaryPresentation ?? "Memory"}</LatexText>
+              </h1>
+              {supportingPresentation.map((item) => (
+                <p key={item}>
+                  <LatexText>{item}</LatexText>
+                </p>
+              ))}
+              {loaderData.prompt.kind === "image-occlusion" &&
+              loaderData.prompt.sourceAsset ? (
+                <div className={s.reviewImage}>
+                  <img
+                    alt="Visual with the target region concealed"
+                    src={`/library/${encodeURIComponent(loaderData.corpusId)}/assets/${encodeURIComponent(loaderData.prompt.sourceAsset)}`}
                   />
-                  <input
-                    name="promptId"
-                    type="hidden"
-                    value={loaderData.prompt.id}
-                  />
-                  <input
-                    name="promptRevision"
-                    type="hidden"
-                    value={loaderData.prompt.revision}
-                  />
-                  <input
-                    name="snapshotDigest"
-                    type="hidden"
-                    value={loaderData.snapshotDigest}
-                  />
-                  {loaderData.captureResponse ? (
-                    <>
-                      <FieldLabel htmlFor="review-attempt">
-                        Your answer
-                      </FieldLabel>
-                      <Input
-                        autoComplete="off"
-                        id="review-attempt"
-                        name="attempt"
-                      />
-                    </>
-                  ) : (
-                    <p>
-                      Recall the answer, then reveal it and assess yourself.
-                    </p>
-                  )}
-                  <div className={s.actions}>
-                    <Button
-                      data-review-shortcut="reveal"
-                      name="intent"
-                      type="submit"
-                      value="resolve"
-                    >
-                      Show answer
-                    </Button>
+                  {!resolved
+                    ? loaderData.prompt.occlusionRegions?.map((region) =>
+                        region.geometry.type === "rectangle" ? (
+                          <span
+                            aria-hidden="true"
+                            className={s.reviewOcclusion}
+                            key={region.id}
+                            style={{
+                              height: `${region.geometry.height * 100}%`,
+                              left: `${region.geometry.x * 100}%`,
+                              top: `${region.geometry.y * 100}%`,
+                              width: `${region.geometry.width * 100}%`,
+                            }}
+                          />
+                        ) : null,
+                      )
+                    : null}
+                </div>
+              ) : null}
+            </div>
+
+            {editing ? (
+              <Form className={s.editPanel} method="post">
+                <div className={s.editHeader}>
+                  <div>
+                    <p className={s.eyebrow}>Quick edit</p>
+                    <h2>Revise without leaving review</h2>
                   </div>
-                </Form>
-              ) : resolved.completed ? (
-                <div className={s.complete}>
-                  <strong>Review recorded as {resolved.assessment}.</strong>
+                  <button
+                    aria-label="Cancel quick edit"
+                    className={s.iconButton}
+                    onClick={() => setEditing(false)}
+                    type="button"
+                  >
+                    <IconX aria-hidden="true" />
+                  </button>
+                </div>
+                <input
+                  name="corpusId"
+                  type="hidden"
+                  value={loaderData.corpusId}
+                />
+                <input
+                  name="promptId"
+                  type="hidden"
+                  value={loaderData.prompt.id}
+                />
+                <input
+                  name="promptRevision"
+                  type="hidden"
+                  value={loaderData.prompt.revision}
+                />
+                <input
+                  name="snapshotDigest"
+                  type="hidden"
+                  value={loaderData.snapshotDigest}
+                />
+                <input name="intent" type="hidden" value="revise" />
+                <Label htmlFor="review-edit-challenge">Challenge</Label>
+                <textarea
+                  className={s.editTextarea}
+                  defaultValue={(
+                    loaderData.prompt.challenge ?? loaderData.presentation
+                  ).join("\n")}
+                  id="review-edit-challenge"
+                  name="challenge"
+                  ref={editChallengeRef}
+                  rows={3}
+                />
+                <Label htmlFor="review-edit-answer">Answer</Label>
+                <textarea
+                  className={s.editTextarea}
+                  defaultValue={(
+                    loaderData.prompt.withheld ??
+                    loaderData.prompt.resolution ??
+                    []
+                  ).join("\n")}
+                  id="review-edit-answer"
+                  name="answer"
+                  rows={3}
+                />
+                <div className={s.editActions}>
+                  <span>
+                    <kbd>⌘↵</kbd> save
+                  </span>
+                  <Button data-review-shortcut="save-edit" type="submit">
+                    Save revision
+                  </Button>
+                </div>
+              </Form>
+            ) : !resolved ? (
+              <Form className={s.recallControls} method="post">
+                <input
+                  name="corpusId"
+                  type="hidden"
+                  value={loaderData.corpusId}
+                />
+                <input
+                  name="promptId"
+                  type="hidden"
+                  value={loaderData.prompt.id}
+                />
+                <input
+                  name="promptRevision"
+                  type="hidden"
+                  value={loaderData.prompt.revision}
+                />
+                <input
+                  name="snapshotDigest"
+                  type="hidden"
+                  value={loaderData.snapshotDigest}
+                />
+                {loaderData.captureResponse ? (
+                  <div className={s.attemptField}>
+                    <Label htmlFor="review-attempt">Your answer</Label>
+                    <Input
+                      autoComplete="off"
+                      id="review-attempt"
+                      name="attempt"
+                    />
+                  </div>
+                ) : (
+                  <p className={s.instruction}>
+                    Recall the answer, then reveal it and assess yourself.
+                  </p>
+                )}
+                <Button
+                  data-review-shortcut="reveal"
+                  name="intent"
+                  type="submit"
+                  value="resolve"
+                >
+                  Show answer <kbd>Space</kbd>
+                </Button>
+              </Form>
+            ) : resolved.completed ? (
+              <div className={s.completionControls}>
+                <div>
+                  <strong>Recorded as {resolved.assessment}</strong>
                   <p>
                     Next review in{" "}
                     {formatInterval(resolved.nextIntervalMinutes)}.
                   </p>
-                  <div className={s.actions}>
-                    {(resolved.assessment === "again" ||
-                      resolved.assessment === "hard") && (
-                      <Link
-                        className={s.secondaryLink}
-                        to={`/library/${encodeURIComponent(loaderData.corpusId)}/memories/${encodeURIComponent(loaderData.prompt.id)}`}
-                      >
-                        Inspect difficult memory
-                      </Link>
-                    )}
-                    <Link
-                      className={s.continueLink}
-                      to={`/review?${continueSearch.toString()}`}
+                </div>
+                <Link className={s.continueLink} to={continueTo}>
+                  {loaderData.sessionLimit !== null &&
+                  nextCompleted >= loaderData.sessionLimit
+                    ? "Finish session"
+                    : "Next memory"}{" "}
+                  <kbd>N</kbd>
+                </Link>
+              </div>
+            ) : (
+              <Form className={s.assessmentForm} method="post">
+                <input
+                  name="corpusId"
+                  type="hidden"
+                  value={loaderData.corpusId}
+                />
+                <input
+                  name="promptId"
+                  type="hidden"
+                  value={loaderData.prompt.id}
+                />
+                <input
+                  name="promptRevision"
+                  type="hidden"
+                  value={loaderData.prompt.revision}
+                />
+                <input
+                  name="snapshotDigest"
+                  type="hidden"
+                  value={loaderData.snapshotDigest}
+                />
+                <input
+                  name="attempt"
+                  type="hidden"
+                  value={resolved.attempt ?? ""}
+                />
+                <input
+                  name="reviewedAt"
+                  type="hidden"
+                  value={loaderData.reviewedAt}
+                />
+                <input name="intent" type="hidden" value="assess" />
+                <fieldset className={s.assessmentGroup}>
+                  <legend>How well did you remember?</legend>
+                  {assessments.map((assessment, index) => (
+                    <Button
+                      data-review-shortcut={String(index + 1)}
+                      key={assessment}
+                      name="assessment"
+                      type="submit"
+                      value={assessment}
                     >
-                      {loaderData.sessionLimit !== null &&
-                      nextCompleted >= loaderData.sessionLimit
-                        ? "Finish session"
-                        : "Next memory"}
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <div className={s.resolution}>
-                  <p>
-                    <strong>Your answer:</strong>{" "}
-                    {resolved.attempt || "No answer"}
-                  </p>
-                  <Form className={s.form} method="post">
-                    <input
-                      name="corpusId"
-                      type="hidden"
-                      value={loaderData.corpusId}
-                    />
-                    <input
-                      name="promptId"
-                      type="hidden"
-                      value={loaderData.prompt.id}
-                    />
-                    <input
-                      name="promptRevision"
-                      type="hidden"
-                      value={loaderData.prompt.revision}
-                    />
-                    <input
-                      name="snapshotDigest"
-                      type="hidden"
-                      value={loaderData.snapshotDigest}
-                    />
-                    <input
-                      name="attempt"
-                      type="hidden"
-                      value={resolved.attempt ?? ""}
-                    />
-                    <input
-                      name="reviewedAt"
-                      type="hidden"
-                      value={loaderData.reviewedAt}
-                    />
-                    <fieldset className={s.assessmentGroup}>
-                      <legend>How well did you remember?</legend>
-                      {assessments.map((assessment, index) => (
-                        <Button
-                          data-review-shortcut={String(index + 1)}
-                          key={assessment}
-                          name="assessment"
-                          type="submit"
-                          value={assessment}
-                        >
-                          <span>
-                            {assessment[0]?.toUpperCase()}
-                            {assessment.slice(1)}
-                          </span>
-                          <span>
-                            {formatInterval(
-                              loaderData.assessmentPreviews[assessment],
-                            )}
-                          </span>
-                        </Button>
-                      ))}
-                    </fieldset>
-                    <input name="intent" type="hidden" value="assess" />
-                  </Form>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className={s.complete}>
-              <strong>No reviews due</strong>
-              <p>
-                {loaderData.dueAt
-                  ? `Next review ${formatDateTime(loaderData.dueAt, timeZone)}.`
-                  : "This corpus has no scheduled reviews."}
-              </p>
-            </div>
-          )}
-        </section>
+                      <span>
+                        {assessment[0]?.toUpperCase()}
+                        {assessment.slice(1)}
+                      </span>
+                      <span>
+                        {formatInterval(
+                          loaderData.assessmentPreviews?.[assessment] ?? 0,
+                        )}
+                      </span>
+                      <kbd>{index + 1}</kbd>
+                    </Button>
+                  ))}
+                </fieldset>
+              </Form>
+            )}
+          </div>
+        ) : (
+          <div className={s.centeredState}>
+            <h1>No reviews due</h1>
+            <p>
+              {loaderData.dueAt
+                ? `Next review ${formatDateTime(loaderData.dueAt, timeZone)}.`
+                : "This workspace has no scheduled reviews."}
+            </p>
+            <Link className={s.continueLink} to="/today">
+              Return to Today
+            </Link>
+          </div>
+        )}
+      </section>
 
-        <section className={s.history}>
-          <h2>Recent history</h2>
-          {loaderData.history.length ? (
-            <ol className={s.historyList}>
-              {loaderData.history.map((review) => (
-                <li className={s.historyItem} key={review.reviewedAt}>
-                  <div>
-                    <strong>{review.assessment}</strong>
-                    <p>{review.attemptedResponse || "No answer"}</p>
-                  </div>
-                  <div className={s.historyMeta}>
-                    <time dateTime={review.reviewedAt}>
-                      {formatDateTime(review.reviewedAt, timeZone)}
-                    </time>
-                    <span>
-                      Next interval:{" "}
-                      {formatInterval(review.nextIntervalMinutes)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className={s.emptyHistory}>No completed reviews yet.</p>
-          )}
-        </section>
-      </div>
-    </AppShell>
+      {actionData && "error" in actionData ? (
+        <p className={s.error} role="alert">
+          {actionData.error}
+        </p>
+      ) : null}
+
+      {!loaderData.prompt && !sessionFinished ? null : (
+        <footer className={s.footer}>
+          <span>
+            {searchParams.get("limit") ? "Focused session" : "All due memories"}
+          </span>
+          <span>
+            Press <kbd>?</kbd> for shortcuts
+          </span>
+        </footer>
+      )}
+    </main>
   )
 }

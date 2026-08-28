@@ -2,7 +2,7 @@ import { createRoutesStub } from "react-router"
 import { describe, expect, test } from "vitest"
 
 import { ReviewPage } from "./review-page"
-import { render, screen } from "~/test/react-test-utils"
+import { fireEvent, render, screen } from "~/test/react-test-utils"
 
 const loaderData = {
   assessmentPreviews: { again: 1, easy: 8640, good: 10, hard: 6 },
@@ -13,7 +13,15 @@ const loaderData = {
   dueCount: 4,
   history: [],
   presentation: ["What is the capital of France?"],
-  prompt: { id: "capital-of-france", revision: 1 },
+  prompt: {
+    challenge: ["What is the capital of France?"],
+    id: "capital-of-france",
+    kind: "basic" as const,
+    resolution: ["Paris"],
+    response: "text" as const,
+    revision: 1,
+    withheld: ["Paris"],
+  },
   reviewCount: 0,
   reviewedAt: "2026-08-26T12:00:00.000Z",
   sessionCompleted: 0,
@@ -39,7 +47,7 @@ describe("ReviewPage", () => {
     ).toBeInTheDocument()
     expect(screen.queryByText("Paris")).not.toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: "Show answer" }),
+      screen.getByRole("button", { name: /Show answer/ }),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText("Corpus")).not.toBeInTheDocument()
     expect(container.querySelector('input[name="corpusId"]')).toHaveValue(
@@ -77,8 +85,39 @@ describe("ReviewPage", () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: "Show answer" }),
+      screen.getByRole("button", { name: /Show answer/ }),
     ).toBeInTheDocument()
+  })
+
+  test("opens the in-review immutable editor from the keyboard", () => {
+    const Router = createRoutesStub([
+      {
+        Component: () => (
+          <ReviewPage actionData={undefined} loaderData={loaderData} />
+        ),
+        path: "/review",
+      },
+    ])
+    const { container } = render(<Router initialEntries={["/review"]} />)
+
+    fireEvent.keyDown(window, { key: "e" })
+
+    expect(
+      screen.getByRole("heading", { name: "Revise without leaving review" }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("Challenge")).toHaveValue(
+      "What is the capital of France?",
+    )
+    expect(screen.getByLabelText("Answer")).toHaveValue("Paris")
+    expect(container.querySelector('input[name="intent"]')).toHaveValue(
+      "revise",
+    )
+    expect(container.querySelector('input[name="promptId"]')).toHaveValue(
+      "capital-of-france",
+    )
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    expect(screen.queryByLabelText("Challenge")).not.toBeInTheDocument()
   })
 
   test("given: every Prompt is scheduled for the future, should: show no review card", () => {
@@ -128,7 +167,7 @@ describe("ReviewPage", () => {
     ])
     render(<Router initialEntries={["/review"]} />)
 
-    expect(screen.getAllByText("Paris")).toHaveLength(2)
+    expect(screen.getByText("Paris")).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: /Good.*10 min/i }),
     ).toBeInTheDocument()

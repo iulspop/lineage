@@ -406,13 +406,32 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
     expect(getPath(page)).toBe("/review")
     await expect(page.getByRole("progressbar")).toBeHidden()
     await expect(page.getByText("What is i squared?")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Exit review" })).toBeVisible()
     await expect(
-      page.getByRole("button", { name: "Show answer" }),
+      page.getByRole("button", { name: "Keyboard shortcuts" }),
     ).toBeVisible()
+
+    await page.keyboard.press("e")
+    await expect(page.getByText("Quick edit", { exact: true })).toBeVisible()
+    await page
+      .getByLabel("Challenge")
+      .fill("What is the exact value of i squared?")
+    await page.keyboard.press("ControlOrMeta+Enter")
+    await expect(page.getByLabel("Challenge")).toBeHidden()
+    await expect(
+      page.getByText("What is the exact value of i squared?", { exact: true }),
+    ).toBeVisible()
+
+    await expect(
+      page.getByRole("button", { name: /Show answer/ }),
+    ).toBeVisible()
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
     await page.keyboard.press("Space")
     await expect(page.getByText("-1", { exact: true })).toBeVisible()
     await page.keyboard.press("3")
     await expect(page.getByText("No reviews due")).toBeVisible()
-    await expect(page.getByRole("listitem").getByText("good")).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: "Return to Today" }),
+    ).toBeVisible()
   })
 })

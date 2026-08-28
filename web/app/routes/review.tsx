@@ -3,6 +3,7 @@ import { data, redirect } from "react-router"
 import type { Route } from "./+types/review"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
 import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
+import type { ManualMemoryDraft } from "~/features/lineage/application/manual-memory-draft"
 import {
   completeReview,
   loadReview,
@@ -11,7 +12,14 @@ import {
   resolveReview,
 } from "~/features/lineage/application/review-flow.server"
 import { ReviewPage } from "~/features/lineage/application/review-page"
+import {
+  acceptMemoryRevision,
+  previewMemoryRevision,
+} from "~/features/lineage/application/revise-memory.server"
+import { StaleCorpusSnapshotError } from "~/features/lineage/application/update-memory-status.server"
+import { parseCorpusDocument } from "~/features/lineage/domain/corpus"
 import { corpusSnapshotStore } from "~/features/lineage/infrastructure/corpus-model.server"
+import { lineageRuntime } from "~/features/lineage/infrastructure/lineage-runtime.server"
 import { reviewCore } from "~/features/lineage/infrastructure/review-core.server"
 import { reviewRecordStore } from "~/features/lineage/infrastructure/review-model.server"
 import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/users-model.server"
@@ -107,6 +115,64 @@ export async function action({ request }: Route.ActionArgs) {
     typeof formData.get("attempt") === "string"
       ? String(formData.get("attempt"))
       : null
+
+  if (intent === "revise") {
+    if (prompt.kind !== "basic" && prompt.kind !== "cloze")
+      return data(
+        { error: "Quick edit is available for basic and cloze memories." },
+        { status: 400 },
+      )
+    const document = parseCorpusDocument(
+      JSON.parse(resolution.snapshot.canonicalJson),
+    )
+    const draft: ManualMemoryDraft = {
+      answer: String(formData.get("answer") ?? ""),
+      challenge: String(formData.get("challenge") ?? ""),
+      collectionIds: document.collectionMemberships
+        .filter(({ promptId: memberPromptId }) => memberPromptId === prompt.id)
+        .map(({ collectionId }) => collectionId),
+      corpusId,
+      hint: prompt.clozeTargets?.[0]?.hints?.[0] ?? "",
+      kind: prompt.kind,
+      promptId: prompt.id,
+      responseMode: prompt.response === "text" ? "text" : "self-check",
+    }
+    try {
+      const preview = await previewMemoryRevision({
+        baseDigest: snapshotDigest,
+        corpusId,
+        draft,
+        ownerId: userId,
+        promptId,
+        store: corpusSnapshotStore,
+        validator: lineageRuntime,
+      })
+      if (!preview) throw data("Memory not found", { status: 404 })
+      if (!preview.valid)
+        return data(
+          {
+            error:
+              preview.diagnostics[0]?.message ??
+              "The revision does not satisfy the review contract.",
+          },
+          { status: 400 },
+        )
+      await acceptMemoryRevision({
+        baseDigest: snapshotDigest,
+        candidateJson: preview.preview.canonicalJson,
+        corpusId,
+        ownerId: userId,
+        store: corpusSnapshotStore,
+        validator: lineageRuntime,
+      })
+      const search = new URL(request.url).search
+      throw redirect(`/review${search}`)
+    } catch (error) {
+      if (error instanceof StaleCorpusSnapshotError)
+        return data({ error: error.message }, { status: 409 })
+      throw error
+    }
+  }
 
   if (intent === "resolve") {
     return data({

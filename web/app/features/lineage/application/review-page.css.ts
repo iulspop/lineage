@@ -1,121 +1,99 @@
-import { style } from "@vanilla-extract/css"
+import { globalStyle, style } from "@vanilla-extract/css"
 
 import { theme } from "~/design-system/theme.css"
 
-export const page = style({
-  marginInline: "auto",
-  maxWidth: "48rem",
-})
-
-export const header = style({
-  alignItems: "end",
-  borderBottom: `1px solid ${theme.color.border.default}`,
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: theme.space[6],
-  paddingBottom: theme.space[4],
-})
-
-export const eyebrow = style({
-  color: theme.color.text.muted,
-  fontSize: theme.font.role.metadata,
-})
-
-export const title = style({
+export const shell = style({
+  background: theme.color.background.canvas,
   color: theme.color.text.primary,
-  fontSize: theme.font.role.pageTitle,
-  fontWeight: theme.font.weight.semibold,
-})
-
-export const progress = style({
-  color: theme.color.text.muted,
   display: "grid",
-  fontSize: theme.font.role.supporting,
-  gap: theme.space[1],
-  textAlign: "right",
+  gridTemplateRows: "auto 1fr auto",
+  minHeight: "100dvh",
+  padding: `${theme.space[4]} clamp(${theme.space[4]}, 4vw, ${theme.space[8]})`,
 })
 
-export const memoryLink = style({
-  color: theme.color.intent.primary.background,
-  fontWeight: theme.font.weight.semibold,
-  textDecoration: "none",
+export const topbar = style({
+  alignItems: "center",
+  display: "grid",
+  gridTemplateColumns: "1fr auto 1fr",
+  minHeight: "3rem",
 })
 
-export const shortcutBar = style({
+export const topbarActions = style({
+  display: "flex",
+  gap: theme.space[2],
+  justifyContent: "flex-end",
+})
+
+export const iconButton = style({
+  alignItems: "center",
+  background: "transparent",
+  border: 0,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.muted,
+  cursor: "pointer",
+  display: "inline-flex",
+  height: "2.75rem",
+  justifyContent: "center",
+  padding: 0,
+  selectors: {
+    "&:focus-visible": { boxShadow: theme.shadow.focus, outline: 0 },
+    "&:hover": {
+      background: theme.color.background.subtle,
+      color: theme.color.text.primary,
+    },
+  },
+  transition: `background ${theme.duration.fast} ${theme.easing.standard}, color ${theme.duration.fast} ${theme.easing.standard}`,
+  width: "2.75rem",
+})
+
+export const iconLink = style([
+  iconButton,
+  { justifySelf: "start", textDecoration: "none" },
+])
+
+export const sessionProgress = style({
   alignItems: "center",
   color: theme.color.text.muted,
   display: "flex",
-  fontSize: theme.font.size.sm,
-  gap: theme.space[3],
-  justifyContent: "space-between",
-  marginBottom: theme.space[3],
-})
-
-export const shortcutButton = style({
-  background: "transparent",
-  border: 0,
-  color: theme.color.intent.primary.background,
-  cursor: "pointer",
-  font: "inherit",
-  fontWeight: theme.font.weight.semibold,
-  padding: theme.space[1],
-})
-
-export const shortcutHelp = style({
-  background: theme.color.background.subtle,
-  border: `1px solid ${theme.color.border.subtle}`,
-  borderRadius: theme.radius.md,
-  display: "grid",
+  fontSize: theme.font.role.metadata,
   gap: theme.space[2],
-  marginBottom: theme.space[4],
-  padding: theme.space[4],
+  justifyContent: "center",
 })
 
-export const corpusPicker = style({
-  "@media": {
-    "screen and (max-width: 40rem)": {
-      alignItems: "stretch",
-      gridTemplateColumns: "1fr",
-    },
-  },
-  alignItems: "end",
+export const stage = style({
+  alignItems: "center",
   display: "grid",
-  gap: theme.space[3],
-  gridTemplateColumns: "minmax(0, 1fr) minmax(10rem, 0.55fr) auto",
-  marginBottom: theme.space[4],
+  justifyItems: "center",
+  paddingBlock: `clamp(${theme.space[6]}, 8vh, 6rem)`,
 })
 
-export const pickerField = style({ display: "grid", gap: theme.space[2] })
-
-export const corpusSelect = style({
-  background: theme.color.background.card,
-  border: `1px solid ${theme.color.border.default}`,
-  borderRadius: theme.radius.sm,
-  color: theme.color.text.primary,
-  minHeight: "2.5rem",
-  paddingInline: theme.space[3],
-})
-
-export const card = style({
-  background: theme.color.background.subtle,
-  border: `1px solid ${theme.color.border.default}`,
-  borderRadius: theme.radius.md,
+export const reviewSurface = style({
   display: "grid",
-  gap: theme.space[6],
-  padding: theme.space[6],
+  gap: `clamp(${theme.space[6]}, 7vh, 5rem)`,
+  maxWidth: "68rem",
+  width: "100%",
 })
 
 export const content = style({
   color: theme.color.text.primary,
   display: "grid",
-  fontSize: theme.font.role.sectionTitle,
-  gap: theme.space[3],
-  lineHeight: theme.font.lineHeight.relaxed,
-  minHeight: "8rem",
+  fontSize: "clamp(2rem, 5vw, 4.75rem)",
+  fontWeight: theme.font.weight.medium,
+  gap: theme.space[5],
+  letterSpacing: "-0.035em",
+  lineHeight: 1.08,
+  marginInline: "auto",
+  maxWidth: "20ch",
+  textAlign: "center",
+  width: "100%",
 })
 
 export const reviewImage = style({
-  borderRadius: theme.radius.md,
+  borderRadius: theme.radius.lg,
+  boxShadow: theme.shadow.elevated,
+  marginInline: "auto",
+  maxHeight: "55vh",
+  maxWidth: "52rem",
   overflow: "hidden",
   position: "relative",
 })
@@ -127,78 +105,251 @@ export const reviewOcclusion = style({
   position: "absolute",
 })
 
-export const form = style({ display: "grid", gap: theme.space[3] })
-
-export const actions = style({ display: "flex", justifyContent: "flex-end" })
-
-export const resolution = style({ display: "grid", gap: theme.space[4] })
-
-export const assessmentGroup = style({
-  border: 0,
-  display: "flex",
-  flexWrap: "wrap",
-  gap: theme.space[2],
-  padding: 0,
-})
-
-export const complete = style({
+export const recallControls = style({
   alignItems: "center",
-  display: "flex",
-  gap: theme.space[4],
-  justifyContent: "space-between",
-})
-
-export const sessionSummary = style({
   display: "grid",
   gap: theme.space[4],
+  justifyItems: "center",
+  marginInline: "auto",
+  maxWidth: "36rem",
+  width: "100%",
+})
+
+export const attemptField = style({
+  display: "grid",
+  gap: theme.space[2],
+  width: "100%",
+})
+
+export const instruction = style({
+  color: theme.color.text.muted,
+  margin: 0,
   textAlign: "center",
 })
 
-export const continueLink = style({
-  background: theme.color.intent.primary.background,
-  borderRadius: theme.radius.sm,
-  color: theme.color.intent.primary.foreground,
-  fontWeight: theme.font.weight.semibold,
-  padding: `${theme.space[3]} ${theme.space[4]}`,
-  textDecoration: "none",
-})
+export const assessmentForm = style({ width: "100%" })
 
-export const secondaryLink = style({
-  color: theme.color.text.primary,
-  fontWeight: theme.font.weight.semibold,
-  padding: theme.space[3],
-  textDecoration: "none",
-})
-
-export const history = style({
+export const assessmentGroup = style({
+  "@media": {
+    "screen and (max-width: 42rem)": { gridTemplateColumns: "repeat(2, 1fr)" },
+  },
+  border: 0,
   display: "grid",
   gap: theme.space[3],
-  marginTop: theme.space[8],
-})
-
-export const historyList = style({
-  display: "grid",
-  gap: theme.space[2],
-  listStyle: "none",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   margin: 0,
   padding: 0,
 })
 
-export const historyItem = style({
-  alignItems: "start",
-  borderBottom: `1px solid ${theme.color.border.default}`,
+export const completionControls = style({
+  "@media": {
+    "screen and (max-width: 36rem)": {
+      alignItems: "stretch",
+      flexDirection: "column",
+    },
+  },
+  alignItems: "center",
   display: "flex",
-  gap: theme.space[4],
+  gap: theme.space[5],
   justifyContent: "space-between",
-  paddingBlock: theme.space[3],
+  marginInline: "auto",
+  maxWidth: "42rem",
+  width: "100%",
 })
 
-export const historyMeta = style({
-  color: theme.color.text.muted,
+export const centeredState = style({
+  alignItems: "center",
   display: "grid",
-  fontSize: theme.font.role.metadata,
-  gap: theme.space[1],
-  textAlign: "right",
+  gap: theme.space[4],
+  justifyItems: "center",
+  maxWidth: "38rem",
+  textAlign: "center",
 })
 
-export const emptyHistory = style({ color: theme.color.text.muted })
+export const eyebrow = style({
+  color: theme.color.text.muted,
+  fontSize: theme.font.role.metadata,
+  fontWeight: theme.font.weight.semibold,
+  letterSpacing: "0.08em",
+  margin: 0,
+  textTransform: "uppercase",
+})
+
+export const actions = style({ display: "flex", gap: theme.space[3] })
+
+export const continueLink = style({
+  alignItems: "center",
+  background: theme.color.intent.primary.background,
+  borderRadius: theme.radius.md,
+  color: theme.color.intent.primary.foreground,
+  display: "inline-flex",
+  fontWeight: theme.font.weight.semibold,
+  gap: theme.space[3],
+  justifyContent: "center",
+  minHeight: "3rem",
+  paddingInline: theme.space[5],
+  selectors: {
+    "&:focus-visible": { boxShadow: theme.shadow.focus, outline: 0 },
+  },
+  textDecoration: "none",
+})
+
+export const secondaryLink = style({
+  alignItems: "center",
+  color: theme.color.text.primary,
+  display: "inline-flex",
+  fontWeight: theme.font.weight.semibold,
+  minHeight: "3rem",
+  paddingInline: theme.space[4],
+  textDecoration: "none",
+})
+
+export const shortcutHelp = style({
+  background: theme.color.background.elevated,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.lg,
+  boxShadow: theme.shadow.elevated,
+  display: "grid",
+  gap: theme.space[4],
+  maxWidth: "26rem",
+  padding: theme.space[5],
+  position: "fixed",
+  right: theme.space[5],
+  top: "4.75rem",
+  width: `calc(100vw - ${theme.space[8]})`,
+  zIndex: 10,
+})
+
+export const shortcutHelpHeader = style({
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "space-between",
+})
+
+export const editPanel = style({
+  background: theme.color.background.elevated,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.lg,
+  boxShadow: theme.shadow.elevated,
+  display: "grid",
+  gap: theme.space[3],
+  marginInline: "auto",
+  maxWidth: "42rem",
+  padding: theme.space[5],
+  width: "100%",
+})
+
+export const editHeader = style({
+  alignItems: "start",
+  display: "flex",
+  justifyContent: "space-between",
+})
+
+export const editTextarea = style({
+  background: theme.color.background.canvas,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  font: "inherit",
+  lineHeight: theme.font.lineHeight.relaxed,
+  padding: theme.space[3],
+  resize: "vertical",
+  selectors: {
+    "&:focus-visible": { boxShadow: theme.shadow.focus, outline: 0 },
+  },
+})
+
+export const editActions = style({
+  alignItems: "center",
+  color: theme.color.text.muted,
+  display: "flex",
+  fontSize: theme.font.role.metadata,
+  justifyContent: "space-between",
+})
+
+export const error = style({
+  background: theme.color.intent.danger.subtle,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.danger,
+  marginInline: "auto",
+  maxWidth: "42rem",
+  padding: theme.space[3],
+  textAlign: "center",
+  width: "100%",
+})
+
+export const footer = style({
+  alignItems: "center",
+  color: theme.color.text.muted,
+  display: "flex",
+  fontSize: theme.font.role.metadata,
+  justifyContent: "space-between",
+  minHeight: "3rem",
+})
+
+globalStyle(`${content} h1`, {
+  font: "inherit",
+  letterSpacing: "inherit",
+  margin: 0,
+})
+globalStyle(`${content} p`, { margin: 0 })
+globalStyle(`${reviewImage} img`, {
+  display: "block",
+  height: "100%",
+  objectFit: "contain",
+  width: "100%",
+})
+globalStyle(`${recallControls} > button`, {
+  minHeight: "3.5rem",
+  minWidth: "14rem",
+})
+globalStyle(`${recallControls} kbd`, {
+  background: "transparent",
+  color: "inherit",
+  marginLeft: theme.space[3],
+})
+globalStyle(`${assessmentGroup} > button`, {
+  display: "grid",
+  gap: theme.space[1],
+  minHeight: "5rem",
+})
+globalStyle(`${assessmentGroup} > button span:nth-child(2)`, {
+  fontSize: theme.font.role.metadata,
+  opacity: 0.75,
+})
+globalStyle(`${assessmentGroup} kbd`, { opacity: 0.55 })
+globalStyle(`${assessmentGroup} legend`, {
+  color: theme.color.text.muted,
+  marginBottom: theme.space[3],
+  textAlign: "center",
+  width: "100%",
+})
+globalStyle(`${completionControls} p`, {
+  color: theme.color.text.muted,
+  marginBottom: 0,
+})
+globalStyle(`${centeredState} h1`, {
+  fontSize: "clamp(2rem, 5vw, 4rem)",
+  margin: 0,
+})
+globalStyle(`${centeredState} p`, {
+  color: theme.color.text.muted,
+  margin: 0,
+})
+globalStyle(`${shortcutHelp} dd`, {
+  color: theme.color.text.muted,
+  margin: 0,
+})
+globalStyle(`${shortcutHelp} dl`, {
+  display: "grid",
+  gap: theme.space[3],
+  margin: 0,
+})
+globalStyle(`${shortcutHelp} dl > div`, {
+  alignItems: "center",
+  display: "grid",
+  gap: theme.space[3],
+  gridTemplateColumns: "5rem 1fr",
+})
+globalStyle(`${shortcutHelp} dt`, { margin: 0 })
+globalStyle(`${editHeader} h2`, { marginBlock: `${theme.space[1]} 0` })
