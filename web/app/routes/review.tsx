@@ -11,6 +11,7 @@ import {
   loadReviewPrompt,
   resolveReview,
 } from "~/features/lineage/application/review-flow.server"
+import { createReviewContinuationUrl } from "~/features/lineage/application/review-navigation"
 import { ReviewPage } from "~/features/lineage/application/review-page"
 import {
   acceptMemoryRevision,
@@ -186,7 +187,7 @@ export async function action({ request }: Route.ActionArgs) {
     if (Number.isNaN(reviewedAt.getTime())) {
       return data({ error: "A valid review time is required" }, { status: 400 })
     }
-    const completed = await completeReview({
+    await completeReview({
       assessment: formData.get("assessment"),
       attempt,
       core: reviewCore,
@@ -196,7 +197,7 @@ export async function action({ request }: Route.ActionArgs) {
       store: reviewRecordStore,
       userId,
     })
-    return data({ completed: true as const, ...completed })
+    throw redirect(createReviewContinuationUrl(request.url))
   }
 
   return data({ error: "Unknown review action" }, { status: 400 })
