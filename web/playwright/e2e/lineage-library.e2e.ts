@@ -158,6 +158,7 @@ In quadratic standard form, what is the quadratic term? >> ax²
 \`\`\`
 In quadratic standard form, what is the linear term? >> bx
 In quadratic standard form, what symbol is the constant term? >> c
+What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
 \`\`\``)
     await page.getByRole("button", { name: "Create memories" }).click()
     await expect(page).toHaveURL("/library/polypan?tab=memories")
@@ -172,6 +173,13 @@ In quadratic standard form, what symbol is the constant term? >> c
         "In quadratic standard form, what symbol is the constant term?",
       ),
     ).toBeVisible()
+    const equationMemory = page.locator("article").filter({
+      has: page.getByRole("link", {
+        name: "What equation defines quadratic standard form?",
+      }),
+    })
+    await equationMemory.getByRole("button", { name: "Reveal answer" }).click()
+    await expect(equationMemory.locator(".katex")).toBeVisible()
 
     await page.goto("/create/manual?corpusId=ignored")
     await expect(page.getByRole("progressbar")).toBeHidden()

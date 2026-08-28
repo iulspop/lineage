@@ -3,6 +3,7 @@ import { Form, Link } from "react-router"
 
 import * as s from "./review-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
+import { LatexText } from "~/components/latex-text/latex-text"
 import { Button } from "~/components/ui/button"
 import { FieldLabel } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
@@ -230,7 +231,9 @@ export function ReviewPage({
             <>
               <div className={s.content}>
                 {presentation.map((item) => (
-                  <p key={item}>{item}</p>
+                  <p key={item}>
+                    <LatexText>{item}</LatexText>
+                  </p>
                 ))}
                 {loaderData.prompt.kind === "image-occlusion" &&
                 loaderData.prompt.sourceAsset ? (

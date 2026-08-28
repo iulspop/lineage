@@ -10,6 +10,7 @@ import type { LineageDiagnostic } from "../domain/corpus"
 import type { ManualMemoryDraft } from "./manual-memory-draft"
 import * as s from "./manual-memory-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
+import { LatexText } from "~/components/latex-text/latex-text"
 import { Button } from "~/components/ui/button"
 import { PageHeader } from "~/components/ui/page-header"
 
@@ -243,13 +244,17 @@ export function ManualMemoryPage({
                   <div className={s.reviewPreview}>
                     <span className={s.previewLabel}>Challenge</span>
                     {previewPrompt.challenge.map((line) => (
-                      <p key={line}>{line}</p>
+                      <p key={line}>
+                        <LatexText>{line}</LatexText>
+                      </p>
                     ))}
                     <details>
                       <summary>Reveal resolution</summary>
                       <div className={s.resolution}>
                         {previewPrompt.resolution.map((line) => (
-                          <p key={line}>{line}</p>
+                          <p key={line}>
+                            <LatexText>{line}</LatexText>
+                          </p>
                         ))}
                       </div>
                     </details>

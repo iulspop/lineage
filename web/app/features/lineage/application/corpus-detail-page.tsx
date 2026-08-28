@@ -12,6 +12,7 @@ import { Form, Link, useFetcher } from "react-router"
 import type { CorpusBrowseProjection } from "./corpus-browse-projection"
 import * as s from "./corpus-detail-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
+import { LatexText } from "~/components/latex-text/latex-text"
 import { PageHeader } from "~/components/ui/page-header"
 import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
@@ -383,7 +384,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                           <Link
                             to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(memory.promptId)}`}
                           >
-                            {memory.challenge}
+                            <LatexText>{memory.challenge}</LatexText>
                           </Link>
                         </h3>
                         {answer && (
@@ -393,7 +394,9 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                           >
                             <span className={s.eyebrow}>Answer</span>
                             {answer.map((line) => (
-                              <p key={line}>{line}</p>
+                              <p key={line}>
+                                <LatexText>{line}</LatexText>
+                              </p>
                             ))}
                           </div>
                         )}

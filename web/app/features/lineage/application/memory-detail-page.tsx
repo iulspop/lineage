@@ -12,6 +12,7 @@ import { Form, Link, useFetcher } from "react-router"
 import * as s from "./memory-detail-page.css"
 import type { MemoryDetailProjection } from "./memory-detail-projection"
 import { AppShell } from "~/components/app-shell/app-shell"
+import { LatexText } from "~/components/latex-text/latex-text"
 import { PageHeader } from "~/components/ui/page-header"
 import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
@@ -94,7 +95,7 @@ export function MemoryDetailPage(props: Props) {
           }
           description={`${memory.kind} · revision ${memory.revision} · ${memory.status}`}
           eyebrow="Memory"
-          title={memory.challenge.join(" ")}
+          title={<LatexText>{memory.challenge.join(" ")}</LatexText>}
         />
 
         <section aria-label="Memory preview" className={s.reviewCard}>
@@ -115,7 +116,9 @@ export function MemoryDetailPage(props: Props) {
           <div className={s.presentation}>
             <span className={s.eyebrow}>Challenge</span>
             {memory.challenge.map((line) => (
-              <p key={line}>{line}</p>
+              <p key={line}>
+                <LatexText>{line}</LatexText>
+              </p>
             ))}
           </div>
           {!resolution ? (
@@ -131,7 +134,9 @@ export function MemoryDetailPage(props: Props) {
             <div aria-live="polite" className={s.resolution}>
               <span className={s.eyebrow}>Resolution</span>
               {resolution.map((line) => (
-                <p key={line}>{line}</p>
+                <p key={line}>
+                  <LatexText>{line}</LatexText>
+                </p>
               ))}
               <button
                 className={s.reveal}

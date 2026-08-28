@@ -16,6 +16,7 @@ import { appConfig } from "./config/app-config"
 import { getServerEnv } from "./config/server-env.server"
 import { darkThemeClass, lightThemeClass } from "./design-system/theme.css"
 import "./design-system/global.css"
+import "katex/dist/katex.min.css"
 
 import { ProgressBarComponent } from "./components/progress-bar"
 import { authMiddleware } from "./features/auth/application/auth-middleware.server"

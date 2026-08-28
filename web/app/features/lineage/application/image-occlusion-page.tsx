@@ -5,6 +5,7 @@ import type { LineageDiagnostic } from "../domain/corpus"
 import type { ImageOcclusionDraft } from "./image-occlusion-draft"
 import * as s from "./image-occlusion-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
+import { LatexText } from "~/components/latex-text/latex-text"
 import { Button } from "~/components/ui/button"
 import { PageHeader } from "~/components/ui/page-header"
 
@@ -179,7 +180,9 @@ export function ImageOcclusionPage({
             </h2>
             {actionData?.valid && imageUrl ? (
               <>
-                <p className={s.challenge}>{draft?.challenge}</p>
+                <p className={s.challenge}>
+                  <LatexText>{draft?.challenge ?? ""}</LatexText>
+                </p>
                 <div className={s.imageStage}>
                   <img
                     alt={draft?.accessibleDescription ?? ""}
@@ -198,7 +201,9 @@ export function ImageOcclusionPage({
                 </div>
                 <details>
                   <summary>Reveal resolution</summary>
-                  <p>{draft?.answer}</p>
+                  <p>
+                    <LatexText>{draft?.answer ?? ""}</LatexText>
+                  </p>
                 </details>
                 <Form method="post">
                   {baseDigest ? (

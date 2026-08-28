@@ -3,7 +3,7 @@ import type { ComponentProps, ReactNode } from "react"
 import * as s from "./page-header.css"
 import { cx } from "~/utils/class-name"
 
-type PageHeaderProps = ComponentProps<"header"> & {
+type PageHeaderProps = Omit<ComponentProps<"header">, "title"> & {
   actions?: ReactNode
   description?: ReactNode
   eyebrow?: ReactNode
