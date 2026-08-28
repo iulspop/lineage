@@ -1,10 +1,13 @@
 import {
   IconArrowLeft,
   IconDownload,
+  IconEye,
+  IconEyeOff,
   IconSearch,
   IconSparkles,
 } from "@tabler/icons-react"
-import { Form, Link } from "react-router"
+import { useEffect, useState } from "react"
+import { Form, Link, useFetcher } from "react-router"
 
 import type { CorpusBrowseProjection } from "./corpus-browse-projection"
 import * as s from "./corpus-detail-page.css"
@@ -35,6 +38,15 @@ type CorpusDetailPageProps = CorpusBrowseProjection & {
 }
 
 export function CorpusDetailPage(props: CorpusDetailPageProps) {
+  const disclosureFetcher = useFetcher<{
+    answers?: Record<string, string[]>
+    canonicalJson?: string
+    error?: string
+  }>()
+  const [canonicalJson, setCanonicalJson] = useState<string | null>(null)
+  const [revealedAnswers, setRevealedAnswers] = useState<
+    Record<string, string[]>
+  >({})
   const timeZone = useTimeZone()
   const activeTab = tabs.includes(props.tab as (typeof tabs)[number])
     ? props.tab
@@ -84,6 +96,41 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
       return false
     return true
   })
+
+  useEffect(() => {
+    const answers = disclosureFetcher.data?.answers
+    if (answers) setRevealedAnswers((current) => ({ ...current, ...answers }))
+    if (disclosureFetcher.data?.canonicalJson)
+      setCanonicalJson(disclosureFetcher.data.canonicalJson)
+  }, [disclosureFetcher.data])
+
+  function requestDisclosure(formData: FormData) {
+    formData.set("snapshotDigest", props.advanced.digest)
+    disclosureFetcher.submit(formData, {
+      action: `/library/${encodeURIComponent(props.corpus.corpusId)}/disclosure`,
+      method: "post",
+    })
+  }
+
+  function revealAnswers(promptIds: string[]) {
+    const formData = new FormData()
+    for (const promptId of promptIds) formData.append("promptId", promptId)
+    requestDisclosure(formData)
+  }
+
+  function revealCanonicalJson() {
+    const formData = new FormData()
+    formData.set("intent", "canonical")
+    requestDisclosure(formData)
+  }
+
+  function hideAnswer(promptId: string) {
+    setRevealedAnswers((current) => {
+      const next = { ...current }
+      delete next[promptId]
+      return next
+    })
+  }
 
   return (
     <AppShell userEmail={props.userEmail}>
@@ -223,7 +270,31 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                 <span className={s.eyebrow}>Memories</span>
                 <h2>Browse this workspace</h2>
               </div>
+              {memories.length > 0 && (
+                <div className={s.revealActions}>
+                  <button
+                    disabled={disclosureFetcher.state !== "idle"}
+                    onClick={() =>
+                      revealAnswers(memories.map((memory) => memory.promptId))
+                    }
+                    type="button"
+                  >
+                    <IconEye aria-hidden="true" /> Reveal all answers
+                  </button>
+                  {Object.keys(revealedAnswers).length > 0 && (
+                    <button
+                      onClick={() => setRevealedAnswers({})}
+                      type="button"
+                    >
+                      <IconEyeOff aria-hidden="true" /> Hide all answers
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
+            {disclosureFetcher.data?.error && (
+              <p role="alert">{disclosureFetcher.data.error}</p>
+            )}
             <Form className={s.filters} method="get" role="search">
               <input name="tab" type="hidden" value="memories" />
               <label className={s.search}>
@@ -296,28 +367,64 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
               <p className={s.empty}>No memories match these filters.</p>
             ) : (
               <div className={s.memoryList}>
-                {memories.map((memory) => (
-                  <Link
-                    className={s.memory}
-                    key={memory.promptId}
-                    to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(memory.promptId)}`}
-                  >
-                    <div className={s.memoryMain}>
-                      <div className={s.badges}>
-                        <span>{memory.kind}</span>
-                        <span>{memory.status}</span>
-                        {memory.due && <span className={s.due}>due</span>}
+                {memories.map((memory) => {
+                  const answer = revealedAnswers[memory.promptId]
+                  return (
+                    <article className={s.memory} key={memory.promptId}>
+                      <div className={s.memoryMain}>
+                        <div className={s.badges}>
+                          <span>{memory.kind}</span>
+                          <span>{memory.status}</span>
+                          {memory.due && <span className={s.due}>due</span>}
+                        </div>
+                        <h3>
+                          <Link
+                            to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(memory.promptId)}`}
+                          >
+                            {memory.challenge}
+                          </Link>
+                        </h3>
+                        <code>{memory.promptId}</code>
+                        {answer && (
+                          <div
+                            aria-live="polite"
+                            className={s.memoryResolution}
+                          >
+                            <span className={s.eyebrow}>Answer</span>
+                            {answer.map((line) => (
+                              <p key={line}>{line}</p>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <h3>{memory.challenge}</h3>
-                      <code>{memory.promptId}</code>
-                    </div>
-                    <span className={s.revision}>
-                      {memory.lastAssessment ?? "New"}
-                      <br />
-                      Revision {memory.revision}
-                    </span>
-                  </Link>
-                ))}
+                      <div className={s.memoryAside}>
+                        <span className={s.revision}>
+                          {memory.lastAssessment ?? "New"}
+                          <br />
+                          Revision {memory.revision}
+                        </span>
+                        {answer ? (
+                          <button
+                            aria-expanded="true"
+                            onClick={() => hideAnswer(memory.promptId)}
+                            type="button"
+                          >
+                            <IconEyeOff aria-hidden="true" /> Hide answer
+                          </button>
+                        ) : (
+                          <button
+                            aria-expanded="false"
+                            disabled={disclosureFetcher.state !== "idle"}
+                            onClick={() => revealAnswers([memory.promptId])}
+                            type="button"
+                          >
+                            <IconEye aria-hidden="true" /> Reveal answer
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             )}
           </section>
@@ -441,10 +548,30 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
             <section className={s.raw}>
               <h2>Canonical JSON</h2>
               <p>
-                This is the validated durable snapshot. Ordinary workflows
-                should use the visual surfaces above.
+                This answer-bearing durable snapshot stays withheld until you
+                explicitly reveal it.
               </p>
-              <pre>{props.advanced.canonicalJson}</pre>
+              {canonicalJson ? (
+                <>
+                  <button
+                    className={s.disclosureButton}
+                    onClick={() => setCanonicalJson(null)}
+                    type="button"
+                  >
+                    <IconEyeOff aria-hidden="true" /> Hide canonical JSON
+                  </button>
+                  <pre>{canonicalJson}</pre>
+                </>
+              ) : (
+                <button
+                  className={s.disclosureButton}
+                  disabled={disclosureFetcher.state !== "idle"}
+                  onClick={revealCanonicalJson}
+                  type="button"
+                >
+                  <IconEye aria-hidden="true" /> Reveal canonical JSON
+                </button>
+              )}
             </section>
           </div>
         )}

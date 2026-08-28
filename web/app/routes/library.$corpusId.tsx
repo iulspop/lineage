@@ -41,6 +41,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   return {
     ...projection,
+    advanced: { ...projection.advanced, canonicalJson: "" },
     collectionMemberships: document.collectionMemberships,
     collections: document.collections,
     filters: {

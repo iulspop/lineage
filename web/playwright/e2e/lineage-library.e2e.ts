@@ -95,21 +95,51 @@ test.describe("Lineage daily workspace", () => {
       page.getByRole("heading", { name: "Corpus imported" }),
     ).toBeVisible()
 
-    await page.goto("/library/powers-of-i?tab=memories&q=squared&status=active")
+    const libraryResponse = await page.goto(
+      "/library/powers-of-i?tab=memories&q=squared&status=active",
+    )
+    expect(await libraryResponse?.text()).not.toContain(
+      '\\"resolution\\":[\\"-1\\"]',
+    )
     await expect(page).toHaveURL(/tab=memories/)
     await expect(page.getByText("What is i squared?")).toBeVisible()
+    await expect(page.getByText("-1", { exact: true })).toBeHidden()
+    const squaredMemory = page.locator("article").filter({
+      has: page.getByRole("link", { name: /what is i squared/i }),
+    })
+    await squaredMemory.getByRole("button", { name: "Reveal answer" }).click()
+    await expect(page.getByText("-1", { exact: true })).toBeVisible()
+    await squaredMemory.getByRole("button", { name: "Hide answer" }).click()
+    await expect(page.getByText("-1", { exact: true })).toBeHidden()
+    await page.getByRole("button", { name: "Reveal all answers" }).click()
+    await expect(page.getByText("-1", { exact: true })).toBeVisible()
+    await page.getByRole("button", { name: "Hide all answers" }).click()
+    await expect(page.getByText("-1", { exact: true })).toBeHidden()
 
     const memoryHref = await page
       .getByRole("link", { name: /what is i squared/i })
       .getAttribute("href")
     expect(memoryHref).toBe("/library/powers-of-i/memories/powers-i-2")
-    await page.goto(memoryHref as string)
+
+    await page.getByRole("link", { name: "Advanced" }).click()
+    await expect(page.getByText("-1", { exact: true })).toBeHidden()
+    await page.getByRole("button", { name: "Reveal canonical JSON" }).click()
+    await expect(page.getByText(/"resolution":\[/)).toBeVisible()
+    await page.getByRole("button", { name: "Hide canonical JSON" }).click()
+    await expect(page.getByText(/"resolution":\[/)).toBeHidden()
+
+    const memoryResponse = await page.goto(memoryHref as string)
+    expect(await memoryResponse?.text()).not.toContain(
+      '\\"resolution\\":[\\"-1\\"]',
+    )
     await expect(
       page.getByRole("heading", { name: "powers-i-2" }),
     ).toBeVisible()
     await expect(page.getByText("-1", { exact: true })).toBeHidden()
     await page.getByRole("button", { name: "Reveal resolution" }).click()
     await expect(page.getByText("-1", { exact: true })).toBeVisible()
+    await page.getByRole("button", { name: "Hide resolution" }).click()
+    await expect(page.getByText("-1", { exact: true })).toBeHidden()
   })
 
   test("given: quick syntax, should: create basic and cloze memories immediately", async ({

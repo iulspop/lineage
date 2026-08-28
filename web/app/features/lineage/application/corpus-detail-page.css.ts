@@ -123,10 +123,33 @@ globalStyle(`${cleanList} span`, {
 export const toolbar = style({
   alignItems: "end",
   display: "flex",
+  flexWrap: "wrap",
   gap: theme.space[4],
   justifyContent: "space-between",
 })
 globalStyle(`${toolbar} h2`, { margin: `${theme.space[1]} 0 0` })
+export const revealActions = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: theme.space[2],
+})
+globalStyle(`${revealActions} button`, {
+  alignItems: "center",
+  background: theme.color.background.canvas,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  display: "inline-flex",
+  font: "inherit",
+  gap: theme.space[2],
+  minHeight: "2.75rem",
+  padding: `${theme.space[2]} ${theme.space[3]}`,
+})
+globalStyle(`${revealActions} button:disabled`, {
+  cursor: "wait",
+  opacity: 0.6,
+})
 export const eyebrow = style({
   color: theme.color.text.link,
   fontSize: theme.font.size.xs,
@@ -178,11 +201,11 @@ export const memoryList = style({ display: "grid", gap: theme.space[3] })
 export const memory = style({
   "@media": {
     "screen and (max-width: 36rem)": {
-      alignItems: "start",
+      alignItems: "stretch",
       flexDirection: "column",
     },
   },
-  alignItems: "center",
+  alignItems: "start",
   background: theme.color.background.canvas,
   border: `1px solid ${theme.color.border.default}`,
   borderRadius: theme.radius.lg,
@@ -191,10 +214,10 @@ export const memory = style({
   gap: theme.space[4],
   justifyContent: "space-between",
   padding: theme.space[5],
-  textDecoration: "none",
 })
 export const memoryMain = style({
   display: "grid",
+  flex: 1,
   gap: theme.space[2],
   minWidth: 0,
 })
@@ -206,6 +229,50 @@ globalStyle(`${memoryMain} h3`, {
   fontSize: theme.font.size.base,
   fontWeight: theme.font.weight.semibold,
   margin: 0,
+})
+globalStyle(`${memoryMain} h3 a`, {
+  color: theme.color.text.primary,
+  textDecoration: "none",
+})
+globalStyle(`${memoryMain} h3 a:hover`, {
+  color: theme.color.text.link,
+  textDecoration: "underline",
+})
+export const memoryResolution = style({
+  background: theme.color.background.subtle,
+  borderLeft: `3px solid ${theme.color.border.interactive}`,
+  display: "grid",
+  gap: theme.space[1],
+  marginTop: theme.space[2],
+  padding: theme.space[3],
+})
+globalStyle(`${memoryResolution} p`, {
+  color: theme.color.text.primary,
+  margin: 0,
+})
+export const memoryAside = style({
+  alignItems: "end",
+  display: "grid",
+  flexShrink: 0,
+  gap: theme.space[3],
+  justifyItems: "end",
+})
+globalStyle(`${memoryAside} button`, {
+  alignItems: "center",
+  background: theme.color.background.canvas,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  display: "inline-flex",
+  font: "inherit",
+  gap: theme.space[2],
+  minHeight: "2.75rem",
+  padding: `${theme.space[2]} ${theme.space[3]}`,
+})
+globalStyle(`${memoryAside} button:disabled`, {
+  cursor: "wait",
+  opacity: 0.6,
 })
 export const badges = style({
   display: "flex",
@@ -296,6 +363,24 @@ globalStyle(`${details} dt`, {
 })
 globalStyle(`${details} dd`, { margin: 0, overflowWrap: "anywhere" })
 export const raw = style([panel, { overflow: "hidden" }])
+export const disclosureButton = style({
+  alignItems: "center",
+  background: theme.color.background.canvas,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  display: "inline-flex",
+  font: "inherit",
+  gap: theme.space[2],
+  marginBottom: theme.space[3],
+  minHeight: "2.75rem",
+  padding: `${theme.space[2]} ${theme.space[3]}`,
+})
+globalStyle(`${disclosureButton}:disabled`, {
+  cursor: "wait",
+  opacity: 0.6,
+})
 globalStyle(`${raw} pre`, {
   background: theme.color.background.subtle,
   borderRadius: theme.radius.md,

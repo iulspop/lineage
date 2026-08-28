@@ -40,7 +40,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   })
   if (!projection) throw data("Memory not found", { status: 404 })
 
-  return { ...projection, userEmail: user?.email ?? "" }
+  return {
+    ...projection,
+    memory: { ...projection.memory, resolution: [] },
+    userEmail: user?.email ?? "",
+  }
 }
 
 export async function action({ params, request }: Route.ActionArgs) {

@@ -2,11 +2,12 @@ import {
   IconArrowLeft,
   IconEdit,
   IconEye,
+  IconEyeOff,
   IconPlayerPlay,
   IconSparkles,
 } from "@tabler/icons-react"
-import { useState } from "react"
-import { Form, Link } from "react-router"
+import { useEffect, useState } from "react"
+import { Form, Link, useFetcher } from "react-router"
 
 import * as s from "./memory-detail-page.css"
 import type { MemoryDetailProjection } from "./memory-detail-projection"
@@ -17,9 +18,28 @@ import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 type Props = MemoryDetailProjection & { userEmail: string }
 
 export function MemoryDetailPage(props: Props) {
-  const [revealed, setRevealed] = useState(false)
+  const disclosureFetcher = useFetcher<{
+    answers?: Record<string, string[]>
+    error?: string
+  }>()
+  const [resolution, setResolution] = useState<string[] | null>(null)
   const timeZone = useTimeZone()
   const memory = props.memory
+
+  useEffect(() => {
+    const answer = disclosureFetcher.data?.answers?.[memory.promptId]
+    if (answer) setResolution(answer)
+  }, [disclosureFetcher.data, memory.promptId])
+
+  function revealResolution() {
+    const formData = new FormData()
+    formData.set("snapshotDigest", props.snapshotDigest)
+    formData.set("promptId", memory.promptId)
+    disclosureFetcher.submit(formData, {
+      action: `/library/${encodeURIComponent(props.corpusId)}/disclosure`,
+      method: "post",
+    })
+  }
 
   return (
     <AppShell userEmail={props.userEmail}>
@@ -98,10 +118,11 @@ export function MemoryDetailPage(props: Props) {
               <p key={line}>{line}</p>
             ))}
           </div>
-          {!revealed ? (
+          {!resolution ? (
             <button
               className={s.reveal}
-              onClick={() => setRevealed(true)}
+              disabled={disclosureFetcher.state !== "idle"}
+              onClick={revealResolution}
               type="button"
             >
               <IconEye aria-hidden="true" /> Reveal resolution
@@ -109,10 +130,20 @@ export function MemoryDetailPage(props: Props) {
           ) : (
             <div aria-live="polite" className={s.resolution}>
               <span className={s.eyebrow}>Resolution</span>
-              {memory.resolution.map((line) => (
+              {resolution.map((line) => (
                 <p key={line}>{line}</p>
               ))}
+              <button
+                className={s.reveal}
+                onClick={() => setResolution(null)}
+                type="button"
+              >
+                <IconEyeOff aria-hidden="true" /> Hide resolution
+              </button>
             </div>
+          )}
+          {disclosureFetcher.data?.error && (
+            <p role="alert">{disclosureFetcher.data.error}</p>
           )}
         </section>
 
