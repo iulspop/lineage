@@ -30,11 +30,23 @@ import { getDomainUrl } from "./utils/get-domain-url.server"
 import { getImgSrc } from "./utils/get-img-src"
 import { useNonce } from "./utils/nonce-provider"
 import { securityMiddleware } from "./utils/security-middleware.server"
+import {
+  getThemePreference,
+  resolveTheme,
+  themeCookieName,
+  themeStorageKey,
+} from "./utils/theme-preference"
+import { TimeZoneProvider } from "./utils/time-zone"
 
 export const middleware = [securityMiddleware, authMiddleware]
 
 export async function loader({ request }: Route.LoaderArgs) {
   const env = getServerEnv()
+  const hints = getHints(request)
+  const themePreference = getThemePreference(request)
+  const colorSchemeHint =
+    request.headers.get("sec-ch-prefers-color-scheme")?.replaceAll('"', "") ??
+    hints.theme
   const viewerId = await getUserId(request)
   const [ownerAccess, activeCorpus] = await Promise.all([
     getOwnerAccess(viewerId),
@@ -61,10 +73,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     isAuthenticated: Boolean(viewerId),
     ownerAccess,
     requestInfo: {
-      hints: getHints(request),
+      hints,
       origin: getDomainUrl(request),
       path: new URL(request.url).pathname,
     },
+    theme: resolveTheme(themePreference, colorSchemeHint),
+    themePreference,
     viewerId,
   })
 }
@@ -72,11 +86,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function Layout({ children }: { children: React.ReactNode }) {
   const rootData = useRouteLoaderData<typeof loader>("root")
   const nonce = useNonce()
-  const themeScript = `(function(){try{var p=localStorage.getItem("app-theme")||"light";var d=p==="dark"||(p==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.remove(${JSON.stringify(lightThemeClass)},${JSON.stringify(darkThemeClass)});document.documentElement.classList.add(d?${JSON.stringify(darkThemeClass)}:${JSON.stringify(lightThemeClass)});}catch(e){}})();`
+  const themeScript = `(function(){try{var p=localStorage.getItem(${JSON.stringify(themeStorageKey)});if(!p)return;document.cookie=${JSON.stringify(`${themeCookieName}=`)}+p+"; Path=/; Max-Age=31536000; SameSite=Lax";var d=p==="dark"||(p==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.remove(${JSON.stringify(lightThemeClass)},${JSON.stringify(darkThemeClass)});document.documentElement.classList.add(d?${JSON.stringify(darkThemeClass)}:${JSON.stringify(lightThemeClass)});}catch(e){}})();`
+  const themeClass =
+    rootData?.theme === "dark" ? darkThemeClass : lightThemeClass
 
   return (
     <html
-      className={lightThemeClass}
+      className={themeClass}
       dir="ltr"
       lang={appConfig.locale}
       suppressHydrationWarning
@@ -117,19 +133,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <ProgressBarComponent />
-        <OpenImgContextProvider
-          getSrc={getImgSrc}
-          optimizerEndpoint="/api/images"
-        >
-          {rootData?.viewerId ? (
-            <ChatStoreProviderComponent viewerId={rootData.viewerId}>
-              <ChatNotificationProvider>{children}</ChatNotificationProvider>
-            </ChatStoreProviderComponent>
-          ) : (
-            children
-          )}
-        </OpenImgContextProvider>
+        <TimeZoneProvider value={rootData?.requestInfo.hints.timeZone ?? "UTC"}>
+          <ProgressBarComponent />
+          <OpenImgContextProvider
+            getSrc={getImgSrc}
+            optimizerEndpoint="/api/images"
+          >
+            {rootData?.viewerId ? (
+              <ChatStoreProviderComponent viewerId={rootData.viewerId}>
+                <ChatNotificationProvider>{children}</ChatNotificationProvider>
+              </ChatStoreProviderComponent>
+            ) : (
+              children
+            )}
+          </OpenImgContextProvider>
+        </TimeZoneProvider>
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Standard pattern for exposing ENV to client in React Router
           dangerouslySetInnerHTML={{

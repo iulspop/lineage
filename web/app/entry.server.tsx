@@ -65,7 +65,10 @@ function handleRequest(
           })
           const stream = createReadableStreamFromReadable(body)
 
+          responseHeaders.set("Accept-CH", "Sec-CH-Prefers-Color-Scheme")
           responseHeaders.set("Content-Type", "text/html")
+          responseHeaders.append("Vary", "Cookie")
+          responseHeaders.append("Vary", "Sec-CH-Prefers-Color-Scheme")
 
           contentSecurity(responseHeaders, {
             contentSecurityPolicy: {

@@ -25,6 +25,7 @@ import { Button } from "~/components/ui/button"
 import { Textarea } from "~/components/ui/textarea"
 import { CHAT_SEND_MESSAGE_INTENT } from "~/features/chat/domain/chat-constants"
 import { useAppDispatch, useAppSelector } from "~/store/store-provider"
+import { formatTime, useTimeZone } from "~/utils/time-zone"
 
 export type ChatThreadMessage = {
   attachments: Array<{ id: string; originalName: string }>
@@ -73,6 +74,7 @@ export function ChatThread({
   const draft = useAppSelector((state) => selectChatDraft(state, identity))
   const typingConversationIds = useAppSelector(selectChatTypingConversationIds)
   const isParticipantTyping = typingConversationIds.includes(conversationId)
+  const timeZone = useTimeZone()
 
   useEffect(() => {
     dispatch(openChatThread(identity))
@@ -168,10 +170,7 @@ export function ChatThread({
               ))}
             </div>
             <small className={s.receipt}>
-              {new Date(message.createdAt).toLocaleTimeString([], {
-                hour: "numeric",
-                minute: "2-digit",
-              })}
+              {formatTime(message.createdAt, timeZone)}
               {message.isMine && message.isRead ? " · Read" : ""}
             </small>
           </li>

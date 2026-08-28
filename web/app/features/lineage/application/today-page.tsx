@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { PageHeader } from "~/components/ui/page-header"
+import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
 export type TodayPageProps = {
   summary: {
@@ -40,6 +41,7 @@ export type TodayPageProps = {
 
 export function TodayPage({ summary, userEmail }: TodayPageProps) {
   const workspace = summary.workspace
+  const timeZone = useTimeZone()
 
   return (
     <AppShell userEmail={userEmail}>
@@ -98,10 +100,7 @@ export function TodayPage({ summary, userEmail }: TodayPageProps) {
                 <div className={s.nextReview}>
                   <IconClock aria-hidden="true" />
                   {summary.nextReviewAt
-                    ? `Next review ${new Intl.DateTimeFormat("en", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }).format(new Date(summary.nextReviewAt))}`
+                    ? `Next review ${formatDateTime(summary.nextReviewAt, timeZone)}`
                     : "Nothing else scheduled yet"}
                 </div>
               )}

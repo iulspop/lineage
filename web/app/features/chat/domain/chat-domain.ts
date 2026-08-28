@@ -46,6 +46,7 @@ export function isUserOnline(
 export function formatPresence(
   lastSeenAt: Date | null,
   now = new Date(),
+  timeZone = "UTC",
 ): string {
   if (lastSeenAt === null) return "Offline"
   if (isUserOnline(lastSeenAt, now)) return "Online"
@@ -61,12 +62,13 @@ export function formatPresence(
   const elapsedDays = Math.floor(elapsedHours / 24)
   if (elapsedDays < 7) return `Last seen ${elapsedDays}d ago`
 
-  return `Last seen ${lastSeenAt.toLocaleDateString("en-US", {
+  return `Last seen ${new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
+    timeZone,
     year:
       lastSeenAt.getFullYear() === now.getFullYear() ? undefined : "numeric",
-  })}`
+  }).format(lastSeenAt)}`
 }
 
 export function parseOwnerEmailAllowlist(value: string | undefined) {

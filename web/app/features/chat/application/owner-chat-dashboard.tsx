@@ -9,6 +9,7 @@ import { formatPresence } from "../domain/chat-domain"
 import { selectChatTypingConversationIds } from "./chat-workflow/chat-workflow-selectors"
 import * as s from "./owner-chat-dashboard.css"
 import { useAppSelector } from "~/store/store-provider"
+import { formatTime, useTimeZone } from "~/utils/time-zone"
 
 export type OwnerConversationSummary = {
   id: string
@@ -23,6 +24,7 @@ export function OwnerChatDashboard({
   conversations: OwnerConversationSummary[]
 }) {
   const typingConversationIds = useAppSelector(selectChatTypingConversationIds)
+  const timeZone = useTimeZone()
 
   return (
     <section aria-labelledby="owner-inbox-title" className={s.page}>
@@ -51,6 +53,8 @@ export function OwnerChatDashboard({
               conversation.user.lastSeenAt
                 ? new Date(conversation.user.lastSeenAt)
                 : null,
+              new Date(),
+              timeZone,
             )
             return (
               <li className={s.listItem} key={conversation.id}>
@@ -66,12 +70,10 @@ export function OwnerChatDashboard({
                       <strong>{conversation.user.email}</strong>
                       {conversation.latestMessage && (
                         <time dateTime={conversation.latestMessage.createdAt}>
-                          {new Date(
+                          {formatTime(
                             conversation.latestMessage.createdAt,
-                          ).toLocaleTimeString([], {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
+                            timeZone,
+                          )}
                         </time>
                       )}
                     </span>

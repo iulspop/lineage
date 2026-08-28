@@ -6,6 +6,7 @@ import { AppShell } from "~/components/app-shell/app-shell"
 import { Button } from "~/components/ui/button"
 import { FieldLabel } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
+import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
 const assessments = ["again", "hard", "good", "easy"] as const
 
@@ -85,6 +86,7 @@ export function ReviewPage({
   loaderData: ReviewLoaderData
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const timeZone = useTimeZone()
   const resolved = actionData && "completed" in actionData ? actionData : null
   const presentation = resolved?.presentation ?? loaderData.presentation
   const sessionFinished =
@@ -148,7 +150,7 @@ export function ReviewPage({
             <p>
               {loaderData.due
                 ? "Due now"
-                : `Next review ${new Date(loaderData.dueAt ?? "").toLocaleString()}`}
+                : `Next review ${formatDateTime(loaderData.dueAt ?? "", timeZone)}`}
             </p>
             {loaderData.prompt && (
               <Link
@@ -404,7 +406,7 @@ export function ReviewPage({
               <strong>No reviews due</strong>
               <p>
                 {loaderData.dueAt
-                  ? `Next review ${new Date(loaderData.dueAt).toLocaleString()}.`
+                  ? `Next review ${formatDateTime(loaderData.dueAt, timeZone)}.`
                   : "This corpus has no scheduled reviews."}
               </p>
             </div>
@@ -423,7 +425,7 @@ export function ReviewPage({
                   </div>
                   <div className={s.historyMeta}>
                     <time dateTime={review.reviewedAt}>
-                      {new Date(review.reviewedAt).toLocaleString()}
+                      {formatDateTime(review.reviewedAt, timeZone)}
                     </time>
                     <span>
                       Next interval:{" "}

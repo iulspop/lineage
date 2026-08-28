@@ -10,6 +10,7 @@ import type { CorpusBrowseProjection } from "./corpus-browse-projection"
 import * as s from "./corpus-detail-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
 import { PageHeader } from "~/components/ui/page-header"
+import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
 const tabs = ["overview", "memories", "sources", "history", "advanced"] as const
 
@@ -33,14 +34,8 @@ type CorpusDetailPageProps = CorpusBrowseProjection & {
   userEmail: string
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
-}
-
 export function CorpusDetailPage(props: CorpusDetailPageProps) {
+  const timeZone = useTimeZone()
   const activeTab = tabs.includes(props.tab as (typeof tabs)[number])
     ? props.tab
     : "overview"
@@ -195,7 +190,8 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                           {review.promptId}
                         </Link>
                         <span>
-                          {review.assessment} · {formatDate(review.reviewedAt)}
+                          {review.assessment} ·{" "}
+                          {formatDateTime(review.reviewedAt, timeZone)}
                         </span>
                       </li>
                     ))}
@@ -210,7 +206,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                       <code>{revision.digest.slice(0, 12)}…</code>
                       <span>
                         {revision.memoryCount} memories ·{" "}
-                        {formatDate(revision.createdAt)}
+                        {formatDateTime(revision.createdAt, timeZone)}
                       </span>
                     </li>
                   ))}
@@ -391,7 +387,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                     <span>
                       Prompt revision {review.promptRevision} ·{" "}
                       {review.intervalMinutes} minute interval ·{" "}
-                      {formatDate(review.reviewedAt)}
+                      {formatDateTime(review.reviewedAt, timeZone)}
                     </span>
                   </li>
                 ))}

@@ -12,18 +12,13 @@ import * as s from "./memory-detail-page.css"
 import type { MemoryDetailProjection } from "./memory-detail-projection"
 import { AppShell } from "~/components/app-shell/app-shell"
 import { PageHeader } from "~/components/ui/page-header"
+import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
 type Props = MemoryDetailProjection & { userEmail: string }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
-}
-
 export function MemoryDetailPage(props: Props) {
   const [revealed, setRevealed] = useState(false)
+  const timeZone = useTimeZone()
   const memory = props.memory
 
   return (
@@ -93,7 +88,7 @@ export function MemoryDetailPage(props: Props) {
               {memory.due
                 ? "Due now"
                 : memory.nextReviewAt
-                  ? `Due ${formatDate(memory.nextReviewAt)}`
+                  ? `Due ${formatDateTime(memory.nextReviewAt, timeZone)}`
                   : "Not scheduled"}
             </span>
           </div>
@@ -133,7 +128,7 @@ export function MemoryDetailPage(props: Props) {
                 <dt>Next review</dt>
                 <dd>
                   {memory.nextReviewAt
-                    ? formatDate(memory.nextReviewAt)
+                    ? formatDateTime(memory.nextReviewAt, timeZone)
                     : "Unscheduled"}
                 </dd>
               </div>
@@ -153,7 +148,7 @@ export function MemoryDetailPage(props: Props) {
                   <li key={revision.digest}>
                     <strong>Revision {revision.revision}</strong>
                     <span>
-                      {formatDate(revision.createdAt)} ·{" "}
+                      {formatDateTime(revision.createdAt, timeZone)} ·{" "}
                       {revision.digest.slice(0, 12)}…
                     </span>
                   </li>
@@ -233,7 +228,7 @@ export function MemoryDetailPage(props: Props) {
                   <li key={review.id}>
                     <strong>{review.assessment}</strong>
                     <span>
-                      {formatDate(review.reviewedAt)} · revision{" "}
+                      {formatDateTime(review.reviewedAt, timeZone)} · revision{" "}
                       {review.promptRevision} · {review.intervalMinutes} min
                     </span>
                   </li>

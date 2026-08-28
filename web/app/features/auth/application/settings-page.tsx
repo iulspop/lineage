@@ -15,6 +15,7 @@ import * as s from "./settings-page.css"
 import { Button } from "~/components/ui/button"
 import { FieldError } from "~/components/ui/field"
 import { cx } from "~/utils/class-name"
+import { formatDate, useTimeZone } from "~/utils/time-zone"
 
 type SettingsActionData =
   | { error: null; success: true }
@@ -42,6 +43,7 @@ export function SettingsPageComponent({
     "idle" | "saving" | "saved" | "error"
   >("idle")
   const hasActivePasskey = passkeys.length > 0 || passkeySetupState === "saved"
+  const timeZone = useTimeZone()
 
   const setupPasskey = async () => {
     setPasskeySetupState("saving")
@@ -98,8 +100,8 @@ export function SettingsPageComponent({
               <div className={s.settingCopy}>
                 <span className={s.settingTitle}>Theme</span>
                 <span className={s.settingDescription}>
-                  Light mode is the default. Your preference is saved on this
-                  device.
+                  Lineage follows your device by default. Your preference is
+                  saved on this device.
                 </span>
               </div>
               <AppearanceControl />
@@ -178,8 +180,7 @@ export function SettingsPageComponent({
                 {passkeys.map((passkey) => (
                   <li className={s.passkeyItem} key={passkey.id}>
                     <span>
-                      Passkey added{" "}
-                      {new Date(passkey.createdAt).toLocaleDateString()}
+                      Passkey added {formatDate(passkey.createdAt, timeZone)}
                     </span>
                     <Form method="post">
                       <input

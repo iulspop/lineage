@@ -79,6 +79,24 @@ describe("Insights projection", () => {
     })
   })
 
+  test("groups review activity by the client-hinted calendar day", () => {
+    const insights = projectInsights({
+      corpora: [corpus],
+      now: new Date("2026-08-27T12:00:00Z"),
+      reviews: [review({ reviewedAt: new Date("2026-08-27T01:00:00Z") })],
+      timeZone: "America/Los_Angeles",
+    })
+
+    expect(insights.dailyActivity.at(-2)).toEqual({
+      count: 1,
+      date: "2026-08-26",
+    })
+    expect(insights.dailyActivity.at(-1)).toEqual({
+      count: 0,
+      date: "2026-08-27",
+    })
+  })
+
   test("keeps unseen active memories due and excludes suspended memories", () => {
     const suspendedCorpus = parseCorpusDocument({
       ...corpus,

@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { PageHeader } from "~/components/ui/page-header"
+import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
 export type InsightsPageProps = {
   collections: Array<{ id: string; title: string }>
@@ -39,6 +40,7 @@ export function InsightsPage({
     (review) => !query.assessment || review.assessment === query.assessment,
   )
   const maxDay = Math.max(1, ...insights.dailyActivity.map((day) => day.count))
+  const timeZone = useTimeZone()
 
   return (
     <AppShell userEmail={userEmail}>
@@ -235,12 +237,7 @@ export function InsightsPage({
                 <tbody>
                   {timeline.map((review) => (
                     <tr key={review.id}>
-                      <td>
-                        {new Intl.DateTimeFormat("en", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(new Date(review.reviewedAt))}
-                      </td>
+                      <td>{formatDateTime(review.reviewedAt, timeZone)}</td>
                       <td>
                         <Link
                           to={`/library/${encodeURIComponent(review.corpusId)}/memories/${encodeURIComponent(review.promptId)}`}

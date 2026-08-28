@@ -8,10 +8,12 @@ import { projectInsights } from "~/features/lineage/application/insights-project
 import { parseCorpusDocument } from "~/features/lineage/domain/corpus"
 import { listCorpusReviewHistory } from "~/features/lineage/infrastructure/review-model.server"
 import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/users-model.server"
+import { getHints } from "~/utils/client-hints"
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request)
   const url = new URL(request.url)
+  const timeZone = getHints(request).timeZone ?? "UTC"
   const resolution = await resolveActiveCorpus(userId)
   if (resolution.status === "empty") throw redirect("/settings/workspace")
   const corpus = parseCorpusDocument(
@@ -48,6 +50,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     insights: projectInsights({
       corpora: [filteredCorpus],
       reviews: filteredReviews,
+      timeZone,
     }),
     query: {
       assessment: url.searchParams.get("assessment") ?? "",

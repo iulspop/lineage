@@ -6,16 +6,23 @@ const assessments: ReviewAssessment[] = ["again", "hard", "good", "easy"]
 
 export type InsightsProjection = ReturnType<typeof projectInsights>
 
-function dayKey(date: Date) {
-  return date.toISOString().slice(0, 10)
+function dayKey(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone,
+    year: "numeric",
+  }).format(date)
 }
 
 export function projectInsights(input: {
   corpora: CorpusDocument[]
   now?: Date
   reviews: ReviewHistoryEntry[]
+  timeZone?: string
 }) {
   const now = input.now ?? new Date()
+  const timeZone = input.timeZone ?? "UTC"
   const ratingDistribution = Object.fromEntries(
     assessments.map((assessment) => [
       assessment,
@@ -25,10 +32,10 @@ export function projectInsights(input: {
   const dailyActivity = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(now)
     date.setUTCDate(now.getUTCDate() - (6 - index))
-    const dateKey = dayKey(date)
+    const dateKey = dayKey(date, timeZone)
     return {
       count: input.reviews.filter(
-        (review) => dayKey(review.reviewedAt) === dateKey,
+        (review) => dayKey(review.reviewedAt, timeZone) === dateKey,
       ).length,
       date: dateKey,
     }

@@ -3,10 +3,11 @@ import { useEffect, useState } from "react"
 import * as s from "./appearance-control.css"
 import { darkThemeClass, lightThemeClass } from "~/design-system/theme.css"
 import { cx } from "~/utils/class-name"
-
-type ThemePreference = "dark" | "light" | "system"
-
-const THEME_STORAGE_KEY = "app-theme"
+import type { ThemePreference } from "~/utils/theme-preference"
+import {
+  serializeThemePreference,
+  themeStorageKey,
+} from "~/utils/theme-preference"
 
 function applyTheme(preference: ThemePreference) {
   const useDark =
@@ -24,7 +25,7 @@ export function AppearanceControl() {
   const [preference, setPreference] = useState<ThemePreference>("light")
 
   useEffect(() => {
-    const savedPreference = window.localStorage.getItem(THEME_STORAGE_KEY)
+    const savedPreference = window.localStorage.getItem(themeStorageKey)
     const initialPreference =
       savedPreference === "dark" || savedPreference === "system"
         ? savedPreference
@@ -44,7 +45,8 @@ export function AppearanceControl() {
   }, [preference])
 
   const selectPreference = (nextPreference: ThemePreference) => {
-    window.localStorage.setItem(THEME_STORAGE_KEY, nextPreference)
+    window.localStorage.setItem(themeStorageKey, nextPreference)
+    document.cookie = serializeThemePreference(nextPreference)
     setPreference(nextPreference)
     applyTheme(nextPreference)
   }
