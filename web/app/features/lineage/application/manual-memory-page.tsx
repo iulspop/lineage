@@ -22,7 +22,11 @@ type ActionData =
       preview?: {
         canonicalJson: string
         document: {
-          prompts: Array<{ challenge: string[]; resolution: string[] }>
+          prompts: Array<{
+            challenge: string[]
+            id: string
+            resolution: string[]
+          }>
         }
       }
       quickError?: string
@@ -51,8 +55,10 @@ export function ManualMemoryPage({
   const draft = actionData?.draft ?? initialDraft
   const editing = mode === "edit"
   const previewPrompt =
-    actionData?.valid && actionData.preview
-      ? actionData.preview.document.prompts.at(-1)
+    actionData?.valid && actionData.preview && draft
+      ? actionData.preview.document.prompts.find(
+          (prompt) => prompt.id === draft.promptId,
+        )
       : null
   const previewIdentity = actionData?.preview?.canonicalJson
   const [editedPreviewIdentity, setEditedPreviewIdentity] = useState<string>()

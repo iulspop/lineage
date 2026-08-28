@@ -3,11 +3,11 @@ import { createRoutesStub } from "react-router"
 import { describe, expect, test } from "vitest"
 
 import { ManualMemoryPage } from "./manual-memory-page"
-import { render, screen } from "~/test/react-test-utils"
+import { render, screen, within } from "~/test/react-test-utils"
 
 const draft = {
-  answer: "(a - b)^2",
-  challenge: "What does $a^2 - 2ab + b^2$ factor into?",
+  answer: "Target answer",
+  challenge: "Target challenge",
   corpusId: "polypan",
   kind: "basic" as const,
   promptId: "memory-id",
@@ -27,7 +27,13 @@ function renderPage() {
                 prompts: [
                   {
                     challenge: [draft.challenge],
+                    id: draft.promptId,
                     resolution: [draft.answer],
+                  },
+                  {
+                    challenge: ["Wrong challenge from another memory"],
+                    id: "another-memory",
+                    resolution: ["Wrong answer"],
                   },
                 ],
               },
@@ -56,6 +62,16 @@ describe("ManualMemoryPage", () => {
     const user = userEvent.setup()
     renderPage()
 
+    const preview = screen
+      .getByRole("heading", { name: "Approval preview" })
+      .closest("aside")
+    if (!preview) {
+      throw new Error("Approval preview was not rendered")
+    }
+    expect(within(preview).getByText("Target challenge")).toBeInTheDocument()
+    expect(
+      within(preview).queryByText("Wrong challenge from another memory"),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: "Approve and save memory" }),
     ).toBeInTheDocument()
