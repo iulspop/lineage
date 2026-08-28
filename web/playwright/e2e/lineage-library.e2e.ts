@@ -12,6 +12,7 @@ async function createWorkspace(
   await expect(
     page.getByRole("heading", { exact: true, name: "Workspace" }),
   ).toBeVisible()
+  await page.waitForTimeout(250)
   await page.getByLabel("Workspace ID").fill(corpusId)
   await page
     .getByLabel(
@@ -120,14 +121,27 @@ test.describe("Lineage daily workspace", () => {
     await page.goto("/create/manual?corpusId=ignored")
     await expect(page.getByRole("progressbar")).toBeHidden()
     await page.waitForTimeout(250)
-    await page
-      .getByLabel("Quick capture")
-      .fill("What is a derivative? >> The instantaneous rate of change.")
-    await page.getByRole("button", { name: "Create memory" }).click()
-    await expect(page).toHaveURL(
-      /\/library\/polypan\/memories\/what-is-a-derivative$/,
-    )
-    await expect(page.getByText("What is a derivative?")).toBeVisible()
+    await page.getByLabel("Quick capture").fill(`\`\`\`text
+In quadratic standard form, what is the quadratic term? >> ax²
+\`\`\`
+
+\`\`\`
+In quadratic standard form, what is the linear term? >> bx
+In quadratic standard form, what symbol is the constant term? >> c
+\`\`\``)
+    await page.getByRole("button", { name: "Create memories" }).click()
+    await expect(page).toHaveURL("/library/polypan?tab=memories")
+    await expect(
+      page.getByText("In quadratic standard form, what is the quadratic term?"),
+    ).toBeVisible()
+    await expect(
+      page.getByText("In quadratic standard form, what is the linear term?"),
+    ).toBeVisible()
+    await expect(
+      page.getByText(
+        "In quadratic standard form, what symbol is the constant term?",
+      ),
+    ).toBeVisible()
 
     await page.goto("/create/manual?corpusId=ignored")
     await expect(page.getByRole("progressbar")).toBeHidden()
@@ -135,9 +149,8 @@ test.describe("Lineage daily workspace", () => {
     await page
       .getByLabel("Quick capture")
       .fill("The derivative of {{x²}} is {{2x}}.")
-    await page.getByRole("button", { name: "Create memory" }).click()
-    await expect(page).toHaveURL(/cloze-1$/)
-    await page.goto("/library/polypan?tab=memories")
+    await page.getByRole("button", { name: "Create memories" }).click()
+    await expect(page).toHaveURL("/library/polypan?tab=memories")
     await expect(page.getByText("The derivative of […] is 2x.")).toBeVisible()
     await expect(page.getByText("The derivative of x² is […].")).toBeVisible()
   })

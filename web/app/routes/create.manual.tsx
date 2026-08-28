@@ -110,9 +110,9 @@ export async function action({ request }: Route.ActionArgs) {
     })
     const promptId = parsed.drafts[0]?.promptId
     throw redirect(
-      promptId
+      parsed.drafts.length === 1 && promptId
         ? `/library/${encodeURIComponent(imported.document.corpusId)}/memories/${encodeURIComponent(promptId)}`
-        : `/library/${encodeURIComponent(imported.document.corpusId)}`,
+        : `/library/${encodeURIComponent(imported.document.corpusId)}?tab=memories`,
     )
   }
 

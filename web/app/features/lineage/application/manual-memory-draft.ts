@@ -76,19 +76,15 @@ function availablePromptId(baseId: string, usedIds: Set<string>) {
   return candidate
 }
 
-export function parseQuickMemoryCapture({
+function parseQuickMemoryLine({
   corpusId,
-  existingPromptIds = [],
-  input,
+  usedIds,
+  value,
 }: {
   corpusId: string
-  existingPromptIds?: string[]
-  input: string
+  usedIds: Set<string>
+  value: string
 }): QuickMemoryCaptureResult {
-  const value = input.trim()
-  if (!value) return { message: "Type a memory first.", valid: false }
-
-  const usedIds = new Set(existingPromptIds)
   const clozes = [...value.matchAll(/\{\{([^{}]+)\}\}/g)]
   if (clozes.length > 0) {
     const plainText = value.replace(/\{\{([^{}]+)\}\}/g, "$1")
@@ -149,6 +145,41 @@ export function parseQuickMemoryCapture({
     ],
     valid: true,
   }
+}
+
+export function parseQuickMemoryCapture({
+  corpusId,
+  existingPromptIds = [],
+  input,
+}: {
+  corpusId: string
+  existingPromptIds?: string[]
+  input: string
+}): QuickMemoryCaptureResult {
+  const entries = input
+    .split("\n")
+    .map((value, index) => ({ lineNumber: index + 1, value: value.trim() }))
+    .filter(({ value }) => value && !/^```[^`]*$/i.test(value))
+  if (entries.length === 0)
+    return { message: "Type one or more memories first.", valid: false }
+
+  const drafts: ManualMemoryDraft[] = []
+  const usedIds = new Set(existingPromptIds)
+  for (const entry of entries) {
+    const parsed = parseQuickMemoryLine({
+      corpusId,
+      usedIds,
+      value: entry.value,
+    })
+    if (!parsed.valid)
+      return {
+        message: `Line ${entry.lineNumber}: ${parsed.message}`,
+        valid: false,
+      }
+    drafts.push(...parsed.drafts)
+  }
+
+  return { drafts, valid: true }
 }
 
 export function validateQuickMemoryCapture({

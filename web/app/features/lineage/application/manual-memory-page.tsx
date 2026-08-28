@@ -81,21 +81,24 @@ export function ManualMemoryPage({
             <input name="corpusId" type="hidden" value={selectedCorpusId} />
             <label className={s.quickField}>
               <span>Quick capture</span>
-              <input
+              <textarea
                 defaultValue={actionData?.quickInput}
                 name="quickInput"
-                placeholder="What is i²? >> −1  or  The capital is {{Paris}}"
+                placeholder={
+                  "What is the quadratic term? >> ax²\nWhat is the linear term? >> bx\nThe constant term is {{c}}."
+                }
                 required
+                rows={5}
               />
             </label>
             <Button name="intent" type="submit" value="quick-create">
               <IconCheck aria-hidden="true" />
-              Create memory
+              Create memories
             </Button>
             <p className={s.quickHelp}>
-              Use <code>question &gt;&gt; answer</code> for a basic memory or
-              wrap one or more answers in <code>{"{{double braces}}"}</code> for
-              cloze deletions. Press Enter to save.
+              Paste one <code>question &gt;&gt; answer</code> memory per line.
+              Cloze lines using <code>{"{{double braces}}"}</code> are also
+              supported, as are Markdown <code>```text</code> fences.
             </p>
             {actionData?.quickError && (
               <p className={s.quickError} role="alert">

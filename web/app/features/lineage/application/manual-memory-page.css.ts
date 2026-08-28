@@ -45,18 +45,20 @@ globalStyle(`${quickField} > span`, {
   fontSize: theme.font.size.sm,
   fontWeight: theme.font.weight.semibold,
 })
-globalStyle(`${quickField} input`, {
+globalStyle(`${quickField} textarea`, {
   background: theme.color.background.canvas,
   border: `1px solid ${theme.color.border.strong}`,
   borderRadius: theme.radius.md,
   color: theme.color.text.primary,
   font: "inherit",
   fontSize: theme.font.size.lg,
-  minHeight: "3.25rem",
+  lineHeight: theme.font.lineHeight.normal,
+  minHeight: "8rem",
   padding: `${theme.space[3]} ${theme.space[4]}`,
+  resize: "vertical",
   width: "100%",
 })
-globalStyle(`${quickField} input:focus`, {
+globalStyle(`${quickField} textarea:focus`, {
   borderColor: theme.color.intent.primary.background,
   outline: `2px solid ${theme.color.accent.subtle}`,
   outlineOffset: "2px",

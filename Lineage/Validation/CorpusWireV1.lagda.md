@@ -130,17 +130,82 @@ lowerAscii 'Y' = 'y'
 lowerAscii 'Z' = 'z'
 lowerAscii value = value
 
-startsWithNormalized : List Char → List Char → Bool
-startsWithNormalized [] content = true
-startsWithNormalized (wanted ∷ wantedRest) [] = false
-startsWithNormalized (wanted ∷ wantedRest) (value ∷ values) =
-  charEq (lowerAscii wanted) (lowerAscii value) && startsWithNormalized wantedRest values
+isAsciiTokenChar : Char → Bool
+isAsciiTokenChar 'a' = true
+isAsciiTokenChar 'b' = true
+isAsciiTokenChar 'c' = true
+isAsciiTokenChar 'd' = true
+isAsciiTokenChar 'e' = true
+isAsciiTokenChar 'f' = true
+isAsciiTokenChar 'g' = true
+isAsciiTokenChar 'h' = true
+isAsciiTokenChar 'i' = true
+isAsciiTokenChar 'j' = true
+isAsciiTokenChar 'k' = true
+isAsciiTokenChar 'l' = true
+isAsciiTokenChar 'm' = true
+isAsciiTokenChar 'n' = true
+isAsciiTokenChar 'o' = true
+isAsciiTokenChar 'p' = true
+isAsciiTokenChar 'q' = true
+isAsciiTokenChar 'r' = true
+isAsciiTokenChar 's' = true
+isAsciiTokenChar 't' = true
+isAsciiTokenChar 'u' = true
+isAsciiTokenChar 'v' = true
+isAsciiTokenChar 'w' = true
+isAsciiTokenChar 'x' = true
+isAsciiTokenChar 'y' = true
+isAsciiTokenChar 'z' = true
+isAsciiTokenChar '0' = true
+isAsciiTokenChar '1' = true
+isAsciiTokenChar '2' = true
+isAsciiTokenChar '3' = true
+isAsciiTokenChar '4' = true
+isAsciiTokenChar '5' = true
+isAsciiTokenChar '6' = true
+isAsciiTokenChar '7' = true
+isAsciiTokenChar '8' = true
+isAsciiTokenChar '9' = true
+isAsciiTokenChar value = false
+
+isTokenChar : Char → Bool
+isTokenChar value = isAsciiTokenChar (lowerAscii value)
+
+firstIsToken : List Char → Bool
+firstIsToken [] = false
+firstIsToken (value ∷ values) = isTokenChar value
+
+lastIsToken : List Char → Bool
+lastIsToken [] = false
+lastIsToken (value ∷ []) = isTokenChar value
+lastIsToken (value ∷ values@(_ ∷ _)) = lastIsToken values
+
+rightBoundary : Bool → List Char → Bool
+rightBoundary false content = true
+rightBoundary true [] = true
+rightBoundary true (value ∷ values) = not (isTokenChar value)
+
+startsWithNormalized : List Char → List Char → Bool → Bool
+startsWithNormalized [] content needsRightBoundary = rightBoundary needsRightBoundary content
+startsWithNormalized (wanted ∷ wantedRest) [] needsRightBoundary = false
+startsWithNormalized (wanted ∷ wantedRest) (value ∷ values) needsRightBoundary =
+  charEq (lowerAscii wanted) (lowerAscii value) &&
+  startsWithNormalized wantedRest values needsRightBoundary
 
 containsCharsNormalized : List Char → List Char → Bool
 containsCharsNormalized [] content = false
-containsCharsNormalized wanted [] = false
-containsCharsNormalized wanted content@(_ ∷ values) =
-  startsWithNormalized wanted content || containsCharsNormalized wanted values
+containsCharsNormalized wanted content = go false content
+  where
+  needsLeftBoundary = firstIsToken wanted
+  needsRightBoundary = lastIsToken wanted
+
+  go : Bool → List Char → Bool
+  go previousIsToken [] = false
+  go previousIsToken content@(value ∷ values) =
+    ((not needsLeftBoundary || not previousIsToken) &&
+      startsWithNormalized wanted content needsRightBoundary) ||
+    go (isTokenChar value) values
 
 containsNormalizedText : String → String → Bool
 containsNormalizedText wanted content =
