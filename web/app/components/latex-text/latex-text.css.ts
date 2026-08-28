@@ -5,7 +5,10 @@ export const root = style({
 })
 
 export const inlineMath = style({
-  display: "inline",
+  display: "inline-block",
+  maxWidth: "100%",
+  verticalAlign: "baseline",
+  whiteSpace: "nowrap",
 })
 
 export const displayMath = style({

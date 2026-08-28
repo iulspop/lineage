@@ -330,7 +330,13 @@ export function ReviewPage({
             </div>
 
             {editing ? (
-              <Form className={s.editPanel} method="post">
+              <Form
+                aria-label="Quick edit memory"
+                aria-modal="true"
+                className={s.editPanel}
+                method="post"
+                role="dialog"
+              >
                 <div className={s.editHeader}>
                   <div>
                     <p className={s.eyebrow}>Quick edit</p>

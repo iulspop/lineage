@@ -77,14 +77,15 @@ export const reviewSurface = style({
 export const content = style({
   color: theme.color.text.primary,
   display: "grid",
-  fontSize: "clamp(2rem, 5vw, 4.75rem)",
+  fontSize: "clamp(2rem, 4vw, 4rem)",
   fontWeight: theme.font.weight.medium,
   gap: theme.space[5],
-  letterSpacing: "-0.035em",
-  lineHeight: 1.08,
+  letterSpacing: "-0.03em",
+  lineHeight: 1.16,
   marginInline: "auto",
-  maxWidth: "20ch",
+  maxWidth: "28ch",
   textAlign: "center",
+  textWrap: "balance",
   width: "100%",
 })
 
@@ -230,13 +231,19 @@ export const editPanel = style({
   background: theme.color.background.elevated,
   border: `1px solid ${theme.color.border.default}`,
   borderRadius: theme.radius.lg,
-  boxShadow: theme.shadow.elevated,
+  boxShadow: `${theme.shadow.elevated}, 0 0 0 100vmax rgb(0 0 0 / 55%)`,
   display: "grid",
   gap: theme.space[3],
-  marginInline: "auto",
+  left: "50%",
+  maxHeight: "calc(100dvh - 2rem)",
   maxWidth: "42rem",
+  overflowY: "auto",
   padding: theme.space[5],
-  width: "100%",
+  position: "fixed",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "calc(100vw - 2rem)",
+  zIndex: 20,
 })
 
 export const editHeader = style({
