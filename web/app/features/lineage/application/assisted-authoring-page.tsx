@@ -132,27 +132,20 @@ export function AssistedAuthoringPage({
               </label>
             </div>
 
-            <div className={s.twoColumns}>
-              <label className={s.field}>
-                <span>Memory types</span>
-                <select
-                  defaultValue={input.memoryKinds?.join(",") ?? "basic,cloze"}
-                  name="memoryKinds"
-                >
-                  <option value="basic,cloze">Basic and cloze</option>
-                  <option value="basic">Basic only</option>
-                  <option value="cloze">Cloze only</option>
-                </select>
-              </label>
-              <label className={s.field}>
-                <span>Memory ID to improve (optional)</span>
-                <input
-                  defaultValue={input.promptId}
-                  name="promptId"
-                  placeholder="e.g. derivative"
-                />
-              </label>
-            </div>
+            <label className={s.field}>
+              <span>Memory types</span>
+              <select
+                defaultValue={input.memoryKinds?.join(",") ?? "basic,cloze"}
+                name="memoryKinds"
+              >
+                <option value="basic,cloze">Basic and cloze</option>
+                <option value="basic">Basic only</option>
+                <option value="cloze">Cloze only</option>
+              </select>
+            </label>
+            {input.promptId ? (
+              <input name="promptId" type="hidden" value={input.promptId} />
+            ) : null}
 
             <Button name="action" type="submit" value="generate">
               <IconSparkles aria-hidden="true" />

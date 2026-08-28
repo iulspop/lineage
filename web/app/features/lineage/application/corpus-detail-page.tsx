@@ -52,6 +52,12 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
     ? props.tab
     : "overview"
   const query = props.filters.query.toLocaleLowerCase()
+  const collectionsById = new Map(
+    props.collections.map((collection) => [collection.id, collection]),
+  )
+  const memoriesById = new Map(
+    props.memories.map((memory) => [memory.promptId, memory]),
+  )
   const membershipsByPrompt = new Map<string, Set<string>>()
   for (const membership of props.collectionMemberships) {
     const memberships =
@@ -60,12 +66,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
     membershipsByPrompt.set(membership.promptId, memberships)
   }
   const memories = props.memories.filter((memory) => {
-    if (
-      query &&
-      !`${memory.challenge} ${memory.promptId}`
-        .toLocaleLowerCase()
-        .includes(query)
-    )
+    if (query && !memory.challenge.toLocaleLowerCase().includes(query))
       return false
     if (props.filters.kind !== "all" && memory.kind !== props.filters.kind)
       return false
@@ -210,7 +211,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                       </Link>
                       <span>
                         {collection.parentId
-                          ? `Nested under ${collection.parentId}`
+                          ? `Nested under ${collectionsById.get(collection.parentId)?.title ?? "another collection"}`
                           : collection.description || "Top-level collection"}
                       </span>
                     </li>
@@ -234,7 +235,8 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                         <Link
                           to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(review.promptId)}`}
                         >
-                          {review.promptId}
+                          {memoriesById.get(review.promptId)?.challenge ??
+                            "Memory"}
                         </Link>
                         <span>
                           {review.assessment} ·{" "}
@@ -250,7 +252,7 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                 <ul className={s.cleanList}>
                   {props.revisions.slice(0, 5).map((revision) => (
                     <li key={revision.digest}>
-                      <code>{revision.digest.slice(0, 12)}…</code>
+                      <strong>Snapshot</strong>
                       <span>
                         {revision.memoryCount} memories ·{" "}
                         {formatDateTime(revision.createdAt, timeZone)}
@@ -384,7 +386,6 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                             {memory.challenge}
                           </Link>
                         </h3>
-                        <code>{memory.promptId}</code>
                         {answer && (
                           <div
                             aria-live="polite"
@@ -487,7 +488,8 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                       <Link
                         to={`/library/${encodeURIComponent(props.corpus.corpusId)}/memories/${encodeURIComponent(review.promptId)}`}
                       >
-                        {review.promptId}
+                        {memoriesById.get(review.promptId)?.challenge ??
+                          "Memory"}
                       </Link>
                       <strong>{review.assessment}</strong>
                     </div>

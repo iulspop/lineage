@@ -133,7 +133,7 @@ test.describe("Lineage daily workspace", () => {
       '\\"resolution\\":[\\"-1\\"]',
     )
     await expect(
-      page.getByRole("heading", { name: "powers-i-2" }),
+      page.getByRole("heading", { name: "What is i squared?" }),
     ).toBeVisible()
     await expect(page.getByText("-1", { exact: true })).toBeHidden()
     await page.getByRole("button", { name: "Reveal resolution" }).click()
@@ -198,7 +198,7 @@ In quadratic standard form, what symbol is the constant term? >> c
     await page.waitForTimeout(250)
     await expect(page.getByLabel("Corpus")).toHaveCount(0)
     await page.getByText("More options").click()
-    await page.getByLabel("Stable memory ID").fill("derivative")
+    await expect(page.getByLabel("Stable memory ID")).toHaveCount(0)
     await page.getByLabel("Challenge").fill("What is a derivative?")
     await page
       .getByLabel("Answer")
@@ -209,9 +209,9 @@ In quadratic standard form, what symbol is the constant term? >> c
     ).toBeVisible()
     await page.getByRole("button", { name: "Approve and save memory" }).click()
 
-    await expect(page).toHaveURL(/\/library\/polypan\/memories\/derivative$/)
+    await expect(page).toHaveURL(/\/library\/polypan\/memories\/[a-z0-9]+$/)
     await expect(
-      page.getByRole("heading", { name: "derivative" }),
+      page.getByRole("heading", { name: "What is a derivative?" }),
     ).toBeVisible()
     await page.getByRole("link", { name: "Revise" }).click()
     await expect(page).toHaveURL(/\/edit$/)
@@ -237,7 +237,7 @@ In quadratic standard form, what symbol is the constant term? >> c
       page.getByRole("heading", { name: "Create image occlusion" }),
     ).toBeVisible()
     await expect(page.getByLabel("Corpus")).toHaveCount(0)
-    await page.getByLabel("Stable memory ID").fill("heart-location")
+    await expect(page.getByLabel("Stable memory ID")).toHaveCount(0)
     await page.locator('input[name="image"]').setInputFiles({
       buffer: Buffer.from(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII=",
@@ -261,9 +261,7 @@ In quadratic standard form, what symbol is the constant term? >> c
     ).toBeVisible()
     await page.getByRole("button", { name: "Approve and save" }).click()
 
-    await expect(page).toHaveURL(
-      /\/library\/polypan\/memories\/heart-location$/,
-    )
+    await expect(page).toHaveURL(/\/library\/polypan\/memories\/[a-z0-9]+$/)
     await expect(page.getByText("image-occlusion")).toBeVisible()
   })
 
@@ -279,7 +277,7 @@ In quadratic standard form, what symbol is the constant term? >> c
     await expect(
       page.getByRole("heading", { name: "Manage sources and materials" }),
     ).toBeVisible()
-    await page.getByLabel("Stable source ID").fill("complex-numbers-text")
+    await expect(page.getByLabel("Stable source ID")).toHaveCount(0)
     await page.getByLabel("Title").fill("Complex numbers notes")
     await page
       .getByLabel("Source text or citation")
@@ -289,9 +287,6 @@ In quadratic standard form, what symbol is the constant term? >> c
       .first()
       .getByRole("checkbox", { name: "What is i squared?" })
       .check()
-    await expect(page.getByLabel("Stable source ID")).toHaveValue(
-      "complex-numbers-text",
-    )
     await expect(page.getByLabel("Title")).toHaveValue("Complex numbers notes")
     await page.getByRole("button", { name: "Preview source changes" }).click()
     await expect(

@@ -85,15 +85,11 @@ export function ImageOcclusionPage({
               type="hidden"
               value={draft?.corpusId ?? ""}
             />
-            <label className={s.field}>
-              <span>Stable memory ID</span>
-              <input
-                defaultValue={draft?.promptId}
-                name="promptId"
-                readOnly={isRevision}
-                required
-              />
-            </label>
+            <input
+              name="promptId"
+              type="hidden"
+              value={draft?.promptId ?? ""}
+            />
             <label className={s.field}>
               <span>Image</span>
               <input

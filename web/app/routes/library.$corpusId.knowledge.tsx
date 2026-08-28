@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2"
 import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/library.$corpusId.knowledge"
@@ -20,7 +21,7 @@ function values(formData: FormData, name: string) {
 function readDraft(formData: FormData): KnowledgeDraft {
   const common = {
     content: String(formData.get("content") ?? ""),
-    id: String(formData.get("id") ?? "").trim(),
+    id: String(formData.get("id") ?? "").trim() || createId(),
     linkedPromptIds: values(formData, "linkedPromptIds"),
   }
   return formData.get("kind") === "material"

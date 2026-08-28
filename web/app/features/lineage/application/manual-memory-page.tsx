@@ -183,19 +183,11 @@ export function ManualMemoryPage({
                 </label>
               </div>
 
-              <label className={s.field}>
-                <span>Stable memory ID</span>
-                <input
-                  defaultValue={draft?.promptId}
-                  name="promptId"
-                  placeholder="e.g. i-squared"
-                  readOnly={editing}
-                  required
-                />
-                <small>
-                  This identity is preserved across future revisions.
-                </small>
-              </label>
+              <input
+                name="promptId"
+                type="hidden"
+                value={draft?.promptId ?? ""}
+              />
 
               <label className={s.field}>
                 <span>Challenge</span>

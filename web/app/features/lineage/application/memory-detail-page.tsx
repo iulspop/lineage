@@ -55,7 +55,7 @@ export function MemoryDetailPage(props: Props) {
             <div className={s.actions}>
               <Link
                 className={s.secondaryAction}
-                to={`/create/ai?intent=improve-memory&corpusId=${encodeURIComponent(props.corpusId)}&promptId=${encodeURIComponent(memory.promptId)}&topic=${encodeURIComponent(`Improve ${memory.promptId}`)}`}
+                to={`/create/ai?intent=improve-memory&corpusId=${encodeURIComponent(props.corpusId)}&promptId=${encodeURIComponent(memory.promptId)}&topic=${encodeURIComponent(`Improve: ${memory.challenge.join(" ")}`)}`}
               >
                 <IconSparkles aria-hidden="true" /> Improve with AI
               </Link>
@@ -94,7 +94,7 @@ export function MemoryDetailPage(props: Props) {
           }
           description={`${memory.kind} · revision ${memory.revision} · ${memory.status}`}
           eyebrow="Memory"
-          title={memory.promptId}
+          title={memory.challenge.join(" ")}
         />
 
         <section aria-label="Memory preview" className={s.reviewCard}>
@@ -203,23 +203,21 @@ export function MemoryDetailPage(props: Props) {
                   <span className={s.eyebrow}>Source</span>
                   <h3>{source.title}</h3>
                   <p>{source.contentPreview}</p>
-                  <code>
-                    {source.id} · revision {source.revision}
-                  </code>
+                  <span>Revision {source.revision}</span>
                 </article>
               ))}
               {props.materials.map((material) => (
                 <article key={material.id}>
                   <span className={s.eyebrow}>Material</span>
-                  <h3>{material.id}</h3>
+                  <h3>Linked material</h3>
                   <p>{material.content}</p>
-                  <code>revision {material.revision}</code>
+                  <span>Revision {material.revision}</span>
                 </article>
               ))}
               {props.assets.map((asset) => (
                 <article key={asset.id}>
                   <span className={s.eyebrow}>Asset</span>
-                  <h3>{asset.id}</h3>
+                  <h3>Linked media</h3>
                   <p>
                     {asset.accessibleDescription ??
                       "No accessibility description"}
@@ -241,9 +239,7 @@ export function MemoryDetailPage(props: Props) {
                 {props.relationships.map((relationship) => (
                   <li key={relationship.id}>
                     <strong>{relationship.kind}</strong>
-                    <span>
-                      {relationship.direction} · {relationship.relatedId}
-                    </span>
+                    <span>{relationship.direction}</span>
                   </li>
                 ))}
               </ul>

@@ -53,14 +53,11 @@ export function SourceMaterialPage({
             <form className={s.form} method="post">
               <input name="baseDigest" type="hidden" value={snapshotDigest} />
               <input name="kind" type="hidden" value="source" />
-              <label>
-                <span>Stable source ID</span>
-                <input
-                  defaultValue={draft?.kind === "source" ? draft.id : ""}
-                  name="id"
-                  required
-                />
-              </label>
+              <input
+                name="id"
+                type="hidden"
+                value={draft?.kind === "source" ? draft.id : ""}
+              />
               <label>
                 <span>Title</span>
                 <input
@@ -109,14 +106,11 @@ export function SourceMaterialPage({
             <form className={s.form} method="post">
               <input name="baseDigest" type="hidden" value={snapshotDigest} />
               <input name="kind" type="hidden" value="material" />
-              <label>
-                <span>Stable material ID</span>
-                <input
-                  defaultValue={draft?.kind === "material" ? draft.id : ""}
-                  name="id"
-                  required
-                />
-              </label>
+              <input
+                name="id"
+                type="hidden"
+                value={draft?.kind === "material" ? draft.id : ""}
+              />
               <label>
                 <span>Material content</span>
                 <textarea
@@ -216,9 +210,7 @@ export function SourceMaterialPage({
                 corpus.sources.map((source) => (
                   <article key={`${source.id}:${source.revision}`}>
                     <strong>{source.title}</strong>
-                    <small>
-                      {source.id} · revision {source.revision}
-                    </small>
+                    <small>Revision {source.revision}</small>
                     <p>{source.content}</p>
                   </article>
                 ))
@@ -231,7 +223,7 @@ export function SourceMaterialPage({
               {corpus.materials.length ? (
                 corpus.materials.map((material) => (
                   <article key={`${material.id}:${material.revision}`}>
-                    <strong>{material.id}</strong>
+                    <strong>Material</strong>
                     <small>
                       Revision {material.revision} · {material.sources.length}{" "}
                       sources
