@@ -4,6 +4,7 @@ import {
   IconEye,
   IconSparkles,
 } from "@tabler/icons-react"
+import { useState } from "react"
 import { Form, Link } from "react-router"
 
 import type { LineageDiagnostic } from "../domain/corpus"
@@ -53,6 +54,10 @@ export function ManualMemoryPage({
     actionData?.valid && actionData.preview
       ? actionData.preview.document.prompts.at(-1)
       : null
+  const previewIdentity = actionData?.preview?.canonicalJson
+  const [editedPreviewIdentity, setEditedPreviewIdentity] = useState<string>()
+  const previewDirty =
+    previewIdentity !== undefined && editedPreviewIdentity === previewIdentity
 
   return (
     <AppShell userEmail={userEmail}>
@@ -124,7 +129,13 @@ export function ManualMemoryPage({
         >
           <summary>{editing ? "Revision details" : "More options"}</summary>
           <div className={s.layout}>
-            <Form className={s.formCard} method="post">
+            <Form
+              className={s.formCard}
+              method="post"
+              onChange={() => {
+                if (previewIdentity) setEditedPreviewIdentity(previewIdentity)
+              }}
+            >
               {baseDigest && (
                 <input name="baseDigest" type="hidden" value={baseDigest} />
               )}
@@ -239,7 +250,10 @@ export function ManualMemoryPage({
                 </div>
               </div>
 
-              {actionData?.valid && actionData.preview && previewPrompt ? (
+              {actionData?.valid &&
+              actionData.preview &&
+              previewPrompt &&
+              !previewDirty ? (
                 <>
                   <div className={s.reviewPreview}>
                     <span className={s.previewLabel}>Challenge</span>
@@ -278,6 +292,13 @@ export function ManualMemoryPage({
                     </Button>
                   </Form>
                 </>
+              ) : previewDirty ? (
+                <div className={s.emptyPreview} role="status">
+                  <p>
+                    The draft changed. Validate it again before approving this
+                    revision.
+                  </p>
+                </div>
               ) : actionData?.draft && actionData.diagnostics ? (
                 <div className={s.diagnostics} role="alert">
                   <h3>Fix these details</h3>
