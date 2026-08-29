@@ -86,16 +86,20 @@ const regionBase = {
 }
 export const drawnRegion = style({
   ...regionBase,
-  background: "color-mix(in srgb, currentColor 22%, transparent)",
-  border: `2px solid ${theme.color.text.primary}`,
-  color: theme.color.text.primary,
+  background: `color-mix(in srgb, ${theme.color.intent.warning.background} 38%, transparent)`,
+  border: `3px solid ${theme.color.intent.warning.background}`,
+  boxShadow: `0 0 0 2px ${theme.color.background.canvas}, inset 0 0 0 1px ${theme.color.background.canvas}`,
+  color: theme.color.text.inverse,
+  fontSize: theme.font.size.sm,
   fontWeight: theme.font.weight.bold,
   pointerEvents: "none",
+  textShadow: "0 1px 2px rgb(0 0 0 / 85%)",
 })
 export const drawingRegion = style({
   ...regionBase,
-  background: "color-mix(in srgb, currentColor 12%, transparent)",
-  border: `2px dashed ${theme.color.text.primary}`,
+  background: `color-mix(in srgb, ${theme.color.intent.warning.background} 28%, transparent)`,
+  border: `3px dashed ${theme.color.intent.warning.background}`,
+  boxShadow: `0 0 0 2px ${theme.color.background.canvas}`,
   pointerEvents: "none",
 })
 export const regions = style({ display: "grid", gap: theme.space[4] })
