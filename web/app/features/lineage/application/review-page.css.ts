@@ -99,6 +99,16 @@ export const reviewImage = style({
   position: "relative",
 })
 
+export const visuallyHidden = style({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: "1px",
+  overflow: "hidden",
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: "1px",
+})
+
 export const reviewOcclusion = style({
   background: theme.color.text.primary,
   border: `2px solid ${theme.color.background.card}`,
@@ -107,9 +117,15 @@ export const reviewOcclusion = style({
 })
 
 export const reviewTargetOcclusion = style({
+  alignItems: "center",
   background: theme.color.text.primary,
   border: `4px solid ${theme.color.text.danger}`,
   boxShadow: `0 0 0 3px ${theme.color.background.card}`,
+  color: theme.color.text.inverse,
+  display: "flex",
+  fontSize: "clamp(1.5rem, 5vw, 3.5rem)",
+  fontWeight: theme.font.weight.bold,
+  justifyContent: "center",
   position: "absolute",
 })
 

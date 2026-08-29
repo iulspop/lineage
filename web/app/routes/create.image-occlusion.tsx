@@ -42,9 +42,7 @@ async function readDraft(formData: FormData): Promise<ImageOcclusionDraft> {
   if (!Array.isArray(regions) || regions.length === 0)
     throw new Error("Draw at least one occlusion box.")
   return {
-    accessibleDescription: String(formData.get("accessibleDescription") ?? ""),
     assetId: String(formData.get("existingAssetId") ?? "") || undefined,
-    challenge: String(formData.get("challenge") ?? ""),
     corpusId: String(formData.get("corpusId") ?? "").trim(),
     imageBase64,
     imageMediaType,
@@ -93,9 +91,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     initialDraft:
       prompt && asset
         ? {
-            accessibleDescription: asset.accessibleDescription ?? "",
             assetId: asset.assetId,
-            challenge: prompt.challenge.join("\n"),
             corpusId,
             imageBase64: Buffer.from(asset.bytes).toString("base64"),
             imageMediaType: asset.mediaType,
@@ -105,8 +101,6 @@ export async function loader({ request }: Route.LoaderArgs) {
                 ?.filter((region) => region.geometry.type === "rectangle")
                 .slice(0, 1)
                 .map((region) => ({
-                  accessibleDescription: region.accessibleDescription,
-                  answer: prompt.resolution.join("\n"),
                   height:
                     region.geometry.type === "rectangle"
                       ? region.geometry.height

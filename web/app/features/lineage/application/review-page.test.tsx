@@ -121,6 +121,12 @@ describe("ReviewPage", () => {
     expect(
       container.querySelectorAll('[data-occlusion-target="false"]'),
     ).toHaveLength(1)
+    expect(
+      container.querySelector('[data-occlusion-target="true"]')?.textContent,
+    ).toBe("?")
+    expect(
+      container.querySelector('[data-occlusion-target="false"]')?.textContent,
+    ).toBe("")
   })
 
   test("supports recall and self-assessment without typed response capture", () => {

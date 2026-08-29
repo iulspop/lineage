@@ -9,8 +9,6 @@ import { validateCorpusCandidate } from "./author-corpus.server"
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 export type ImageOcclusionRegionDraft = {
-  accessibleDescription: string
-  answer: string
   height: number
   id?: string
   label: string
@@ -21,9 +19,7 @@ export type ImageOcclusionRegionDraft = {
 }
 
 export type ImageOcclusionDraft = {
-  accessibleDescription: string
   assetId?: string
-  challenge: string
   corpusId: string
   imageBase64: string
   imageMediaType: string
@@ -40,13 +36,6 @@ export type ImageOcclusionDraftResult =
       preview: CorpusCandidatePreview
     }
   | { diagnostics: LineageDiagnostic[]; valid: false }
-
-function lines(value: string) {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-}
 
 function baseDocument(corpusId: string): CorpusDocument {
   return {
@@ -95,7 +84,6 @@ export function validateImageOcclusionDraft({
     current && !draft.newImage && draft.assetId ? draft.assetId : createId()
   const extension = draft.imageMediaType === "image/jpeg" ? "jpg" : "png"
   const asset = {
-    accessibleDescription: draft.accessibleDescription.trim(),
     byteSize: bytes.byteLength,
     id: assetId,
     mediaType: draft.imageMediaType,
@@ -103,8 +91,7 @@ export function validateImageOcclusionDraft({
     sha256: createHash("sha256").update(bytes).digest("hex"),
   }
   const regions = draft.regions.map((region, index) => ({
-    accessibleDescription: region.accessibleDescription.trim(),
-    answer: region.answer.trim(),
+    accessibleDescription: "Occluded image region",
     geometry: {
       height: region.height,
       type: "rectangle" as const,
@@ -120,18 +107,18 @@ export function validateImageOcclusionDraft({
   const prompts = regions.map((target) => ({
     ...(target.promptId === current?.id ? current : {}),
     assets: [assetId],
-    challenge: lines(draft.challenge),
+    challenge: [],
     id: target.promptId,
     kind: "image-occlusion" as const,
     occlusionRegions: [
       target,
       ...regions.filter((region) => region.id !== target.id),
-    ].map(({ answer: _answer, promptId: _promptId, ...region }) => region),
-    resolution: lines(target.answer),
+    ].map(({ promptId: _promptId, ...region }) => region),
+    resolution: ["target region"],
     response: { capture: "none" as const, mode: "self-check" as const },
     revision: target.promptId === current?.id ? current.revision + 1 : 1,
     sourceAsset: assetId,
-    withheld: lines(target.answer),
+    withheld: ["target region"],
   }))
   const replacedPromptIds = new Set(prompts.map(({ id }) => id))
   const candidate = {

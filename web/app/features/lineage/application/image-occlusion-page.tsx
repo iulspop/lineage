@@ -11,7 +11,6 @@ import type {
 } from "./image-occlusion-draft"
 import * as s from "./image-occlusion-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
-import { LatexText } from "~/components/latex-text/latex-text"
 import { Button } from "~/components/ui/button"
 import { PageHeader } from "~/components/ui/page-header"
 
@@ -122,8 +121,6 @@ export function ImageOcclusionPage({
     setRegions((current) => [
       ...current,
       {
-        accessibleDescription: "",
-        answer: "",
         height,
         id: createId(),
         label: `Region ${number}`,
@@ -132,17 +129,6 @@ export function ImageOcclusionPage({
         y,
       },
     ])
-  }
-
-  function updateRegion(
-    index: number,
-    patch: Partial<ImageOcclusionRegionDraft>,
-  ) {
-    setRegions((current) =>
-      current.map((region, regionIndex) =>
-        regionIndex === index ? { ...region, ...patch } : region,
-      ),
-    )
   }
 
   const draftRectangle = drawing
@@ -285,76 +271,35 @@ export function ImageOcclusionPage({
                 </div>
               )}
             </div>
-            <label className={s.field}>
-              <span>Image accessibility description</span>
-              <input
-                defaultValue={draft?.accessibleDescription}
-                name="accessibleDescription"
-                required
-              />
-            </label>
-            <label className={s.field}>
-              <span>Prompt shown for every box</span>
-              <textarea
-                defaultValue={draft?.challenge ?? "What is highlighted?"}
-                name="challenge"
-                required
-                rows={2}
-              />
-            </label>
             <section className={s.regions}>
               <div className={s.sectionHeading}>
                 <div>
                   <h2>Occlusion boxes</h2>
-                  <p>
-                    Drag on the image. Add the answer for each numbered box.
-                  </p>
+                  <p>Drag on the image. Each box becomes one memory.</p>
                 </div>
                 <span>{regions.length} boxes</span>
               </div>
               {regions.length ? (
-                regions.map((region, index) => (
-                  <fieldset className={s.regionCard} key={region.id}>
-                    <legend>Box {index + 1}</legend>
-                    <label className={s.field}>
-                      <span>Answer</span>
-                      <input
-                        onChange={(event) =>
-                          updateRegion(index, {
-                            answer: event.currentTarget.value,
-                          })
+                <div className={s.regionList}>
+                  {regions.map((region, index) => (
+                    <div className={s.regionCard} key={region.id}>
+                      <strong>Box {index + 1}</strong>
+                      <button
+                        className={s.removeRegion}
+                        onClick={() =>
+                          setRegions((current) =>
+                            current.filter(
+                              (_, regionIndex) => regionIndex !== index,
+                            ),
+                          )
                         }
-                        required
-                        value={region.answer}
-                      />
-                    </label>
-                    <label className={s.field}>
-                      <span>Accessible description of the covered area</span>
-                      <input
-                        onChange={(event) =>
-                          updateRegion(index, {
-                            accessibleDescription: event.currentTarget.value,
-                          })
-                        }
-                        required
-                        value={region.accessibleDescription}
-                      />
-                    </label>
-                    <button
-                      className={s.removeRegion}
-                      onClick={() =>
-                        setRegions((current) =>
-                          current.filter(
-                            (_, regionIndex) => regionIndex !== index,
-                          ),
-                        )
-                      }
-                      type="button"
-                    >
-                      <IconTrash aria-hidden="true" /> Remove box
-                    </button>
-                  </fieldset>
-                ))
+                        type="button"
+                      >
+                        <IconTrash aria-hidden="true" /> Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <p className={s.emptyRegions}>
                   Draw at least one box on the image.
@@ -377,21 +322,15 @@ export function ImageOcclusionPage({
             </h2>
             {actionData?.valid && imageUrl ? (
               <>
-                <p className={s.challenge}>
-                  <LatexText>{draft?.challenge ?? ""}</LatexText>
-                </p>
                 <p className={s.previewNote}>
-                  Each box becomes its own memory. During recall all boxes are
-                  concealed, with the current target outlined.
+                  Each box becomes its own memory. During recall every box is
+                  concealed and only the current target shows a question mark.
                 </p>
                 {regions.map((target, targetIndex) => (
                   <div className={s.promptPreview} key={target.id}>
                     <strong>Memory {targetIndex + 1}</strong>
                     <div className={s.imageStage}>
-                      <img
-                        alt={draft?.accessibleDescription ?? ""}
-                        src={imageUrl}
-                      />
+                      <img alt="" src={imageUrl} />
                       {regions.map((region, regionIndex) => (
                         <span
                           aria-hidden="true"
@@ -407,15 +346,11 @@ export function ImageOcclusionPage({
                             top: `${region.y * 100}%`,
                             width: `${region.width * 100}%`,
                           }}
-                        />
+                        >
+                          {regionIndex === targetIndex ? "?" : null}
+                        </span>
                       ))}
                     </div>
-                    <details>
-                      <summary>Reveal resolution</summary>
-                      <p>
-                        <LatexText>{target.answer}</LatexText>
-                      </p>
-                    </details>
                   </div>
                 ))}
                 <Form method="post">

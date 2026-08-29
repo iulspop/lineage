@@ -293,14 +293,26 @@ export function ReviewPage({
         ) : loaderData.prompt ? (
           <div className={s.reviewSurface}>
             <div className={s.content}>
-              <h1>
-                <LatexText>{primaryPresentation ?? "Memory"}</LatexText>
+              <h1
+                className={
+                  loaderData.prompt.kind === "image-occlusion"
+                    ? s.visuallyHidden
+                    : undefined
+                }
+              >
+                <LatexText>
+                  {loaderData.prompt.kind === "image-occlusion"
+                    ? "Image occlusion memory"
+                    : (primaryPresentation ?? "Memory")}
+                </LatexText>
               </h1>
-              {supportingPresentation.map((item) => (
-                <p key={item}>
-                  <LatexText>{item}</LatexText>
-                </p>
-              ))}
+              {loaderData.prompt.kind !== "image-occlusion"
+                ? supportingPresentation.map((item) => (
+                    <p key={item}>
+                      <LatexText>{item}</LatexText>
+                    </p>
+                  ))
+                : null}
               {loaderData.prompt.kind === "image-occlusion" &&
               loaderData.prompt.sourceAsset ? (
                 <div className={s.reviewImage}>
@@ -327,7 +339,9 @@ export function ReviewPage({
                                 top: `${region.geometry.y * 100}%`,
                                 width: `${region.geometry.width * 100}%`,
                               }}
-                            />
+                            >
+                              {index === 0 ? "?" : null}
+                            </span>
                           ) : null,
                       )
                     : null}

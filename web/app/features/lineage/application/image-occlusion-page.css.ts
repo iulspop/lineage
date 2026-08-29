@@ -118,17 +118,14 @@ globalStyle(`${sectionHeading} > span`, {
   color: theme.color.text.secondary,
   whiteSpace: "nowrap",
 })
+export const regionList = style({ display: "grid", gap: theme.space[2] })
 export const regionCard = style({
+  alignItems: "center",
   border: `1px solid ${theme.color.border.default}`,
   borderRadius: theme.radius.md,
-  display: "grid",
-  gap: theme.space[4],
-  margin: 0,
-  padding: theme.space[4],
-})
-globalStyle(`${regionCard} legend`, {
-  fontWeight: theme.font.weight.bold,
-  paddingInline: theme.space[2],
+  display: "flex",
+  justifyContent: "space-between",
+  padding: theme.space[3],
 })
 export const removeRegion = style({
   alignItems: "center",
@@ -167,9 +164,15 @@ export const occlusion = style({
   position: "absolute",
 })
 export const targetOcclusion = style({
+  alignItems: "center",
   background: theme.color.text.primary,
   border: `3px solid ${theme.color.text.danger}`,
   boxShadow: `0 0 0 2px ${theme.color.background.card}`,
+  color: theme.color.text.inverse,
+  display: "flex",
+  fontSize: "clamp(1.25rem, 4vw, 2.5rem)",
+  fontWeight: theme.font.weight.bold,
+  justifyContent: "center",
   position: "absolute",
 })
 export const promptPreview = style({

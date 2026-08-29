@@ -5,16 +5,12 @@ import { lineageRuntime } from "../infrastructure/lineage-runtime.server"
 import { validateImageOcclusionDraft } from "./image-occlusion-draft"
 
 const draft = {
-  accessibleDescription: "A map of France with two cities concealed",
-  challenge: "Name the highlighted city.",
   corpusId: "geography",
   imageBase64: Buffer.from("test-image").toString("base64"),
   imageMediaType: "image/png",
   imageName: "france.png",
   regions: [
     {
-      accessibleDescription: "The concealed location of France's capital",
-      answer: "Paris",
       height: 0.15,
       label: "Region 1",
       width: 0.2,
@@ -22,8 +18,6 @@ const draft = {
       y: 0.3,
     },
     {
-      accessibleDescription: "The concealed location of a southern city",
-      answer: "Marseille",
       height: 0.12,
       label: "Region 2",
       width: 0.18,
@@ -51,8 +45,8 @@ describe("image occlusion drafts", () => {
     expect(result.promptIds).toHaveLength(2)
     expect(result.preview.document.prompts).toHaveLength(2)
     expect(
-      result.preview.document.prompts.map((prompt) => prompt.resolution[0]),
-    ).toEqual(["Paris", "Marseille"])
+      result.preview.document.prompts.map((prompt) => prompt.resolution),
+    ).toEqual([["target region"], ["target region"]])
     for (const prompt of result.preview.document.prompts) {
       expect(prompt.kind).toBe("image-occlusion")
       expect(prompt.sourceAsset).toBe(asset?.id)
@@ -88,7 +82,7 @@ describe("image occlusion drafts", () => {
       base: first.preview.document,
       draft: {
         ...singleRegionDraft,
-        regions: [{ ...singleRegionDraft.regions[0], answer: "Paris, France" }],
+        regions: [{ ...singleRegionDraft.regions[0], width: 0.25 }],
       },
       existingPromptId: promptId,
       validator: lineageRuntime,

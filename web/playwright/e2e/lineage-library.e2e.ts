@@ -254,12 +254,10 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
       mimeType: "image/png",
       name: "heart.png",
     })
-    await page
-      .getByLabel("Image accessibility description")
-      .fill("A simplified anatomy diagram")
-    await page
-      .getByLabel("Prompt shown for every box")
-      .fill("What is highlighted?")
+    await expect(
+      page.getByLabel("Image accessibility description"),
+    ).toHaveCount(0)
+    await expect(page.getByLabel("Prompt shown for every box")).toHaveCount(0)
     const editor = page.getByRole("application", {
       name: "Occlusion editor. Drag on the image to create a box.",
     })
@@ -280,7 +278,7 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
       clientY: bounds.y + bounds.height * 0.4,
       pointerId: 1,
     })
-    await expect(page.getByRole("group", { name: "Box 1" })).toBeVisible()
+    await expect(page.getByText("Box 1", { exact: true })).toBeVisible()
     await editor.dispatchEvent("pointerdown", {
       clientX: bounds.x + bounds.width * 0.55,
       clientY: bounds.y + bounds.height * 0.55,
@@ -297,22 +295,16 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
       clientY: bounds.y + bounds.height - 10,
       pointerId: 1,
     })
-    await page.getByLabel("Answer").nth(0).fill("The heart")
-    await page.getByLabel("Answer").nth(1).fill("The lungs")
-    await page
-      .getByLabel("Accessible description of the covered area")
-      .nth(0)
-      .fill("The concealed heart region")
-    await page
-      .getByLabel("Accessible description of the covered area")
-      .nth(1)
-      .fill("The concealed lung region")
-    await page.getByRole("button", { name: "Validate and preview" }).click()
+    await expect(page.getByText("Box 2", { exact: true })).toBeVisible()
+    await expect(page.getByLabel("Answer")).toHaveCount(0)
     await expect(
-      page.getByRole("img", { name: "A simplified anatomy diagram" }).first(),
-    ).toBeVisible()
+      page.getByLabel("Accessible description of the covered area"),
+    ).toHaveCount(0)
+    await page.getByRole("button", { name: "Validate and preview" }).click()
+    await expect(page.locator('aside img[alt=""]').first()).toBeVisible()
     await expect(page.getByText("Memory 1")).toBeVisible()
     await expect(page.getByText("Memory 2")).toBeVisible()
+    await expect(page.getByText("?", { exact: true })).toHaveCount(2)
     await page
       .getByRole("button", { name: "Approve and save 2 memories" })
       .click()
