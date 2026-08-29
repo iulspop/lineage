@@ -314,6 +314,12 @@ export function ReviewPage({
                   ))
                 : null}
               {loaderData.prompt.kind === "image-occlusion" &&
+              primaryPresentation ? (
+                <p className={s.imageOcclusionHint}>
+                  <LatexText>{primaryPresentation}</LatexText>
+                </p>
+              ) : null}
+              {loaderData.prompt.kind === "image-occlusion" &&
               loaderData.prompt.sourceAsset ? (
                 <div className={s.reviewImage}>
                   <img

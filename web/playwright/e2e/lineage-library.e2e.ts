@@ -296,6 +296,9 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
       pointerId: 1,
     })
     await expect(page.getByText("Box 2", { exact: true })).toBeVisible()
+    const hints = page.getByLabel("Optional hint or prompt")
+    await hints.nth(0).fill("Which chamber is covered?")
+    await expect(hints.nth(1)).toHaveValue("")
     await expect(page.getByLabel("Answer")).toHaveCount(0)
     await expect(
       page.getByLabel("Accessible description of the covered area"),
@@ -304,6 +307,7 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
     await expect(page.locator('aside img[alt=""]').first()).toBeVisible()
     await expect(page.getByText("Memory 1")).toBeVisible()
     await expect(page.getByText("Memory 2")).toBeVisible()
+    await expect(page.getByText("Which chamber is covered?")).toBeVisible()
     await expect(page.getByText("?", { exact: true })).toHaveCount(2)
     await page
       .getByRole("button", { name: "Approve and save 2 memories" })

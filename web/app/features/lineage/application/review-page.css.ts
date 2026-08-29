@@ -89,6 +89,13 @@ export const content = style({
   width: "100%",
 })
 
+export const imageOcclusionHint = style({
+  fontSize: "clamp(1.25rem, 2.5vw, 2rem)",
+  fontWeight: theme.font.weight.medium,
+  letterSpacing: "-0.015em",
+  lineHeight: theme.font.lineHeight.relaxed,
+})
+
 export const reviewImage = style({
   borderRadius: theme.radius.lg,
   boxShadow: theme.shadow.elevated,

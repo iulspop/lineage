@@ -10,6 +10,7 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 export type ImageOcclusionRegionDraft = {
   height: number
+  hint?: string
   id?: string
   label: string
   promptId?: string
@@ -99,6 +100,7 @@ export function validateImageOcclusionDraft({
       x: region.x,
       y: region.y,
     },
+    hint: region.hint,
     id: current?.occlusionRegions?.[index]?.id ?? region.id ?? createId(),
     label: region.label.trim(),
     promptId:
@@ -107,13 +109,13 @@ export function validateImageOcclusionDraft({
   const prompts = regions.map((target) => ({
     ...(target.promptId === current?.id ? current : {}),
     assets: [assetId],
-    challenge: [],
+    challenge: target.hint?.trim() ? [target.hint.trim()] : [],
     id: target.promptId,
     kind: "image-occlusion" as const,
     occlusionRegions: [
       target,
       ...regions.filter((region) => region.id !== target.id),
-    ].map(({ promptId: _promptId, ...region }) => region),
+    ].map(({ hint: _hint, promptId: _promptId, ...region }) => region),
     resolution: ["target region"],
     response: { capture: "none" as const, mode: "self-check" as const },
     revision: target.promptId === current?.id ? current.revision + 1 : 1,

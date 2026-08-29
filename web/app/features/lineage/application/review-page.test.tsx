@@ -73,8 +73,10 @@ describe("ReviewPage", () => {
             loaderData={{
               ...loaderData,
               captureResponse: false,
+              presentation: ["Which structure carries oxygenated blood?"],
               prompt: {
                 ...loaderData.prompt,
+                challenge: ["Which structure carries oxygenated blood?"],
                 kind: "image-occlusion" as const,
                 occlusionRegions: [
                   {
@@ -112,6 +114,9 @@ describe("ReviewPage", () => {
     ])
     const { container } = render(<Router initialEntries={["/review"]} />)
 
+    expect(
+      screen.getByText("Which structure carries oxygenated blood?"),
+    ).toBeVisible()
     expect(container.querySelectorAll("[data-occlusion-target]")).toHaveLength(
       2,
     )

@@ -284,6 +284,25 @@ export function ImageOcclusionPage({
                   {regions.map((region, index) => (
                     <div className={s.regionCard} key={region.id}>
                       <strong>Box {index + 1}</strong>
+                      <label className={s.field}>
+                        <span>Optional hint or prompt</span>
+                        <input
+                          onChange={(event) => {
+                            const hint = event.currentTarget.value
+                            setRegions((current) =>
+                              current.map((item) =>
+                                item.id === region.id
+                                  ? { ...item, hint }
+                                  : item,
+                              ),
+                            )
+                          }}
+                          placeholder="e.g. Which structure is this?"
+                          type="text"
+                          value={region.hint ?? ""}
+                        />
+                        <small>Shown above the image during review.</small>
+                      </label>
                       <button
                         className={s.removeRegion}
                         onClick={() =>
@@ -329,6 +348,9 @@ export function ImageOcclusionPage({
                 {regions.map((target, targetIndex) => (
                   <div className={s.promptPreview} key={target.id}>
                     <strong>Memory {targetIndex + 1}</strong>
+                    {target.hint?.trim() ? (
+                      <p className={s.challenge}>{target.hint.trim()}</p>
+                    ) : null}
                     <div className={s.imageStage}>
                       <img alt="" src={imageUrl} />
                       {regions.map((region, regionIndex) => (

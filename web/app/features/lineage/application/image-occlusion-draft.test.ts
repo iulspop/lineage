@@ -12,6 +12,7 @@ const draft = {
   regions: [
     {
       height: 0.15,
+      hint: "Which country is covered?",
       label: "Region 1",
       width: 0.2,
       x: 0.4,
@@ -44,6 +45,9 @@ describe("image occlusion drafts", () => {
     expect(asset?.sha256).toMatch(/^[a-f0-9]{64}$/)
     expect(result.promptIds).toHaveLength(2)
     expect(result.preview.document.prompts).toHaveLength(2)
+    expect(
+      result.preview.document.prompts.map((prompt) => prompt.challenge),
+    ).toEqual([["Which country is covered?"], []])
     expect(
       result.preview.document.prompts.map((prompt) => prompt.resolution),
     ).toEqual([["target region"], ["target region"]])

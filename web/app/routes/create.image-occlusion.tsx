@@ -105,6 +105,7 @@ export async function loader({ request }: Route.LoaderArgs) {
                     region.geometry.type === "rectangle"
                       ? region.geometry.height
                       : 0.25,
+                  hint: prompt.challenge[0] ?? "",
                   id: region.id,
                   label: region.label,
                   promptId,
