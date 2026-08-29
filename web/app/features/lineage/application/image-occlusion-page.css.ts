@@ -6,14 +6,14 @@ export const page = style({
   display: "grid",
   gap: theme.space[8],
   margin: "0 auto",
-  maxWidth: "76rem",
+  maxWidth: "82rem",
 })
 export const layout = style({
-  "@media": { "screen and (max-width: 58rem)": { gridTemplateColumns: "1fr" } },
+  "@media": { "screen and (max-width: 64rem)": { gridTemplateColumns: "1fr" } },
   alignItems: "start",
   display: "grid",
   gap: theme.space[6],
-  gridTemplateColumns: "minmax(0, 1.05fr) minmax(20rem, 0.95fr)",
+  gridTemplateColumns: "minmax(0, 1.2fr) minmax(22rem, 0.8fr)",
 })
 export const card = style({
   background: theme.color.background.card,
@@ -44,13 +44,107 @@ globalStyle(`${field} input, ${field} textarea`, {
   padding: `${theme.space[3]} ${theme.space[4]}`,
   width: "100%",
 })
-export const regionGrid = style({
-  "@media": {
-    "screen and (max-width: 34rem)": { gridTemplateColumns: "1fr 1fr" },
+export const pasteTarget = style({
+  border: `1px dashed ${theme.color.border.strong}`,
+  borderRadius: theme.radius.lg,
+  minHeight: "18rem",
+  outline: "none",
+  overflow: "hidden",
+  selectors: {
+    "&:focus-visible": { boxShadow: theme.shadow.focus },
   },
+})
+export const pasteEmpty = style({
+  alignItems: "center",
+  color: theme.color.text.secondary,
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.space[2],
+  justifyContent: "center",
+  minHeight: "18rem",
+  padding: theme.space[8],
+  textAlign: "center",
+})
+globalStyle(`${pasteEmpty} svg`, { height: "2rem", width: "2rem" })
+export const imageEditor = style({
+  cursor: "crosshair",
+  position: "relative",
+  touchAction: "none",
+  userSelect: "none",
+})
+globalStyle(`${imageEditor} img`, {
+  display: "block",
+  height: "auto",
+  pointerEvents: "none",
+  width: "100%",
+})
+const regionBase = {
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "center",
+  position: "absolute" as const,
+}
+export const drawnRegion = style({
+  ...regionBase,
+  background: "color-mix(in srgb, currentColor 22%, transparent)",
+  border: `2px solid ${theme.color.text.primary}`,
+  color: theme.color.text.primary,
+  fontWeight: theme.font.weight.bold,
+  pointerEvents: "none",
+})
+export const drawingRegion = style({
+  ...regionBase,
+  background: "color-mix(in srgb, currentColor 12%, transparent)",
+  border: `2px dashed ${theme.color.text.primary}`,
+  pointerEvents: "none",
+})
+export const regions = style({ display: "grid", gap: theme.space[4] })
+export const sectionHeading = style({
+  alignItems: "end",
+  display: "flex",
+  gap: theme.space[4],
+  justifyContent: "space-between",
+})
+globalStyle(`${sectionHeading} h2, ${sectionHeading} p`, { margin: 0 })
+globalStyle(`${sectionHeading} p`, {
+  color: theme.color.text.secondary,
+  marginTop: theme.space[1],
+})
+globalStyle(`${sectionHeading} > span`, {
+  color: theme.color.text.secondary,
+  whiteSpace: "nowrap",
+})
+export const regionCard = style({
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
   display: "grid",
-  gap: theme.space[3],
-  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: theme.space[4],
+  margin: 0,
+  padding: theme.space[4],
+})
+globalStyle(`${regionCard} legend`, {
+  fontWeight: theme.font.weight.bold,
+  paddingInline: theme.space[2],
+})
+export const removeRegion = style({
+  alignItems: "center",
+  background: "transparent",
+  border: 0,
+  color: theme.color.text.danger,
+  cursor: "pointer",
+  display: "inline-flex",
+  font: "inherit",
+  gap: theme.space[2],
+  justifySelf: "start",
+  padding: 0,
+})
+export const emptyRegions = style({
+  border: `1px dashed ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.secondary,
+  margin: 0,
+  padding: theme.space[5],
+  textAlign: "center",
 })
 export const imageStage = style({
   borderRadius: theme.radius.md,
@@ -67,6 +161,22 @@ export const occlusion = style({
   border: `2px solid ${theme.color.background.card}`,
   boxShadow: theme.shadow.sm,
   position: "absolute",
+})
+export const targetOcclusion = style({
+  background: theme.color.text.primary,
+  border: `3px solid ${theme.color.text.danger}`,
+  boxShadow: `0 0 0 2px ${theme.color.background.card}`,
+  position: "absolute",
+})
+export const promptPreview = style({
+  borderTop: `1px solid ${theme.color.border.default}`,
+  display: "grid",
+  gap: theme.space[3],
+  paddingTop: theme.space[4],
+})
+export const previewNote = style({
+  color: theme.color.text.secondary,
+  margin: 0,
 })
 export const challenge = style({
   fontSize: theme.font.size.lg,

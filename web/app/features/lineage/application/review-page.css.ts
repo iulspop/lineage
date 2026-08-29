@@ -106,6 +106,13 @@ export const reviewOcclusion = style({
   position: "absolute",
 })
 
+export const reviewTargetOcclusion = style({
+  background: theme.color.text.primary,
+  border: `4px solid ${theme.color.text.danger}`,
+  boxShadow: `0 0 0 3px ${theme.color.background.card}`,
+  position: "absolute",
+})
+
 export const recallControls = style({
   alignItems: "center",
   display: "grid",

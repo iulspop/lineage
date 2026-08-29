@@ -257,20 +257,68 @@ What equation defines quadratic standard form? >> $ax^2 + bx + c = 0$
     await page
       .getByLabel("Image accessibility description")
       .fill("A simplified anatomy diagram")
-    await page.getByLabel("Challenge").fill("Which organ is concealed?")
-    await page.getByLabel("Answer").fill("The heart")
-    await page.getByLabel("Region label").fill("Heart")
     await page
-      .getByLabel("Region accessibility description")
+      .getByLabel("Prompt shown for every box")
+      .fill("What is highlighted?")
+    const editor = page.getByRole("application", {
+      name: "Occlusion editor. Drag on the image to create a box.",
+    })
+    const bounds = await editor.boundingBox()
+    if (!bounds) throw new Error("Occlusion editor was not measurable")
+    await editor.dispatchEvent("pointerdown", {
+      clientX: bounds.x + 10,
+      clientY: bounds.y + 10,
+      pointerId: 1,
+    })
+    await editor.dispatchEvent("pointermove", {
+      clientX: bounds.x + bounds.width * 0.4,
+      clientY: bounds.y + bounds.height * 0.4,
+      pointerId: 1,
+    })
+    await editor.dispatchEvent("pointerup", {
+      clientX: bounds.x + bounds.width * 0.4,
+      clientY: bounds.y + bounds.height * 0.4,
+      pointerId: 1,
+    })
+    await expect(page.getByRole("group", { name: "Box 1" })).toBeVisible()
+    await editor.dispatchEvent("pointerdown", {
+      clientX: bounds.x + bounds.width * 0.55,
+      clientY: bounds.y + bounds.height * 0.55,
+      pointerId: 1,
+    })
+    await page.waitForTimeout(50)
+    await editor.dispatchEvent("pointermove", {
+      clientX: bounds.x + bounds.width - 10,
+      clientY: bounds.y + bounds.height - 10,
+      pointerId: 1,
+    })
+    await editor.dispatchEvent("pointerup", {
+      clientX: bounds.x + bounds.width - 10,
+      clientY: bounds.y + bounds.height - 10,
+      pointerId: 1,
+    })
+    await page.getByLabel("Answer").nth(0).fill("The heart")
+    await page.getByLabel("Answer").nth(1).fill("The lungs")
+    await page
+      .getByLabel("Accessible description of the covered area")
+      .nth(0)
       .fill("The concealed heart region")
+    await page
+      .getByLabel("Accessible description of the covered area")
+      .nth(1)
+      .fill("The concealed lung region")
     await page.getByRole("button", { name: "Validate and preview" }).click()
     await expect(
-      page.getByRole("img", { name: "A simplified anatomy diagram" }),
+      page.getByRole("img", { name: "A simplified anatomy diagram" }).first(),
     ).toBeVisible()
-    await page.getByRole("button", { name: "Approve and save" }).click()
+    await expect(page.getByText("Memory 1")).toBeVisible()
+    await expect(page.getByText("Memory 2")).toBeVisible()
+    await page
+      .getByRole("button", { name: "Approve and save 2 memories" })
+      .click()
 
-    await expect(page).toHaveURL(/\/library\/polypan\/memories\/[a-z0-9]+$/)
-    await expect(page.getByText("image-occlusion")).toBeVisible()
+    await expect(page).toHaveURL("/library/polypan?tab=memories")
+    await expect(page.getByText("image-occlusion")).toHaveCount(2)
   })
 
   test("given: a corpus, should: create and link a durable source", async ({

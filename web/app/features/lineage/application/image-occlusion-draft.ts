@@ -8,28 +8,34 @@ import { validateCorpusCandidate } from "./author-corpus.server"
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
-export type ImageOcclusionDraft = {
+export type ImageOcclusionRegionDraft = {
   accessibleDescription: string
   answer: string
-  assetId?: string
-  challenge: string
-  corpusId: string
   height: number
-  imageBase64: string
-  imageMediaType: string
-  imageName: string
-  newImage?: boolean
-  promptId: string
-  regionDescription: string
-  regionLabel: string
+  id?: string
+  label: string
+  promptId?: string
   width: number
   x: number
   y: number
 }
 
+export type ImageOcclusionDraft = {
+  accessibleDescription: string
+  assetId?: string
+  challenge: string
+  corpusId: string
+  imageBase64: string
+  imageMediaType: string
+  imageName: string
+  newImage?: boolean
+  regions: ImageOcclusionRegionDraft[]
+}
+
 export type ImageOcclusionDraftResult =
   | {
       asset: CorpusDocument["assets"][number]
+      promptIds: string[]
       valid: true
       preview: CorpusCandidatePreview
     }
@@ -96,38 +102,45 @@ export function validateImageOcclusionDraft({
     path: `assets/${assetId}.${extension}`,
     sha256: createHash("sha256").update(bytes).digest("hex"),
   }
-  const prompt = {
-    ...(current ?? {}),
+  const regions = draft.regions.map((region, index) => ({
+    accessibleDescription: region.accessibleDescription.trim(),
+    answer: region.answer.trim(),
+    geometry: {
+      height: region.height,
+      type: "rectangle" as const,
+      width: region.width,
+      x: region.x,
+      y: region.y,
+    },
+    id: current?.occlusionRegions?.[index]?.id ?? region.id ?? createId(),
+    label: region.label.trim(),
+    promptId:
+      index === 0 && current ? current.id : (region.promptId ?? createId()),
+  }))
+  const prompts = regions.map((target) => ({
+    ...(target.promptId === current?.id ? current : {}),
     assets: [assetId],
     challenge: lines(draft.challenge),
-    id: current?.id ?? draft.promptId.trim(),
+    id: target.promptId,
     kind: "image-occlusion" as const,
     occlusionRegions: [
-      {
-        accessibleDescription: draft.regionDescription.trim(),
-        geometry: {
-          height: draft.height,
-          type: "rectangle" as const,
-          width: draft.width,
-          x: draft.x,
-          y: draft.y,
-        },
-        id: current?.occlusionRegions?.[0]?.id ?? createId(),
-        label: draft.regionLabel.trim(),
-      },
-    ],
-    resolution: lines(draft.answer),
+      target,
+      ...regions.filter((region) => region.id !== target.id),
+    ].map(({ answer: _answer, promptId: _promptId, ...region }) => region),
+    resolution: lines(target.answer),
     response: { capture: "none" as const, mode: "self-check" as const },
-    revision: current ? current.revision + 1 : 1,
+    revision: target.promptId === current?.id ? current.revision + 1 : 1,
     sourceAsset: assetId,
-    withheld: lines(draft.answer),
-  }
+    withheld: lines(target.answer),
+  }))
+  const replacedPromptIds = new Set(prompts.map(({ id }) => id))
   const candidate = {
     ...document,
     assets: [...document.assets.filter(({ id }) => id !== assetId), asset],
-    prompts: current
-      ? document.prompts.map((item) => (item.id === current.id ? prompt : item))
-      : [...document.prompts, prompt],
+    prompts: [
+      ...document.prompts.filter(({ id }) => !replacedPromptIds.has(id)),
+      ...prompts,
+    ],
   }
   const result = validateCorpusCandidate({
     candidateJson: JSON.stringify(candidate),
@@ -136,5 +149,10 @@ export function validateImageOcclusionDraft({
   })
   if (!result.valid) return result
   if (baseDigest && !base) throw new Error("A base digest requires a corpus")
-  return { asset, preview: result.preview, valid: true }
+  return {
+    asset,
+    preview: result.preview,
+    promptIds: prompts.map(({ id }) => id),
+    valid: true,
+  }
 }

@@ -64,6 +64,65 @@ describe("ReviewPage", () => {
     )
   })
 
+  test("conceals every image region and highlights only the atomic target", () => {
+    const Router = createRoutesStub([
+      {
+        Component: () => (
+          <ReviewPage
+            actionData={undefined}
+            loaderData={{
+              ...loaderData,
+              captureResponse: false,
+              prompt: {
+                ...loaderData.prompt,
+                kind: "image-occlusion" as const,
+                occlusionRegions: [
+                  {
+                    accessibleDescription: "The target region",
+                    geometry: {
+                      height: 0.2,
+                      type: "rectangle" as const,
+                      width: 0.2,
+                      x: 0.1,
+                      y: 0.1,
+                    },
+                    id: "target-region",
+                    label: "Target",
+                  },
+                  {
+                    accessibleDescription: "Another concealed region",
+                    geometry: {
+                      height: 0.2,
+                      type: "rectangle" as const,
+                      width: 0.2,
+                      x: 0.6,
+                      y: 0.6,
+                    },
+                    id: "other-region",
+                    label: "Other",
+                  },
+                ],
+                sourceAsset: "anatomy-image",
+              },
+            }}
+          />
+        ),
+        path: "/review",
+      },
+    ])
+    const { container } = render(<Router initialEntries={["/review"]} />)
+
+    expect(container.querySelectorAll("[data-occlusion-target]")).toHaveLength(
+      2,
+    )
+    expect(
+      container.querySelectorAll('[data-occlusion-target="true"]'),
+    ).toHaveLength(1)
+    expect(
+      container.querySelectorAll('[data-occlusion-target="false"]'),
+    ).toHaveLength(1)
+  })
+
   test("supports recall and self-assessment without typed response capture", () => {
     const Router = createRoutesStub([
       {

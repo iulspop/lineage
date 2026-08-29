@@ -309,20 +309,26 @@ export function ReviewPage({
                     src={`/library/${encodeURIComponent(loaderData.corpusId)}/assets/${encodeURIComponent(loaderData.prompt.sourceAsset)}`}
                   />
                   {!resolved
-                    ? loaderData.prompt.occlusionRegions?.map((region) =>
-                        region.geometry.type === "rectangle" ? (
-                          <span
-                            aria-hidden="true"
-                            className={s.reviewOcclusion}
-                            key={region.id}
-                            style={{
-                              height: `${region.geometry.height * 100}%`,
-                              left: `${region.geometry.x * 100}%`,
-                              top: `${region.geometry.y * 100}%`,
-                              width: `${region.geometry.width * 100}%`,
-                            }}
-                          />
-                        ) : null,
+                    ? loaderData.prompt.occlusionRegions?.map(
+                        (region, index) =>
+                          region.geometry.type === "rectangle" ? (
+                            <span
+                              aria-hidden="true"
+                              className={
+                                index === 0
+                                  ? s.reviewTargetOcclusion
+                                  : s.reviewOcclusion
+                              }
+                              data-occlusion-target={index === 0}
+                              key={region.id}
+                              style={{
+                                height: `${region.geometry.height * 100}%`,
+                                left: `${region.geometry.x * 100}%`,
+                                top: `${region.geometry.y * 100}%`,
+                                width: `${region.geometry.width * 100}%`,
+                              }}
+                            />
+                          ) : null,
                       )
                     : null}
                 </div>

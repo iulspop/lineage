@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2"
 import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/create.image-occlusion"
@@ -18,10 +17,6 @@ import { replaceCorpusAssets } from "~/features/lineage/infrastructure/lineage-a
 import { lineageRuntime } from "~/features/lineage/infrastructure/lineage-runtime.server"
 import { retrieveUserFromDatabaseById } from "~/features/users/infrastructure/users-model.server"
 
-function number(formData: FormData, name: string) {
-  return Number.parseFloat(String(formData.get(name) ?? ""))
-}
-
 async function readDraft(formData: FormData): Promise<ImageOcclusionDraft> {
   const file = formData.get("image")
   const existingBase64 = String(formData.get("existingImageBase64") ?? "")
@@ -39,23 +34,23 @@ async function readDraft(formData: FormData): Promise<ImageOcclusionDraft> {
     imageName = file.name
   }
   if (!imageBase64) throw new Error("Choose an image to occlude.")
+  if (imageMediaType !== "image/png" && imageMediaType !== "image/jpeg")
+    throw new Error("Use a PNG or JPEG image.")
+  if (Buffer.byteLength(imageBase64, "base64") > MAX_IMAGE_BYTES)
+    throw new Error("Images must be 5 MB or smaller.")
+  const regions = JSON.parse(String(formData.get("regionsJson") ?? "[]"))
+  if (!Array.isArray(regions) || regions.length === 0)
+    throw new Error("Draw at least one occlusion box.")
   return {
     accessibleDescription: String(formData.get("accessibleDescription") ?? ""),
-    answer: String(formData.get("answer") ?? ""),
     assetId: String(formData.get("existingAssetId") ?? "") || undefined,
     challenge: String(formData.get("challenge") ?? ""),
     corpusId: String(formData.get("corpusId") ?? "").trim(),
-    height: number(formData, "height"),
     imageBase64,
     imageMediaType,
     imageName,
     newImage,
-    promptId: String(formData.get("promptId") ?? "").trim(),
-    regionDescription: String(formData.get("regionDescription") ?? ""),
-    regionLabel: String(formData.get("regionLabel") ?? ""),
-    width: number(formData, "width"),
-    x: number(formData, "x"),
-    y: number(formData, "y"),
+    regions,
   }
 }
 
@@ -99,35 +94,41 @@ export async function loader({ request }: Route.LoaderArgs) {
       prompt && asset
         ? {
             accessibleDescription: asset.accessibleDescription ?? "",
-            answer: prompt.resolution.join("\n"),
             assetId: asset.assetId,
             challenge: prompt.challenge.join("\n"),
             corpusId,
-            height:
-              prompt.occlusionRegions?.[0]?.geometry.type === "rectangle"
-                ? prompt.occlusionRegions[0].geometry.height
-                : 0.25,
             imageBase64: Buffer.from(asset.bytes).toString("base64"),
             imageMediaType: asset.mediaType,
             imageName: asset.path.split("/").at(-1) ?? "image",
-            promptId,
-            regionDescription:
-              prompt.occlusionRegions?.[0]?.accessibleDescription ?? "",
-            regionLabel: prompt.occlusionRegions?.[0]?.label ?? "",
-            width:
-              prompt.occlusionRegions?.[0]?.geometry.type === "rectangle"
-                ? prompt.occlusionRegions[0].geometry.width
-                : 0.25,
-            x:
-              prompt.occlusionRegions?.[0]?.geometry.type === "rectangle"
-                ? prompt.occlusionRegions[0].geometry.x
-                : 0.1,
-            y:
-              prompt.occlusionRegions?.[0]?.geometry.type === "rectangle"
-                ? prompt.occlusionRegions[0].geometry.y
-                : 0.1,
+            regions:
+              prompt.occlusionRegions
+                ?.filter((region) => region.geometry.type === "rectangle")
+                .slice(0, 1)
+                .map((region) => ({
+                  accessibleDescription: region.accessibleDescription,
+                  answer: prompt.resolution.join("\n"),
+                  height:
+                    region.geometry.type === "rectangle"
+                      ? region.geometry.height
+                      : 0.25,
+                  id: region.id,
+                  label: region.label,
+                  promptId,
+                  width:
+                    region.geometry.type === "rectangle"
+                      ? region.geometry.width
+                      : 0.25,
+                  x:
+                    region.geometry.type === "rectangle"
+                      ? region.geometry.x
+                      : 0.1,
+                  y:
+                    region.geometry.type === "rectangle"
+                      ? region.geometry.y
+                      : 0.1,
+                })) ?? [],
           }
-        : { corpusId, promptId: promptId || createId() },
+        : { corpusId },
     userEmail: user?.email ?? "",
   }
 }
@@ -149,9 +150,12 @@ export async function action({ request }: Route.ActionArgs) {
       throw new StaleCorpusSnapshotError(
         "This corpus changed after preview. Reload before saving.",
       )
-    const promptId = String(formData.get("promptId") ?? "")
+    const promptIds = JSON.parse(
+      String(formData.get("promptIdsJson") ?? "[]"),
+    ) as string[]
+    const firstPromptId = promptIds[0]
     const sourceAsset = document.prompts.find(
-      ({ id }) => id === promptId,
+      ({ id }) => id === firstPromptId,
     )?.sourceAsset
     const asset = document.assets.find(({ id }) => id === sourceAsset)
     if (!asset) throw data("Image asset missing", { status: 400 })
@@ -180,7 +184,9 @@ export async function action({ request }: Route.ActionArgs) {
       ownerId,
     })
     throw redirect(
-      `/library/${encodeURIComponent(document.corpusId)}/memories/${encodeURIComponent(promptId)}`,
+      promptIds.length === 1 && firstPromptId
+        ? `/library/${encodeURIComponent(document.corpusId)}/memories/${encodeURIComponent(firstPromptId)}`
+        : `/library/${encodeURIComponent(document.corpusId)}?tab=memories`,
     )
   }
   try {
@@ -202,6 +208,7 @@ export async function action({ request }: Route.ActionArgs) {
         ? {
             canonicalJson: result.preview.canonicalJson,
             draft,
+            promptIds: result.promptIds,
             valid: true as const,
           }
         : { diagnostics: result.diagnostics, draft, valid: false as const },
