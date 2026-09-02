@@ -9,7 +9,7 @@ export async function loader() {
 
 export async function action({ request }: Route.ActionArgs) {
   const setCookie = await destroyUserSession(request)
-  return redirect("/login", {
+  return redirect("/auth/signin", {
     headers: { "Set-Cookie": setCookie },
   })
 }

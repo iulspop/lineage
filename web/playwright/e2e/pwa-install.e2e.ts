@@ -27,9 +27,9 @@ test.describe("minimum installable PWA shell", () => {
           expectedIcons.map((icon) => expect.objectContaining(icon)),
         ),
         lang: "en",
-        name: "Personal App",
+        name: "Lineage",
         scope: "/",
-        short_name: "Personal",
+        short_name: "Lineage",
         start_url: "/",
         theme_color: "#faf9f7",
       })
@@ -81,7 +81,7 @@ test.describe("minimum installable PWA shell", () => {
       ).toHaveAttribute("href", "/apple-touch-icon.png")
       await expect(
         page.locator('meta[name="application-name"]'),
-      ).toHaveAttribute("content", "Personal App")
+      ).toHaveAttribute("content", "Lineage")
       await expect(
         page.locator('meta[name="apple-mobile-web-app-capable"]'),
       ).toHaveAttribute("content", "yes")
