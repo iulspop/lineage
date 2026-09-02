@@ -18,12 +18,15 @@ import {
   savePasskeyToDatabase,
   updatePasskeyCounterInDatabaseByCredentialId,
 } from "../infrastructure/passkeys-model.server"
+import { getServerEnv } from "~/config/server-env.server"
 import { retrieveUserFromDatabaseByEmail } from "~/features/users/infrastructure/users-model.server"
 
 const rpName = "Personal App"
 
-const getRpId = (request: Request) => new URL(request.url).hostname
-const getOrigin = (request: Request) => new URL(request.url).origin
+const getPublicUrl = (request: Request) =>
+  new URL(getServerEnv().APP_URL ?? request.url)
+const getRpId = (request: Request) => getPublicUrl(request).hostname
+const getOrigin = (request: Request) => getPublicUrl(request).origin
 const encodePublicKey = (credentialPublicKey: Uint8Array_) =>
   isoBase64URL.fromBuffer(credentialPublicKey)
 const decodePublicKey = (credentialPublicKey: string) =>

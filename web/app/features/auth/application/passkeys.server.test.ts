@@ -1,11 +1,19 @@
-import { generateRegistrationOptions } from "@simplewebauthn/server"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+} from "@simplewebauthn/server"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { generatePasskeyRegistrationOptions } from "./passkeys.server"
+import {
+  generatePasskeyRegistrationOptions,
+  verifyPasskeyRegistration,
+} from "./passkeys.server"
+import { resetServerEnvCacheForTests } from "~/config/server-env.server"
 
 vi.mock("@simplewebauthn/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@simplewebauthn/server")>()),
   generateRegistrationOptions: vi.fn(() => ({ challenge: "challenge" })),
+  verifyRegistrationResponse: vi.fn(() => ({ verified: false })),
 }))
 
 vi.mock("../infrastructure/passkeys-model.server", () => ({
@@ -21,6 +29,12 @@ vi.mock("~/features/users/infrastructure/users-model.server", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resetServerEnvCacheForTests()
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  resetServerEnvCacheForTests()
 })
 
 describe("generatePasskeyRegistrationOptions()", () => {
@@ -42,5 +56,36 @@ describe("generatePasskeyRegistrationOptions()", () => {
     }
 
     expect(actual).toEqual(expected)
+  })
+
+  test("given: a proxy-internal request URL, should: use the configured public application origin", async () => {
+    vi.stubEnv("APP_URL", "https://lineage-polyanova.fly.dev/")
+    const request = new Request(
+      "http://lineage-polyanova.fly.dev/auth/passkey/register",
+    )
+
+    await generatePasskeyRegistrationOptions({
+      request,
+      userEmail: "user@example.com",
+      userId: "user-id",
+    })
+
+    expect(vi.mocked(generateRegistrationOptions)).toHaveBeenCalledWith(
+      expect.objectContaining({ rpID: "lineage-polyanova.fly.dev" }),
+    )
+
+    await verifyPasskeyRegistration({
+      expectedChallenge: "challenge",
+      request,
+      response: {} as never,
+      userId: "user-id",
+    })
+
+    expect(vi.mocked(verifyRegistrationResponse)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedOrigin: "https://lineage-polyanova.fly.dev",
+        expectedRPID: "lineage-polyanova.fly.dev",
+      }),
+    )
   })
 })
