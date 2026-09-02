@@ -2,6 +2,9 @@ app = "lineage-polyanova"
 primary_region = "iad"
 swap_size_mb = 512
 
+[build]
+  dockerfile = "web/Dockerfile"
+
 [vm]
   cpu_kind = "performance"
   cpus = 1

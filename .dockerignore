@@ -1,0 +1,11 @@
+.git
+.mastracode
+**/node_modules
+**/dist
+**/build
+**/.react-router
+**/test-results
+**/playwright-report
+**/*.db
+**/*.db-journal
+**/*.log
