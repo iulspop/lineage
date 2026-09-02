@@ -1,84 +1,53 @@
-import type { Card, Grade, State } from "ts-fsrs"
-import { createEmptyCard, fsrs, generatorParameters, Rating } from "ts-fsrs"
+import type { RecallHistoryState } from "@lineage/core/scheduling"
+import {
+  FSRS6_IDENTITY,
+  FSRS6_PARAMETERS,
+  fsrs6,
+} from "@lineage/core/scheduling"
 
 import type { ReviewAssessment, ReviewHistoryEntry } from "../domain/review"
 
-export const REVIEW_SCHEDULER = "fsrs"
-export const REVIEW_SCHEDULER_VERSION = "6"
-export const REVIEW_SCHEDULER_IMPLEMENTATION = "ts-fsrs@5.4.1"
-export const REVIEW_SCHEDULER_PROFILE = "fsrs-6-default-r90-v1"
-export const REVIEW_PARAMETER_SET =
-  "sha256:68ec99cf2c9d3129f7e81f0ad77aaf08892e68417f3809d85c37442708dc6732"
+export const REVIEW_SCHEDULER = FSRS6_IDENTITY.family
+export const REVIEW_SCHEDULER_VERSION = FSRS6_IDENTITY.version
+export const REVIEW_SCHEDULER_IMPLEMENTATION = FSRS6_IDENTITY.implementation
+export const REVIEW_SCHEDULER_PROFILE = FSRS6_IDENTITY.profile
+export const REVIEW_PARAMETER_SET = FSRS6_IDENTITY.parameterSet
+export const REVIEW_PARAMETERS = FSRS6_PARAMETERS
 
-export const REVIEW_PARAMETERS = generatorParameters({
-  enable_fuzz: true,
-  enable_short_term: true,
-  learning_steps: ["1m", "10m"],
-  maximum_interval: 36_500,
-  relearning_steps: ["10m"],
-  request_retention: 0.9,
-})
+const policy = fsrs6()
 
-const scheduler = fsrs(REVIEW_PARAMETERS)
-
-const ratings: Record<ReviewAssessment, Grade> = {
-  again: Rating.Again,
-  easy: Rating.Easy,
-  good: Rating.Good,
-  hard: Rating.Hard,
-}
-
-function previousCard(previous: ReviewHistoryEntry | null, now: Date): Card {
-  if (
-    previous?.scheduler === REVIEW_SCHEDULER &&
-    previous.fsrsDueAt &&
-    previous.fsrsState != null &&
-    previous.fsrsStability != null &&
-    previous.fsrsDifficulty != null &&
-    previous.fsrsElapsedDays != null &&
-    previous.fsrsScheduledDays != null &&
-    previous.fsrsLearningSteps != null &&
-    previous.fsrsReps != null &&
-    previous.fsrsLapses != null
-  ) {
-    return {
-      difficulty: previous.fsrsDifficulty,
-      due: previous.fsrsDueAt,
-      elapsed_days: previous.fsrsElapsedDays,
-      lapses: previous.fsrsLapses,
-      last_review: previous.reviewedAt,
-      learning_steps: previous.fsrsLearningSteps,
-      reps: previous.fsrsReps,
-      scheduled_days: previous.fsrsScheduledDays,
-      stability: previous.fsrsStability,
-      state: previous.fsrsState as State,
-    }
+export function toRecallHistoryState(
+  previous: ReviewHistoryEntry,
+): RecallHistoryState
+export function toRecallHistoryState(previous: null): null
+export function toRecallHistoryState(
+  previous: ReviewHistoryEntry | null,
+): RecallHistoryState | null
+export function toRecallHistoryState(
+  previous: ReviewHistoryEntry | null,
+): RecallHistoryState | null {
+  if (!previous) return null
+  return {
+    difficulty: previous.fsrsDifficulty,
+    dueAt: previous.fsrsDueAt,
+    elapsedDays: previous.fsrsElapsedDays,
+    lapses: previous.fsrsLapses,
+    lastReviewedAt: previous.reviewedAt,
+    learningSteps: previous.fsrsLearningSteps,
+    nextIntervalMinutes: previous.nextIntervalMinutes,
+    reps: previous.fsrsReps,
+    scheduledDays: previous.fsrsScheduledDays,
+    scheduler: previous.scheduler,
+    stability: previous.fsrsStability,
+    state: previous.fsrsState,
   }
-
-  return createEmptyCard(now)
-}
-
-function intervalMinutes(due: Date, reviewedAt: Date) {
-  return Math.max(
-    1,
-    Math.round((due.getTime() - reviewedAt.getTime()) / 60_000),
-  )
 }
 
 export function previewReview(
   previous: ReviewHistoryEntry | null,
   reviewedAt: Date,
 ) {
-  const preview = scheduler.repeat(
-    previousCard(previous, reviewedAt),
-    reviewedAt,
-  )
-  return {
-    again: intervalMinutes(preview[Rating.Again].card.due, reviewedAt),
-    easy: intervalMinutes(preview[Rating.Easy].card.due, reviewedAt),
-    good: intervalMinutes(preview[Rating.Good].card.due, reviewedAt),
-    hard: intervalMinutes(preview[Rating.Hard].card.due, reviewedAt),
-  } satisfies Record<ReviewAssessment, number>
+  return policy.preview(toRecallHistoryState(previous), reviewedAt)
 }
 
 export function scheduleReview(
@@ -86,42 +55,35 @@ export function scheduleReview(
   previous: ReviewHistoryEntry | null,
   reviewedAt: Date,
 ) {
-  const result = scheduler.next(
-    previousCard(previous, reviewedAt),
+  const transition = policy.transition(
+    assessment,
+    toRecallHistoryState(previous),
     reviewedAt,
-    ratings[assessment],
   )
-  const card = result.card
-
   return {
-    fsrsDifficulty: card.difficulty,
-    fsrsDueAt: card.due,
-    fsrsElapsedDays: card.elapsed_days,
-    fsrsLapses: card.lapses,
-    fsrsLearningSteps: card.learning_steps,
-    fsrsReps: card.reps,
-    fsrsScheduledDays: card.scheduled_days,
-    fsrsStability: card.stability,
-    fsrsState: card.state,
-    nextIntervalMinutes: intervalMinutes(card.due, reviewedAt),
-    parameterSet: REVIEW_PARAMETER_SET,
-    previousIntervalMinutes: previous?.nextIntervalMinutes ?? 0,
-    scheduler: REVIEW_SCHEDULER,
-    schedulerImplementation: REVIEW_SCHEDULER_IMPLEMENTATION,
-    schedulerProfile: REVIEW_SCHEDULER_PROFILE,
-    schedulerVersion: REVIEW_SCHEDULER_VERSION,
+    fsrsDifficulty: transition.difficulty,
+    fsrsDueAt: transition.dueAt,
+    fsrsElapsedDays: transition.elapsedDays,
+    fsrsLapses: transition.lapses,
+    fsrsLearningSteps: transition.learningSteps,
+    fsrsReps: transition.reps,
+    fsrsScheduledDays: transition.scheduledDays,
+    fsrsStability: transition.stability,
+    fsrsState: transition.state,
+    nextIntervalMinutes: transition.nextIntervalMinutes,
+    parameterSet: transition.parameterSet,
+    previousIntervalMinutes: transition.previousIntervalMinutes,
+    scheduler: transition.family,
+    schedulerImplementation: transition.implementation,
+    schedulerProfile: transition.profile,
+    schedulerVersion: transition.version,
   }
 }
 
 export function dueAt(review: ReviewHistoryEntry | null) {
-  if (!review) return null
-  return (
-    review.fsrsDueAt ??
-    new Date(review.reviewedAt.getTime() + review.nextIntervalMinutes * 60_000)
-  )
+  return policy.dueAt(toRecallHistoryState(review))
 }
 
 export function isDue(review: ReviewHistoryEntry | null, now = new Date()) {
-  const due = dueAt(review)
-  return !due || due <= now
+  return policy.isDue(toRecallHistoryState(review), now)
 }

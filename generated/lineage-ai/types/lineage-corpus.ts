@@ -138,6 +138,66 @@ export interface CollectionMembership {
 
 }
 
+/** Stable generalized learning target. */
+export interface LearningTargetReference {
+  /** Learning target kind. Determines which revision and segment fields are required. */
+  "type": "prompt" | "source" | "material" | "source-segment" | "material-segment" | "collection" | "concept"
+  /** Stable target identity. Must resolve inside the corpus except for declared concepts. */
+  "id": string
+  /** Exact immutable revision. Required for Prompt, Source, Material, and segment targets. */
+  "revision"?: number
+  /** Stable reading segment identity. Required only for source-segment and material-segment targets. */
+  "segmentId"?: string
+
+}
+
+/** Revision-bound Source or Material segment owner. */
+export interface ReadingSegmentTarget {
+  /** Segment owner kind. Only Source and Material revisions can own reading segments. */
+  "type": "source" | "material"
+  /** Owner identity. Must resolve with revision. */
+  "id": string
+  /** Exact owner revision. Prevents progress drifting across edited prose. */
+  "revision": number
+
+}
+
+/** Stable durable reading segment. */
+export interface ReadingSegment {
+  /** Stable segment identity within its revision-bound owner. Never derived from mutable character offsets. */
+  "id": string
+  /** Revision-bound Source or Material owner. The owner revision must resolve exactly. */
+  "target": ReadingSegmentTarget
+  /** Stable authored ordering within the owner revision. Used for coherent continuation, not identity. */
+  "ordinal": number
+  /** Durable segment content. Must contain at least one content block. */
+  "content": Array<string>
+
+}
+
+/** Append-only non-recall learning evidence. */
+export interface LearningObservation {
+  /** Stable observation identity. Append-only and unique among generalized observations. */
+  "id": string
+  /** Observed learning target. Must resolve to the exact durable target. */
+  "target": LearningTargetReference
+  /** Activity that produced the observation. Recall-specific scheduler evidence remains a Repetition. */
+  "activityKind": "recall" | "practice" | "read" | "lesson"
+  /** Factual observation kind. Does not persist inferred mastery. */
+  "observationKind": "presented" | "attempted" | "completed" | "skipped" | "assessed" | "deferred"
+  /** Observation timestamp. Hosts declare chronological replay order for merges. */
+  "observedAt": string
+  /** Observed duration. Non-negative when present. */
+  "durationMilliseconds"?: number
+  /** Policy-neutral authored assessment. Required only by host policy when observationKind is assessed. */
+  "assessment"?: string
+  /** Optional captured learner response. Absence remains distinct from an empty response. */
+  "response"?: string
+  /** Origin records. All references resolve locally. */
+  "provenance"?: Array<string>
+
+}
+
 /** Asset version-1 wire object. */
 export interface Asset {
   /** Stable asset identity. Referenced by Prompts, Sources, and Materials. */
@@ -365,6 +425,10 @@ export interface CorpusDocument {
   "collections"?: Array<Collection>
   /** Prompt membership in collections. Memories may belong to multiple collections. */
   "collectionMemberships"?: Array<CollectionMembership>
+  /** Stable revision-bound reading segments. Defaults to empty for backward compatibility. */
+  "readingSegments"?: Array<ReadingSegment>
+  /** Append-only non-recall learning evidence. Defaults to empty; Repetitions remain recall-specific evidence. */
+  "learningObservations"?: Array<LearningObservation>
   /** Asset declarations. Defaults to empty. */
   "assets"?: Array<Asset>
   /** Typed relationships. Defaults to empty. */

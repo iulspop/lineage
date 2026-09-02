@@ -48,6 +48,20 @@ data ArchiveEntryRole : Set where
 data ResponseInteraction : Set where
   textResponse selfCheckResponse : ResponseInteraction
 
+data LearningTargetKind : Set where
+  promptTarget sourceTarget materialTarget sourceSegmentTarget materialSegmentTarget
+    collectionTarget conceptTarget : LearningTargetKind
+
+data SegmentOwnerKind : Set where
+  sourceSegmentOwner materialSegmentOwner : SegmentOwnerKind
+
+data LearningActivityKind : Set where
+  recallActivity practiceActivity readActivity lessonActivity : LearningActivityKind
+
+data LearningObservationKind : Set where
+  presentedObservation attemptedObservation completedObservation skippedObservation
+    assessedObservation deferredObservation : LearningObservationKind
+
 record EntityReference : Set where
   constructor entityReference
   field
@@ -125,6 +139,35 @@ record CollectionMembership : Set where
   constructor collectionMembership
   field
     collectionId promptId : String
+
+record LearningTargetReference : Set where
+  constructor learningTargetReference
+  field
+    targetKind : LearningTargetKind
+    targetId : String
+    targetRevision : Maybe ℕ
+    targetSegmentId : Maybe String
+
+record ReadingSegment : Set where
+  constructor readingSegment
+  field
+    segmentId : String
+    ownerKind : SegmentOwnerKind
+    ownerId : String
+    ownerRevision ordinal : ℕ
+    segmentContent : List String
+
+record LearningObservation : Set where
+  constructor learningObservation
+  field
+    observationId : String
+    observationTarget : LearningTargetReference
+    activityKind : LearningActivityKind
+    observationKind : LearningObservationKind
+    observedAt : String
+    durationMilliseconds : Maybe ℕ
+    assessment response : Maybe String
+    provenanceIds : List String
 
 record Prompt : Set where
   constructor prompt
@@ -245,6 +288,8 @@ record CorpusDocument : Set where
     materials : List MaterialRevision
     collections : List Collection
     collectionMemberships : List CollectionMembership
+    readingSegments : List ReadingSegment
+    learningObservations : List LearningObservation
     assets : List AssetReference
     relationships : List Relationship
     repetitions : List Repetition
@@ -389,6 +434,58 @@ collectionMembershipFields =
     "Containing collection." "Must resolve locally." ∷
   describeField "promptId" required (reference "Prompt")
     "Organized Prompt identity." "Membership does not partition scheduling." ∷ []
+
+learningTargetReferenceFields : List Field
+learningTargetReferenceFields =
+  describeField "type" required (enumeration ("prompt" ∷ "source" ∷ "material" ∷ "source-segment" ∷ "material-segment" ∷ "collection" ∷ "concept" ∷ []))
+    "Learning target kind." "Determines which revision and segment fields are required." ∷
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable target identity." "Must resolve inside the corpus except for declared concepts." ∷
+  describeConstrainedField "revision" optional (scalar natural) (minimum 1 ∷ []) noDefault
+    "Exact immutable revision." "Required for Prompt, Source, Material, and segment targets." ∷
+  describeField "segmentId" optional (scalar text)
+    "Stable reading segment identity." "Required only for source-segment and material-segment targets." ∷ []
+
+readingSegmentFields : List Field
+readingSegmentFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable segment identity within its revision-bound owner." "Never derived from mutable character offsets." ∷
+  describeField "target" required (objectRef "ReadingSegmentTarget")
+    "Revision-bound Source or Material owner." "The owner revision must resolve exactly." ∷
+  describeField "ordinal" required (scalar natural)
+    "Stable authored ordering within the owner revision." "Used for coherent continuation, not identity." ∷
+  describeField "content" required (array (scalar text))
+    "Durable segment content." "Must contain at least one content block." ∷ []
+
+readingSegmentTargetFields : List Field
+readingSegmentTargetFields =
+  describeField "type" required (enumeration ("source" ∷ "material" ∷ []))
+    "Segment owner kind." "Only Source and Material revisions can own reading segments." ∷
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Owner identity." "Must resolve with revision." ∷
+  describeConstrainedField "revision" required (scalar natural) (minimum 1 ∷ []) noDefault
+    "Exact owner revision." "Prevents progress drifting across edited prose." ∷ []
+
+learningObservationFields : List Field
+learningObservationFields =
+  describeConstrainedField "id" required (scalar text) (nonEmpty ∷ []) noDefault
+    "Stable observation identity." "Append-only and unique among generalized observations." ∷
+  describeField "target" required (objectRef "LearningTargetReference")
+    "Observed learning target." "Must resolve to the exact durable target." ∷
+  describeField "activityKind" required (enumeration ("recall" ∷ "practice" ∷ "read" ∷ "lesson" ∷ []))
+    "Activity that produced the observation." "Recall-specific scheduler evidence remains a Repetition." ∷
+  describeField "observationKind" required (enumeration ("presented" ∷ "attempted" ∷ "completed" ∷ "skipped" ∷ "assessed" ∷ "deferred" ∷ []))
+    "Factual observation kind." "Does not persist inferred mastery." ∷
+  describeConstrainedField "observedAt" required (scalar timestamp) (semanticFormat "date-time" ∷ []) noDefault
+    "Observation timestamp." "Hosts declare chronological replay order for merges." ∷
+  describeField "durationMilliseconds" optional (scalar natural)
+    "Observed duration." "Non-negative when present." ∷
+  describeField "assessment" optional (scalar text)
+    "Policy-neutral authored assessment." "Required only by host policy when observationKind is assessed." ∷
+  describeField "response" optional (scalar text)
+    "Optional captured learner response." "Absence remains distinct from an empty response." ∷
+  describeDefaultedField "provenance" optional (array (reference "Provenance")) defaultEmptyArray
+    "Origin records." "All references resolve locally." ∷ []
 
 promptFields : List Field
 promptFields =
@@ -573,6 +670,10 @@ corpusDocumentFields =
     "Identity-neutral organization." "Defaults to empty for backward compatibility." ∷
   describeDefaultedField "collectionMemberships" optional (array (objectRef "CollectionMembership")) defaultEmptyArray
     "Prompt membership in collections." "Memories may belong to multiple collections." ∷
+  describeDefaultedField "readingSegments" optional (array (objectRef "ReadingSegment")) defaultEmptyArray
+    "Stable revision-bound reading segments." "Defaults to empty for backward compatibility." ∷
+  describeDefaultedField "learningObservations" optional (array (objectRef "LearningObservation")) defaultEmptyArray
+    "Append-only non-recall learning evidence." "Defaults to empty; Repetitions remain recall-specific evidence." ∷
   describeDefaultedField "assets" optional (array (objectRef "Asset")) defaultEmptyArray
     "Asset declarations." "Defaults to empty." ∷
   describeDefaultedField "relationships" optional (array (objectRef "Relationship")) defaultEmptyArray
@@ -656,6 +757,10 @@ v1Rules =
   rule "asset.path-unsafe" error "An asset path is unsafe." "Paths are relative, normalized, unique, and cannot traverse." "asset" ∷
   rule "history.prompt-unresolved" error "A repetition references an absent Prompt revision." "History resolves to exact served Prompt revisions." "repetition" ∷
   rule "history.correction-invalid" error "A correction target is missing or self-referential." "Corrections are distinct append-only events." "correction" ∷
+  rule "reading.segment-owner-unresolved" error "A reading segment owner revision is absent." "Segments bind an exact Source or Material revision." "reading" ∷
+  rule "reading.segment-content-empty" error "A reading segment has no durable content." "Stable segments contain at least one content block." "reading" ∷
+  rule "evidence.target-unresolved" error "A learning observation target is absent or malformed." "Evidence resolves to an exact durable learning target." "evidence" ∷
+  rule "evidence.replay-invalid" error "Learning evidence cannot be replayed deterministically." "Every observation carries a replay timestamp; hosts declare merge ordering." "evidence" ∷
   rule "migration.chain-invalid" error "Migration history is not forward and contiguous." "Each step starts at the preceding version and advances." "migration" ∷
   rule "extension.required-unsupported" error "A required extension is unsupported." "Required capabilities must be understood by the renderer." "extension" ∷
   rule "extension.optional-fallback-missing" error "An optional extension lacks a fallback." "Portable fallback content keeps the Prompt reviewable." "extension" ∷
@@ -699,6 +804,10 @@ v1Description = format "lineage.corpus" 1
    object "Material" "Material version-1 wire object." materialFields ∷
    object "Collection" "Collection version-1 wire object." collectionFields ∷
    object "CollectionMembership" "CollectionMembership version-1 wire object." collectionMembershipFields ∷
+   object "LearningTargetReference" "Stable generalized learning target." learningTargetReferenceFields ∷
+   object "ReadingSegmentTarget" "Revision-bound Source or Material segment owner." readingSegmentTargetFields ∷
+   object "ReadingSegment" "Stable durable reading segment." readingSegmentFields ∷
+   object "LearningObservation" "Append-only non-recall learning evidence." learningObservationFields ∷
    object "Asset" "Asset version-1 wire object." assetFields ∷
    object "ExtensionSet" "ExtensionSet version-1 wire object." extensionSetFields ∷
    object "Prompt" "Prompt version-1 wire object." promptFields ∷

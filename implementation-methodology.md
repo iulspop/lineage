@@ -415,6 +415,20 @@ A scheduler adapter should make explicit:
 
 The initial implementation should integrate with the Open Spaced Repetition ecosystem while keeping scheduler-specific semantics outside the identity of the corpus.
 
+## 5.8 General learning-planning algebra
+
+Lineage generalizes scheduling without weakening Prompt review semantics. A **learning target** is an exact reference to a Prompt, Source, or Material revision, a stable revision-bound reading segment, a Collection, or an authored concept. A **learning activity** is an ephemeral instruction such as recall, practice, reading, or lesson progression. A **learning observation** is an append-only factual event; mastery, due state, reading position, and session order are derived projections.
+
+The formal boundary is split compositionally:
+
+* `LearningTarget` specifies stable heterogeneous references;
+* `LearningEvidence` embeds existing Repetitions losslessly and adds factual non-recall observations;
+* `Planning` selects only eligible authored candidates and carries explicit budget proofs, rationales, policy identities, and tie-break input;
+* executable evidence histories may be newest-first, but their denotation and folds are chronological;
+* deterministic planning means the same explicit corpus, evidence, policy versions, objective, time, budget, and seed denote the same plan.
+
+Prompt recall continues through the proved `ReviewContract` disclosure state machine. Reading and lesson activities never masquerade as reviews, policy scores never become durable corpus truth, and version-one planners do not invent content or prerequisites.
+
 ---
 
 # 6. Literate Agda

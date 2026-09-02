@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
+import { compiledLineageApi as lineageCore } from "@lineage/core/runtime"
 import Ajv2020 from "ajv/dist/2020.js"
 
 import {
@@ -7,7 +8,6 @@ import {
   parseCorpusDocument,
   serializeCorpusDocument,
 } from "../app/features/lineage/domain/corpus"
-import lineageCore from "../app/features/lineage/generated/lineage-core.mjs"
 import { createCompiledCoreValidator } from "../app/features/lineage/infrastructure/compiled-core"
 import {
   decodeFormatDescription,

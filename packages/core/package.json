@@ -1,0 +1,59 @@
+{
+	"dependencies": {
+		"ts-fsrs": "5.4.1",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.10"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./corpus": {
+			"import": "./dist/corpus/index.js",
+			"types": "./dist/corpus/index.d.ts"
+		},
+		"./evidence": {
+			"import": "./dist/evidence/index.js",
+			"types": "./dist/evidence/index.d.ts"
+		},
+		"./planning": {
+			"import": "./dist/planning/index.js",
+			"types": "./dist/planning/index.d.ts"
+		},
+		"./policies": {
+			"import": "./dist/policies/index.js",
+			"types": "./dist/policies/index.d.ts"
+		},
+		"./review": {
+			"import": "./dist/review/index.js",
+			"types": "./dist/review/index.d.ts"
+		},
+		"./runtime": {
+			"import": "./dist/runtime/index.js",
+			"types": "./dist/runtime/index.d.ts"
+		},
+		"./scheduling": {
+			"import": "./dist/scheduling/index.js",
+			"types": "./dist/scheduling/index.d.ts"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"name": "@lineage/core",
+	"private": true,
+	"scripts": {
+		"benchmark:scale": "pnpm build && node --max-old-space-size=1536 scripts/benchmark-scale.mjs",
+		"build": "tsc -p tsconfig.json && mkdir -p dist/generated && cp src/generated/lineage-core.mjs src/generated/lineage-core.d.mts dist/generated/",
+		"check:architecture": "node scripts/check-architecture.mjs",
+		"test": "vitest run src --passWithNoTests",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"sideEffects": false,
+	"type": "module",
+	"version": "0.0.0"
+}

@@ -1,6 +1,6 @@
+import { compiledLineageApi as lineageCore } from "@lineage/core/runtime"
 import { describe, expect, test } from "vitest"
 
-import lineageCore from "../generated/lineage-core.mjs"
 import { lineageRuntime } from "./lineage-runtime.server"
 
 const contract = {

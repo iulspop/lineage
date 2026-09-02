@@ -25,9 +25,11 @@ import Lineage.Specification.CorpusWireV1 as Wire
 open Wire using
   ( PromptKind; Lifecycle; RequirementLevel; RelationshipKind; RepetitionRating
   ; ProvenanceKind; ConversionStatus; ResponseInteraction; OcclusionGeometry
+  ; LearningTargetKind; SegmentOwnerKind; LearningActivityKind; LearningObservationKind
   ; EntityReference; ExtensionSet; NormalizedPoint; RectangleGeometry; PolygonGeometry
   ; AssetReference; ClozeTarget; OcclusionRegion; SourceRevision; MaterialRevision
-  ; Collection; CollectionMembership; Prompt; SchedulerObservation; Repetition; RepetitionCorrection; Relationship
+  ; Collection; CollectionMembership; LearningTargetReference; ReadingSegment; LearningObservation
+  ; Prompt; SchedulerObservation; Repetition; RepetitionCorrection; Relationship
   ; ProvenanceRecord; ExtensionDeclaration; MigrationRecord; InteroperabilityReport
   ; CorpusDocument; v1Description
   )
@@ -130,6 +132,33 @@ responseInteraction : String → ResponseInteraction
 responseInteraction "self-check" = Wire.selfCheckResponse
 responseInteraction _ = Wire.textResponse
 
+learningTargetKind : String → LearningTargetKind
+learningTargetKind "source" = Wire.sourceTarget
+learningTargetKind "material" = Wire.materialTarget
+learningTargetKind "source-segment" = Wire.sourceSegmentTarget
+learningTargetKind "material-segment" = Wire.materialSegmentTarget
+learningTargetKind "collection" = Wire.collectionTarget
+learningTargetKind "concept" = Wire.conceptTarget
+learningTargetKind _ = Wire.promptTarget
+
+segmentOwnerKind : String → SegmentOwnerKind
+segmentOwnerKind "material" = Wire.materialSegmentOwner
+segmentOwnerKind _ = Wire.sourceSegmentOwner
+
+learningActivityKind : String → LearningActivityKind
+learningActivityKind "practice" = Wire.practiceActivity
+learningActivityKind "read" = Wire.readActivity
+learningActivityKind "lesson" = Wire.lessonActivity
+learningActivityKind _ = Wire.recallActivity
+
+learningObservationKind : String → LearningObservationKind
+learningObservationKind "attempted" = Wire.attemptedObservation
+learningObservationKind "completed" = Wire.completedObservation
+learningObservationKind "skipped" = Wire.skippedObservation
+learningObservationKind "assessed" = Wire.assessedObservation
+learningObservationKind "deferred" = Wire.deferredObservation
+learningObservationKind _ = Wire.presentedObservation
+
 disclosureContains : String → String → Bool
 disclosureContains = CorpusValidation.containsNormalizedText
 
@@ -213,10 +242,48 @@ interoperabilityReport :
   String → String → String → ConversionStatus → List String → List String → InteroperabilityReport
 interoperabilityReport = Wire.interoperabilityReport
 
+promptTarget sourceTarget materialTarget sourceSegmentTarget materialSegmentTarget collectionTarget conceptTarget : LearningTargetKind
+promptTarget = Wire.promptTarget
+sourceTarget = Wire.sourceTarget
+materialTarget = Wire.materialTarget
+sourceSegmentTarget = Wire.sourceSegmentTarget
+materialSegmentTarget = Wire.materialSegmentTarget
+collectionTarget = Wire.collectionTarget
+conceptTarget = Wire.conceptTarget
+
+sourceSegmentOwner materialSegmentOwner : SegmentOwnerKind
+sourceSegmentOwner = Wire.sourceSegmentOwner
+materialSegmentOwner = Wire.materialSegmentOwner
+
+recallActivity practiceActivity readActivity lessonActivity : LearningActivityKind
+recallActivity = Wire.recallActivity
+practiceActivity = Wire.practiceActivity
+readActivity = Wire.readActivity
+lessonActivity = Wire.lessonActivity
+
+presentedObservation attemptedObservation completedObservation skippedObservation assessedObservation deferredObservation : LearningObservationKind
+presentedObservation = Wire.presentedObservation
+attemptedObservation = Wire.attemptedObservation
+completedObservation = Wire.completedObservation
+skippedObservation = Wire.skippedObservation
+assessedObservation = Wire.assessedObservation
+deferredObservation = Wire.deferredObservation
+
+learningTargetReference : LearningTargetKind → String → Maybe ℕ → Maybe String → LearningTargetReference
+learningTargetReference = Wire.learningTargetReference
+
+readingSegment : String → SegmentOwnerKind → String → ℕ → ℕ → List String → ReadingSegment
+readingSegment = Wire.readingSegment
+
+learningObservation :
+  String → LearningTargetReference → LearningActivityKind → LearningObservationKind → String →
+  Maybe ℕ → Maybe String → Maybe String → List String → LearningObservation
+learningObservation = Wire.learningObservation
+
 corpusDocument :
   String → ℕ → String → List Prompt → List SourceRevision → List MaterialRevision →
-  List Collection → List CollectionMembership → List AssetReference → List Relationship →
-  List Repetition → List RepetitionCorrection → List ProvenanceRecord →
+  List Collection → List CollectionMembership → List ReadingSegment → List LearningObservation →
+  List AssetReference → List Relationship → List Repetition → List RepetitionCorrection → List ProvenanceRecord →
   List ExtensionDeclaration → List MigrationRecord → List InteroperabilityReport → CorpusDocument
 corpusDocument = Wire.corpusDocument
 

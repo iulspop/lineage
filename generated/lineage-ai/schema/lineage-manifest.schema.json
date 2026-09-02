@@ -382,6 +382,177 @@
       ],
       "type": "object"
     },
+    "LearningTargetReference": {
+      "additionalProperties": false,
+      "description": "Stable generalized learning target.",
+      "properties": {
+        "type": {
+          "enum": [
+            "prompt",
+            "source",
+            "material",
+            "source-segment",
+            "material-segment",
+            "collection",
+            "concept"
+          ],
+          "description": "Learning target kind. Determines which revision and segment fields are required."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable target identity. Must resolve inside the corpus except for declared concepts."
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer",
+          "description": "Exact immutable revision. Required for Prompt, Source, Material, and segment targets."
+        },
+        "segmentId": {
+          "type": "string",
+          "description": "Stable reading segment identity. Required only for source-segment and material-segment targets."
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "type": "object"
+    },
+    "ReadingSegmentTarget": {
+      "additionalProperties": false,
+      "description": "Revision-bound Source or Material segment owner.",
+      "properties": {
+        "type": {
+          "enum": [
+            "source",
+            "material"
+          ],
+          "description": "Segment owner kind. Only Source and Material revisions can own reading segments."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Owner identity. Must resolve with revision."
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer",
+          "description": "Exact owner revision. Prevents progress drifting across edited prose."
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "revision"
+      ],
+      "type": "object"
+    },
+    "ReadingSegment": {
+      "additionalProperties": false,
+      "description": "Stable durable reading segment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable segment identity within its revision-bound owner. Never derived from mutable character offsets."
+        },
+        "target": {
+          "$ref": "#/$defs/ReadingSegmentTarget",
+          "description": "Revision-bound Source or Material owner. The owner revision must resolve exactly."
+        },
+        "ordinal": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Stable authored ordering within the owner revision. Used for coherent continuation, not identity."
+        },
+        "content": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Durable segment content. Must contain at least one content block."
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "ordinal",
+        "content"
+      ],
+      "type": "object"
+    },
+    "LearningObservation": {
+      "additionalProperties": false,
+      "description": "Append-only non-recall learning evidence.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable observation identity. Append-only and unique among generalized observations."
+        },
+        "target": {
+          "$ref": "#/$defs/LearningTargetReference",
+          "description": "Observed learning target. Must resolve to the exact durable target."
+        },
+        "activityKind": {
+          "enum": [
+            "recall",
+            "practice",
+            "read",
+            "lesson"
+          ],
+          "description": "Activity that produced the observation. Recall-specific scheduler evidence remains a Repetition."
+        },
+        "observationKind": {
+          "enum": [
+            "presented",
+            "attempted",
+            "completed",
+            "skipped",
+            "assessed",
+            "deferred"
+          ],
+          "description": "Factual observation kind. Does not persist inferred mastery."
+        },
+        "observedAt": {
+          "format": "date-time",
+          "type": "string",
+          "description": "Observation timestamp. Hosts declare chronological replay order for merges."
+        },
+        "durationMilliseconds": {
+          "minimum": 0,
+          "type": "integer",
+          "description": "Observed duration. Non-negative when present."
+        },
+        "assessment": {
+          "type": "string",
+          "description": "Policy-neutral authored assessment. Required only by host policy when observationKind is assessed."
+        },
+        "response": {
+          "type": "string",
+          "description": "Optional captured learner response. Absence remains distinct from an empty response."
+        },
+        "provenance": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+            "x-lineage-reference": "Provenance"
+          },
+          "type": "array",
+          "description": "Origin records. All references resolve locally.",
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "activityKind",
+        "observationKind",
+        "observedAt"
+      ],
+      "type": "object"
+    },
     "Asset": {
       "additionalProperties": false,
       "description": "Asset version-1 wire object.",
@@ -1037,6 +1208,22 @@
           },
           "type": "array",
           "description": "Prompt membership in collections. Memories may belong to multiple collections.",
+          "default": []
+        },
+        "readingSegments": {
+          "items": {
+            "$ref": "#/$defs/ReadingSegment"
+          },
+          "type": "array",
+          "description": "Stable revision-bound reading segments. Defaults to empty for backward compatibility.",
+          "default": []
+        },
+        "learningObservations": {
+          "items": {
+            "$ref": "#/$defs/LearningObservation"
+          },
+          "type": "array",
+          "description": "Append-only non-recall learning evidence. Defaults to empty; Repetitions remain recall-specific evidence.",
           "default": []
         },
         "assets": {

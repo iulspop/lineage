@@ -1218,6 +1218,8 @@ Corpus
 ├── Asset
 ├── Region
 ├── Repetition
+├── Learning observation
+├── Stable reading segment
 ├── Relationship
 ├── Provenance
 ├── Presentation profile
@@ -1236,8 +1238,11 @@ how it was presented
 what was withheld
 what response was requested
 what was revealed
-what happened during each review
+what happened during each review or broader learning activity
+which exact revision-bound segment was read
 where the material came from
 ```
 
-Everything else—including a particular UI, template engine, scheduler, search index, or AI system—can be replaced.
+Everything else—including a particular UI, template engine, scheduler, mastery model, session planner, search index, or AI system—can be replaced.
+
+Broader learning state follows the same durable-facts rule. Recall evidence remains the existing Repetition contract for OSR and Anki interoperability. Non-recall evidence records factual presentation, attempt, completion, skip, assessment, or deferral against an exact learning target. Incremental-reading progress binds a stable segment ID to an exact Source or Material revision rather than using mutable character offsets. Session candidates, policy scores, prerequisite-readiness estimates, reading position, mastery, and ordered plans are replaceable derived values; when plans are retained for explanation they include their policy identities and deterministic inputs rather than becoming canonical content truth.

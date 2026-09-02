@@ -1,0 +1,10 @@
+{
+	"name": "lineage",
+	"private": true,
+	"packageManager": "pnpm@11.17.0",
+	"scripts": {
+		"build": "pnpm --filter @lineage/core build && pnpm --filter lineage-web build",
+		"test": "pnpm --filter @lineage/core test && pnpm --filter lineage-web test",
+		"typecheck": "pnpm --filter @lineage/core typecheck && pnpm --filter lineage-web typecheck"
+	}
+}

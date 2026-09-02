@@ -13,6 +13,7 @@ const corpus: CorpusDocument = {
   format: "lineage.corpus",
   formatVersion: 1,
   interoperability: [],
+  learningObservations: [],
   materials: [],
   migrations: [],
   prompts: [
@@ -34,6 +35,7 @@ const corpus: CorpusDocument = {
     },
   ],
   provenance: [],
+  readingSegments: [],
   relationships: [],
   repetitionCorrections: [],
   repetitions: [],

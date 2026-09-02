@@ -1,7 +1,7 @@
+import { compiledLineageApi as lineageCore } from "@lineage/core/runtime"
 import { mkdir, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 
-import lineageCore from "../app/features/lineage/generated/lineage-core.mjs"
 import {
   decodeFormatDescription,
   toAuthoringSpec,

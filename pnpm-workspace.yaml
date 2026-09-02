@@ -1,3 +1,7 @@
+packages:
+  - packages/*
+  - web
+
 allowBuilds:
   '@prisma/engines': true
   '@sentry/cli': true

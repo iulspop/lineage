@@ -1,0 +1,9 @@
+{
+	"generatedAt": "2026-09-02",
+	"generator": "Lineage.API.JavaScript",
+	"runtime": {
+		"path": "src/generated/lineage-core.mjs",
+		"sha256": "76cfd0d3cf1285b6e2f9dd7ae3d03a4d2d2314052ba9f2236eddaefb2de97809"
+	},
+	"sourceOfTruth": "Lineage/**/*.lagda.md"
+}

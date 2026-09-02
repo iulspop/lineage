@@ -365,6 +365,32 @@ migrationIds = map MigrationRecord.migrationId
 reportIds : List InteroperabilityReport → List String
 reportIds = map InteroperabilityReport.reportId
 
+readingSegmentIds : List ReadingSegment → List String
+readingSegmentIds = map ReadingSegment.segmentId
+
+learningObservationIds : List LearningObservation → List String
+learningObservationIds = map LearningObservation.observationId
+
+readingSegmentOwnerKey : ReadingSegment → String
+readingSegmentOwnerKey value = ReadingSegment.ownerId value <> "#" <>
+  showNat (ReadingSegment.ownerRevision value)
+
+readingSegmentTargetKey : ReadingSegment → String
+readingSegmentTargetKey value = readingSegmentOwnerKey value <> "#" <>
+  ReadingSegment.segmentId value
+
+sourceSegmentKeys : List ReadingSegment → List String
+sourceSegmentKeys [] = []
+sourceSegmentKeys (value ∷ values) with ReadingSegment.ownerKind value
+... | sourceSegmentOwner = readingSegmentTargetKey value ∷ sourceSegmentKeys values
+... | materialSegmentOwner = sourceSegmentKeys values
+
+materialSegmentKeys : List ReadingSegment → List String
+materialSegmentKeys [] = []
+materialSegmentKeys (value ∷ values) with ReadingSegment.ownerKind value
+... | sourceSegmentOwner = materialSegmentKeys values
+... | materialSegmentOwner = readingSegmentTargetKey value ∷ materialSegmentKeys values
+
 allEntityIds : CorpusDocument → List String
 allEntityIds document =
   map Prompt.promptId (CorpusDocument.prompts document) ++
@@ -779,6 +805,95 @@ migrationDiagnostics previous index (value ∷ values) =
     else errorAt "migration.chain-invalid" (base <> "/toVersion")
       "Migrations must advance the format version." ∷ []
 
+readingSegmentDiagnostics : List String → List String → ℕ → List ReadingSegment → List Diagnostic
+readingSegmentDiagnostics sourceRevisions materialRevisions index [] = []
+readingSegmentDiagnostics sourceRevisions materialRevisions index (value ∷ values) =
+  current ++ readingSegmentDiagnostics sourceRevisions materialRevisions (suc index) values
+  where
+  base : String
+  base = indexPath "/readingSegments" index
+
+  ownerResolved : Bool
+  ownerResolved with ReadingSegment.ownerKind value
+  ... | sourceSegmentOwner = containsString (readingSegmentOwnerKey value) sourceRevisions
+  ... | materialSegmentOwner = containsString (readingSegmentOwnerKey value) materialRevisions
+
+  contentDiagnostics : List Diagnostic
+  contentDiagnostics with ReadingSegment.segmentContent value
+  ... | [] = errorAt "reading.segment-content-empty" (base <> "/content")
+      "Reading segments must contain durable content." ∷ []
+  ... | _ ∷ _ = []
+
+  current : List Diagnostic
+  current =
+    (if stringEq (ReadingSegment.ownerId value) ""
+      then errorAt "identity.empty" (base <> "/target/id")
+        "Reading-segment owner identity must be non-empty." ∷ []
+      else []) ++
+    (if natEq (ReadingSegment.ownerRevision value) zero
+      then errorAt "revision.non-positive" (base <> "/target/revision")
+        "Reading segments must bind a positive owner revision." ∷ []
+      else []) ++
+    (if ownerResolved then [] else
+      relatedError "reading.segment-owner-unresolved" (base <> "/target/id")
+        "Reading segment does not resolve to the exact Source or Material revision."
+        (base <> "/target/revision") ∷ []) ++
+    contentDiagnostics
+
+targetResolved :
+  List String → List String → List String → List String → List String → List String →
+  LearningTargetReference → Bool
+targetResolved prompts sourceRevisions materialRevisions sourceSegments materialSegments collections target
+  with LearningTargetReference.targetKind target |
+    LearningTargetReference.targetRevision target |
+    LearningTargetReference.targetSegmentId target
+... | promptTarget | just revision | nothing =
+  containsString (LearningTargetReference.targetId target <> "#" <> showNat revision) prompts
+... | sourceTarget | just revision | nothing =
+  containsString (LearningTargetReference.targetId target <> "#" <> showNat revision) sourceRevisions
+... | materialTarget | just revision | nothing =
+  containsString (LearningTargetReference.targetId target <> "#" <> showNat revision) materialRevisions
+... | sourceSegmentTarget | just revision | just segment =
+  containsString (LearningTargetReference.targetId target <> "#" <> showNat revision <> "#" <> segment)
+    sourceSegments
+... | materialSegmentTarget | just revision | just segment =
+  containsString (LearningTargetReference.targetId target <> "#" <> showNat revision <> "#" <> segment)
+    materialSegments
+... | collectionTarget | nothing | nothing =
+  containsString (LearningTargetReference.targetId target) collections
+... | conceptTarget | nothing | nothing = not (stringEq (LearningTargetReference.targetId target) "")
+... | _ | _ | _ = false
+
+learningObservationDiagnostics :
+  List String → List String → List String → List String → List String → List String → List String →
+  ℕ → List LearningObservation → List Diagnostic
+learningObservationDiagnostics prompts sourceRevisions materialRevisions sourceSegments materialSegments collections provenance index [] = []
+learningObservationDiagnostics prompts sourceRevisions materialRevisions sourceSegments materialSegments collections provenance index (value ∷ values) =
+  current ++ learningObservationDiagnostics prompts sourceRevisions materialRevisions sourceSegments materialSegments collections provenance (suc index) values
+  where
+  base : String
+  base = indexPath "/learningObservations" index
+
+  target : LearningTargetReference
+  target = LearningObservation.observationTarget value
+
+  current : List Diagnostic
+  current =
+    (if stringEq (LearningTargetReference.targetId target) ""
+      then errorAt "identity.empty" (base <> "/target/id")
+        "Learning-observation target identity must be non-empty." ∷ []
+      else []) ++
+    (if targetResolved prompts sourceRevisions materialRevisions sourceSegments materialSegments collections target
+      then []
+      else errorAt "evidence.target-unresolved" (base <> "/target")
+        "Learning observation does not resolve to its exact durable target." ∷ []) ++
+    (if stringEq (LearningObservation.observedAt value) ""
+      then errorAt "evidence.replay-invalid" (base <> "/observedAt")
+        "Learning observations require a timestamp for deterministic replay." ∷ []
+      else []) ++
+    checkReferences "reference.unresolved" (base <> "/provenance") provenance
+      (LearningObservation.provenanceIds value)
+
 repetitionDiagnostics : List String → ℕ → List Repetition → List Diagnostic
 repetitionDiagnostics prompts index [] = []
 repetitionDiagnostics prompts index (value ∷ values) =
@@ -835,6 +950,10 @@ validateCorpus document =
   collectionDiagnostics collections zero (CorpusDocument.collections document)
     (CorpusDocument.collections document) ++
   membershipDiagnostics collections promptIds zero (CorpusDocument.collectionMemberships document) ++
+  readingSegmentDiagnostics sourceRevisionKeys materialRevisionKeys zero
+    (CorpusDocument.readingSegments document) ++
+  learningObservationDiagnostics prompts sourceRevisionKeys materialRevisionKeys sourceSegments
+    materialSegments collections provenance zero (CorpusDocument.learningObservations document) ++
   relationshipDiagnostics entityIds revisionEntityKeys zero (CorpusDocument.relationships document) ++
   provenanceLinkDiagnostics provenance zero (CorpusDocument.provenance document) ++
   repetitionProvenanceDiagnostics provenance zero (CorpusDocument.repetitions document) ++
@@ -859,10 +978,16 @@ validateCorpus document =
   corrections = correctionIds (CorpusDocument.repetitionCorrections document)
   migrations = migrationIds (CorpusDocument.migrations document)
   reports = reportIds (CorpusDocument.interoperability document)
+  readingSegments = readingSegmentIds (CorpusDocument.readingSegments document)
+  learningObservations = learningObservationIds (CorpusDocument.learningObservations document)
   promptRevisions = promptRevisionIdentities (CorpusDocument.prompts document)
   sourceRevisions = sourceRevisionIdentities (CorpusDocument.sources document)
   materialRevisions = materialRevisionIdentities (CorpusDocument.materials document)
-  revisionEntityKeys = revisionKeys promptRevisions ++ revisionKeys sourceRevisions ++ revisionKeys materialRevisions
+  sourceRevisionKeys = revisionKeys sourceRevisions
+  materialRevisionKeys = revisionKeys materialRevisions
+  sourceSegments = sourceSegmentKeys (CorpusDocument.readingSegments document)
+  materialSegments = materialSegmentKeys (CorpusDocument.readingSegments document)
+  revisionEntityKeys = revisionKeys promptRevisions ++ sourceRevisionKeys ++ materialRevisionKeys
   entityIds = allEntityIds document
 
   formatDiagnostics : List Diagnostic
@@ -884,6 +1009,8 @@ validateCorpus document =
     emptyIdentityDiagnostics "/materials" "id" materials ++
     emptyIdentityDiagnostics "/collections" "id" collections ++
     emptyIdentityDiagnostics "/collections" "title" (map Collection.title (CorpusDocument.collections document)) ++
+    emptyIdentityDiagnostics "/readingSegments" "id" readingSegments ++
+    emptyIdentityDiagnostics "/learningObservations" "id" learningObservations ++
     emptyIdentityDiagnostics "/assets" "id" assets ++
     emptyIdentityDiagnostics "/relationships" "id" relationships ++
     emptyIdentityDiagnostics "/repetitions" "id" repetitions ++
@@ -897,6 +1024,8 @@ validateCorpus document =
     duplicateStrings "identity.duplicate" "/materials" (revisionKeys materialRevisions) ++
     duplicateStrings "identity.duplicate" "/collections" collections ++
     duplicateStrings "collection.duplicate-membership" "/collectionMemberships" memberships ++
+    duplicateStrings "identity.duplicate" "/readingSegments" readingSegments ++
+    duplicateStrings "identity.duplicate" "/learningObservations" learningObservations ++
     duplicateStrings "identity.duplicate" "/assets" assets ++
     duplicateStrings "identity.duplicate" "/relationships" relationships ++
     duplicateStrings "identity.duplicate" "/repetitions" repetitions ++

@@ -2,7 +2,7 @@
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-generated="$root/web/app/features/lineage/generated/lineage-core.mjs"
+generated="$root/packages/core/src/generated/lineage-core.mjs"
 temporary="$(mktemp -d "${TMPDIR:-/tmp}/lineage-generated.XXXXXX")"
 trap 'rm -rf "$temporary"' EXIT
 

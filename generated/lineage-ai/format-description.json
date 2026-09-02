@@ -1712,6 +1712,444 @@
     {
       "fields": [
         {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Determines which revision and segment fields are required.",
+          "name": "type",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "prompt",
+                "source",
+                "material",
+                "source-segment",
+                "material-segment",
+                "collection",
+                "concept"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Learning target kind."
+        },
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve inside the corpus except for declared concepts.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable target identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required for Prompt, Source, Material, and segment targets.",
+          "name": "revision",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Exact immutable revision."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required only for source-segment and material-segment targets.",
+          "name": "segmentId",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable reading segment identity."
+        }
+      ],
+      "name": "LearningTargetReference",
+      "summary": "Stable generalized learning target."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Only Source and Material revisions can own reading segments.",
+          "name": "type",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "source",
+                "material"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Segment owner kind."
+        },
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve with revision.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Owner identity."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                1
+              ],
+              "kind": "minimum"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Prevents progress drifting across edited prose.",
+          "name": "revision",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Exact owner revision."
+        }
+      ],
+      "name": "ReadingSegmentTarget",
+      "summary": "Revision-bound Source or Material segment owner."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Never derived from mutable character offsets.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable segment identity within its revision-bound owner."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "The owner revision must resolve exactly.",
+          "name": "target",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "ReadingSegmentTarget"
+            ],
+            "kind": "objectRef"
+          },
+          "summary": "Revision-bound Source or Material owner."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Used for coherent continuation, not identity.",
+          "name": "ordinal",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable authored ordering within the owner revision."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must contain at least one content block.",
+          "name": "content",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  null
+                ],
+                "kind": "scalar"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Durable segment content."
+        }
+      ],
+      "name": "ReadingSegment",
+      "summary": "Stable durable reading segment."
+    },
+    {
+      "fields": [
+        {
+          "constraints": [
+            {
+              "args": [],
+              "kind": "nonEmpty"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Append-only and unique among generalized observations.",
+          "name": "id",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Stable observation identity."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Must resolve to the exact durable target.",
+          "name": "target",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              "LearningTargetReference"
+            ],
+            "kind": "objectRef"
+          },
+          "summary": "Observed learning target."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Recall-specific scheduler evidence remains a Repetition.",
+          "name": "activityKind",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "recall",
+                "practice",
+                "read",
+                "lesson"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Activity that produced the observation."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Does not persist inferred mastery.",
+          "name": "observationKind",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              [
+                "presented",
+                "attempted",
+                "completed",
+                "skipped",
+                "assessed",
+                "deferred"
+              ]
+            ],
+            "kind": "enumeration"
+          },
+          "summary": "Factual observation kind."
+        },
+        {
+          "constraints": [
+            {
+              "args": [
+                "date-time"
+              ],
+              "kind": "semanticFormat"
+            }
+          ],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Hosts declare chronological replay order for merges.",
+          "name": "observedAt",
+          "requirement": "required",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Observation timestamp."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Non-negative when present.",
+          "name": "durationMilliseconds",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Observed duration."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Required only by host policy when observationKind is assessed.",
+          "name": "assessment",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Policy-neutral authored assessment."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "noDefault"
+          },
+          "explanation": "Absence remains distinct from an empty response.",
+          "name": "response",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              null
+            ],
+            "kind": "scalar"
+          },
+          "summary": "Optional captured learner response."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "All references resolve locally.",
+          "name": "provenance",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "Provenance"
+                ],
+                "kind": "reference"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Origin records."
+        }
+      ],
+      "name": "LearningObservation",
+      "summary": "Append-only non-recall learning evidence."
+    },
+    {
+      "fields": [
+        {
           "constraints": [
             {
               "args": [],
@@ -3511,6 +3949,50 @@
             "args": [],
             "kind": "defaultEmptyArray"
           },
+          "explanation": "Defaults to empty for backward compatibility.",
+          "name": "readingSegments",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "ReadingSegment"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Stable revision-bound reading segments."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
+          "explanation": "Defaults to empty; Repetitions remain recall-specific evidence.",
+          "name": "learningObservations",
+          "requirement": "optional",
+          "shape": {
+            "args": [
+              {
+                "args": [
+                  "LearningObservation"
+                ],
+                "kind": "objectRef"
+              }
+            ],
+            "kind": "array"
+          },
+          "summary": "Append-only non-recall learning evidence."
+        },
+        {
+          "constraints": [],
+          "defaultValue": {
+            "args": [],
+            "kind": "defaultEmptyArray"
+          },
           "explanation": "Defaults to empty.",
           "name": "assets",
           "requirement": "optional",
@@ -4218,6 +4700,34 @@
       "explanation": "Corrections are distinct append-only events.",
       "severity": "error",
       "summary": "A correction target is missing or self-referential."
+    },
+    {
+      "appliesTo": "reading",
+      "code": "reading.segment-owner-unresolved",
+      "explanation": "Segments bind an exact Source or Material revision.",
+      "severity": "error",
+      "summary": "A reading segment owner revision is absent."
+    },
+    {
+      "appliesTo": "reading",
+      "code": "reading.segment-content-empty",
+      "explanation": "Stable segments contain at least one content block.",
+      "severity": "error",
+      "summary": "A reading segment has no durable content."
+    },
+    {
+      "appliesTo": "evidence",
+      "code": "evidence.target-unresolved",
+      "explanation": "Evidence resolves to an exact durable learning target.",
+      "severity": "error",
+      "summary": "A learning observation target is absent or malformed."
+    },
+    {
+      "appliesTo": "evidence",
+      "code": "evidence.replay-invalid",
+      "explanation": "Every observation carries a replay timestamp; hosts declare merge ordering.",
+      "severity": "error",
+      "summary": "Learning evidence cannot be replayed deterministically."
     },
     {
       "appliesTo": "migration",

@@ -1,0 +1,70 @@
+{
+  "format": "lineage.corpus",
+  "formatVersion": 1,
+  "corpusId": "incremental-reading-example",
+  "prompts": [],
+  "sources": [
+    {
+      "id": "source-denotational-design",
+      "revision": 1,
+      "title": "A short introduction to denotational design",
+      "content": "Meaning comes first. Implementations are interpreted into that meaning, and correctness follows from preservation.",
+      "assets": [],
+      "provenance": []
+    }
+  ],
+  "readingSegments": [
+    {
+      "id": "segment-meaning-first",
+      "target": {
+        "type": "source",
+        "id": "source-denotational-design",
+        "revision": 1
+      },
+      "ordinal": 0,
+      "content": [
+        "Meaning comes first."
+      ]
+    },
+    {
+      "id": "segment-preservation",
+      "target": {
+        "type": "source",
+        "id": "source-denotational-design",
+        "revision": 1
+      },
+      "ordinal": 1,
+      "content": [
+        "Implementations are interpreted into that meaning, and correctness follows from preservation."
+      ]
+    }
+  ],
+  "learningObservations": [
+    {
+      "id": "observation-segment-preservation-deferred",
+      "target": {
+        "type": "source-segment",
+        "id": "source-denotational-design",
+        "revision": 1,
+        "segmentId": "segment-preservation"
+      },
+      "activityKind": "read",
+      "observationKind": "deferred",
+      "observedAt": "2026-09-02T16:05:00Z",
+      "provenance": []
+    },
+    {
+      "id": "observation-segment-meaning-first-completed",
+      "target": {
+        "type": "source-segment",
+        "id": "source-denotational-design",
+        "revision": 1,
+        "segmentId": "segment-meaning-first"
+      },
+      "activityKind": "read",
+      "observationKind": "completed",
+      "observedAt": "2026-09-02T16:00:00Z",
+      "provenance": []
+    }
+  ]
+}

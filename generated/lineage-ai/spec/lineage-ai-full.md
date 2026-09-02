@@ -107,7 +107,47 @@ CollectionMembership version-1 wire object.
 - `collectionId` (required; reference): Containing collection. Must resolve locally.
 - `promptId` (required; reference): Organized Prompt identity. Membership does not partition scheduling.
 
-### 2.13 Asset
+### 2.13 LearningTargetReference
+
+Stable generalized learning target.
+
+- `type` (required; enumeration): Learning target kind. Determines which revision and segment fields are required.
+- `id` (required; scalar; nonEmpty): Stable target identity. Must resolve inside the corpus except for declared concepts.
+- `revision` (optional; scalar; minimum): Exact immutable revision. Required for Prompt, Source, Material, and segment targets.
+- `segmentId` (optional; scalar): Stable reading segment identity. Required only for source-segment and material-segment targets.
+
+### 2.14 ReadingSegmentTarget
+
+Revision-bound Source or Material segment owner.
+
+- `type` (required; enumeration): Segment owner kind. Only Source and Material revisions can own reading segments.
+- `id` (required; scalar; nonEmpty): Owner identity. Must resolve with revision.
+- `revision` (required; scalar; minimum): Exact owner revision. Prevents progress drifting across edited prose.
+
+### 2.15 ReadingSegment
+
+Stable durable reading segment.
+
+- `id` (required; scalar; nonEmpty): Stable segment identity within its revision-bound owner. Never derived from mutable character offsets.
+- `target` (required; objectRef): Revision-bound Source or Material owner. The owner revision must resolve exactly.
+- `ordinal` (required; scalar): Stable authored ordering within the owner revision. Used for coherent continuation, not identity.
+- `content` (required; array): Durable segment content. Must contain at least one content block.
+
+### 2.16 LearningObservation
+
+Append-only non-recall learning evidence.
+
+- `id` (required; scalar; nonEmpty): Stable observation identity. Append-only and unique among generalized observations.
+- `target` (required; objectRef): Observed learning target. Must resolve to the exact durable target.
+- `activityKind` (required; enumeration): Activity that produced the observation. Recall-specific scheduler evidence remains a Repetition.
+- `observationKind` (required; enumeration): Factual observation kind. Does not persist inferred mastery.
+- `observedAt` (required; scalar; semanticFormat): Observation timestamp. Hosts declare chronological replay order for merges.
+- `durationMilliseconds` (optional; scalar): Observed duration. Non-negative when present.
+- `assessment` (optional; scalar): Policy-neutral authored assessment. Required only by host policy when observationKind is assessed.
+- `response` (optional; scalar): Optional captured learner response. Absence remains distinct from an empty response.
+- `provenance` (optional; array): Origin records. All references resolve locally.
+
+### 2.17 Asset
 
 Asset version-1 wire object.
 
@@ -118,14 +158,14 @@ Asset version-1 wire object.
 - `path` (required; scalar): Safe archive-relative path. Must begin assets/ and cannot traverse.
 - `accessibleDescription` (optional; scalar): Accessible media equivalent. Required when media conveys review meaning.
 
-### 2.14 ExtensionSet
+### 2.18 ExtensionSet
 
 ExtensionSet version-1 wire object.
 
 - `required` (optional; array): Required extensions. Renderer support is mandatory.
 - `optional` (optional; array): Optional extensions. Portable fallback is mandatory.
 
-### 2.15 Prompt
+### 2.19 Prompt
 
 Prompt version-1 wire object.
 
@@ -147,7 +187,7 @@ Prompt version-1 wire object.
 - `extensions` (optional; objectRef): Prompt extension requirements. Required and optional capabilities are explicit.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.16 Relationship
+### 2.20 Relationship
 
 Relationship version-1 wire object.
 
@@ -156,7 +196,7 @@ Relationship version-1 wire object.
 - `source` (required; objectRef): Source endpoint. Must resolve.
 - `target` (required; objectRef): Target endpoint. Must resolve.
 
-### 2.17 SchedulerObservation
+### 2.21 SchedulerObservation
 
 SchedulerObservation version-1 wire object.
 
@@ -167,7 +207,7 @@ SchedulerObservation version-1 wire object.
 - `nextIntervalMinutes` (optional; scalar): Resulting interval. Historical observation.
 - `dueAt` (optional; scalar; semanticFormat): Resulting due timestamp. Derived state captured for audit.
 
-### 2.18 Repetition
+### 2.22 Repetition
 
 Repetition version-1 wire object.
 
@@ -183,7 +223,7 @@ Repetition version-1 wire object.
 - `scheduler` (optional; objectRef): Historical scheduler observation. Replaceable current state is not corpus meaning.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.19 RepetitionCorrection
+### 2.23 RepetitionCorrection
 
 RepetitionCorrection version-1 wire object.
 
@@ -195,7 +235,7 @@ RepetitionCorrection version-1 wire object.
 - `replacementResponse` (optional; scalar): Replacement response. Original event remains unchanged.
 - `provenance` (optional; array): Origin records. All references resolve.
 
-### 2.20 Provenance
+### 2.24 Provenance
 
 Provenance version-1 wire object.
 
@@ -208,7 +248,7 @@ Provenance version-1 wire object.
 - `note` (optional; scalar): Origin note. Optional explanatory text.
 - `sources` (optional; array): Prior provenance records. Forms append-only derivation chains.
 
-### 2.21 Extension
+### 2.25 Extension
 
 Extension version-1 wire object.
 
@@ -217,7 +257,7 @@ Extension version-1 wire object.
 - `requirement` (required; enumeration): Requirement level. Required extensions need support.
 - `fallback` (optional; scalar): Portable fallback. Required for optional extensions.
 
-### 2.22 Migration
+### 2.26 Migration
 
 Migration version-1 wire object.
 
@@ -228,7 +268,7 @@ Migration version-1 wire object.
 - `tool` (required; scalar): Migration tool. Must be non-empty.
 - `toolVersion` (required; scalar): Tool version. Must be non-empty.
 
-### 2.23 InteroperabilityReport
+### 2.27 InteroperabilityReport
 
 InteroperabilityReport version-1 wire object.
 
@@ -239,7 +279,7 @@ InteroperabilityReport version-1 wire object.
 - `losses` (optional; array): Declared losses. Non-empty when status is lossy.
 - `preservedArtifacts` (optional; array): Preserved original artifact IDs. Supports faithful round trips.
 
-### 2.24 CorpusDocument
+### 2.28 CorpusDocument
 
 CorpusDocument version-1 wire object.
 
@@ -251,6 +291,8 @@ CorpusDocument version-1 wire object.
 - `materials` (optional; array): Material revisions. Defaults to empty.
 - `collections` (optional; array): Identity-neutral organization. Defaults to empty for backward compatibility.
 - `collectionMemberships` (optional; array): Prompt membership in collections. Memories may belong to multiple collections.
+- `readingSegments` (optional; array): Stable revision-bound reading segments. Defaults to empty for backward compatibility.
+- `learningObservations` (optional; array): Append-only non-recall learning evidence. Defaults to empty; Repetitions remain recall-specific evidence.
 - `assets` (optional; array): Asset declarations. Defaults to empty.
 - `relationships` (optional; array): Typed relationships. Defaults to empty.
 - `repetitions` (optional; array): Review history. Append-oriented.
@@ -260,7 +302,7 @@ CorpusDocument version-1 wire object.
 - `migrations` (optional; array): Forward migration history. Defaults to empty.
 - `interoperability` (optional; array): Conversion reports. Defaults to empty.
 
-### 2.25 ArchiveEntry
+### 2.29 ArchiveEntry
 
 ArchiveEntry version-1 wire object.
 
@@ -271,7 +313,7 @@ ArchiveEntry version-1 wire object.
 - `role` (required; enumeration): Entry role. Determines closure requirements.
 - `required` (required; scalar): Dependency requirement. Required entries must be present.
 
-### 2.26 Manifest
+### 2.30 Manifest
 
 Manifest version-1 wire object.
 
@@ -433,49 +475,73 @@ A repetition references an absent Prompt revision. History resolves to exact ser
 
 A correction target is missing or self-referential. Corrections are distinct append-only events.
 
-### 3.25 `migration.chain-invalid`
+### 3.25 `reading.segment-owner-unresolved`
+
+**Severity:** error. **Applies to:** reading.
+
+A reading segment owner revision is absent. Segments bind an exact Source or Material revision.
+
+### 3.26 `reading.segment-content-empty`
+
+**Severity:** error. **Applies to:** reading.
+
+A reading segment has no durable content. Stable segments contain at least one content block.
+
+### 3.27 `evidence.target-unresolved`
+
+**Severity:** error. **Applies to:** evidence.
+
+A learning observation target is absent or malformed. Evidence resolves to an exact durable learning target.
+
+### 3.28 `evidence.replay-invalid`
+
+**Severity:** error. **Applies to:** evidence.
+
+Learning evidence cannot be replayed deterministically. Every observation carries a replay timestamp; hosts declare merge ordering.
+
+### 3.29 `migration.chain-invalid`
 
 **Severity:** error. **Applies to:** migration.
 
 Migration history is not forward and contiguous. Each step starts at the preceding version and advances.
 
-### 3.26 `extension.required-unsupported`
+### 3.30 `extension.required-unsupported`
 
 **Severity:** error. **Applies to:** extension.
 
 A required extension is unsupported. Required capabilities must be understood by the renderer.
 
-### 3.27 `extension.optional-fallback-missing`
+### 3.31 `extension.optional-fallback-missing`
 
 **Severity:** error. **Applies to:** extension.
 
 An optional extension lacks a fallback. Portable fallback content keeps the Prompt reviewable.
 
-### 3.28 `interoperability.loss-unreported`
+### 3.32 `interoperability.loss-unreported`
 
 **Severity:** error. **Applies to:** interoperability.
 
 A lossy conversion has no loss report. Losses must be explicit and inspectable.
 
-### 3.29 `manifest.corpus-mismatch`
+### 3.33 `manifest.corpus-mismatch`
 
 **Severity:** error. **Applies to:** manifest.
 
 Manifest and corpus identities differ. The archive manifest names the enclosed corpus.
 
-### 3.30 `archive.entry-missing`
+### 3.34 `archive.entry-missing`
 
 **Severity:** error. **Applies to:** archive.
 
 A declared archive entry is missing. All manifest entries must have actual bytes.
 
-### 3.31 `archive.digest-mismatch`
+### 3.35 `archive.digest-mismatch`
 
 **Severity:** error. **Applies to:** archive.
 
 Archive entry digest does not match bytes. Hosts compute and verify SHA-256 over actual bytes.
 
-### 3.32 `archive.duplicate-path`
+### 3.36 `archive.duplicate-path`
 
 **Severity:** error. **Applies to:** archive.
 
