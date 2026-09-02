@@ -91,6 +91,39 @@ export async function setupLineageCorpus(
         ownerId,
       },
     })
+    await prisma.user.update({
+      data: { activeLineageCorpusId: corpusId },
+      where: { id: ownerId },
+    })
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+export async function setupIntegrationClient(
+  createdByUserId: string,
+  options: {
+    clientId?: string
+    name?: string
+    redirectUri?: string
+  } = {},
+) {
+  const prisma = createPrisma()
+  const clientId = options.clientId ?? `client-${randomUUID()}`
+  const redirectUri =
+    options.redirectUri ?? "http://localhost:5251/integration-callback"
+
+  try {
+    await prisma.integrationClient.create({
+      data: {
+        clientId,
+        clientType: "public",
+        createdByUserId,
+        name: options.name ?? "Test integration",
+        redirectUris: { create: { uri: redirectUri } },
+      },
+    })
+    return { clientId, redirectUri }
   } finally {
     await prisma.$disconnect()
   }

@@ -1,7 +1,7 @@
 import type {
   ActiveCorpusPreferenceStore,
   CorpusSnapshot,
-  CorpusSnapshotStore,
+  OptimisticCorpusSnapshotStore,
 } from "../domain/corpus-ports"
 import { prisma } from "~/utils/db.server"
 
@@ -48,7 +48,7 @@ export const activeCorpusPreferenceStore: ActiveCorpusPreferenceStore = {
   },
 }
 
-export const corpusSnapshotStore: CorpusSnapshotStore = {
+export const corpusSnapshotStore: OptimisticCorpusSnapshotStore = {
   async append(ownerId, snapshot) {
     await prisma.lineageCorpusSnapshot.upsert({
       create: { ...snapshot, ownerId },
@@ -60,6 +60,47 @@ export const corpusSnapshotStore: CorpusSnapshotStore = {
           ownerId,
         },
       },
+    })
+  },
+
+  async compareAndAppend(ownerId, expectedBase, snapshot) {
+    return prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.findUnique({
+        select: { activeLineageCorpusId: true },
+        where: { id: ownerId },
+      })
+      if (user?.activeLineageCorpusId !== expectedBase.corpusId)
+        return {
+          reason: "active-corpus-changed" as const,
+          status: "conflict" as const,
+        }
+
+      const latest = await transaction.lineageCorpusSnapshot.findFirst({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { digest: true },
+        where: { corpusId: expectedBase.corpusId, ownerId },
+      })
+      if (latest?.digest !== expectedBase.digest)
+        return {
+          reason: "snapshot-changed" as const,
+          status: "conflict" as const,
+        }
+
+      const existing = await transaction.lineageCorpusSnapshot.findUnique({
+        select: { id: true },
+        where: {
+          ownerId_corpusId_digest: {
+            corpusId: snapshot.corpusId,
+            digest: snapshot.digest,
+            ownerId,
+          },
+        },
+      })
+      if (existing) return { status: "deduplicated" as const }
+      await transaction.lineageCorpusSnapshot.create({
+        data: { ...snapshot, ownerId },
+      })
+      return { status: "appended" as const }
     })
   },
 

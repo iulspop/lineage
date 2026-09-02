@@ -8,25 +8,29 @@ datasource db {
 }
 
 model User {
-  id                    String             @id @default(cuid())
-  email                 String             @unique
-  emailVerifiedAt       DateTime?
-  lastSeenAt            DateTime?
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  activeLineageCorpusId String?
-  connections           Connection[]
-  passkeys              Passkey[]
-  sessions              Session[]
-  ownerClaim            OwnerClaim?
-  ownedConversations    ChatConversation[] @relation("ConversationOwner")
-  chatConversation      ChatConversation?  @relation("ConversationUser")
-  sentChatMessages      ChatMessage[]      @relation("MessageSender")
-  receivedNotifications ChatNotification[] @relation("NotificationRecipient")
-  chatTypingStates       ChatTypingState[]
-  lineageCorpusSnapshots LineageCorpusSnapshot[]
-  lineageReviews         LineageReview[]
-  lineageAssets          LineageCorpusAsset[]
+  id                            String                         @id @default(cuid())
+  email                         String                         @unique
+  emailVerifiedAt               DateTime?
+  lastSeenAt                    DateTime?
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @updatedAt
+  activeLineageCorpusId         String?
+  connections                   Connection[]
+  passkeys                      Passkey[]
+  sessions                      Session[]
+  ownerClaim                    OwnerClaim?
+  ownedConversations            ChatConversation[]             @relation("ConversationOwner")
+  chatConversation              ChatConversation?              @relation("ConversationUser")
+  sentChatMessages              ChatMessage[]                  @relation("MessageSender")
+  receivedNotifications         ChatNotification[]             @relation("NotificationRecipient")
+  chatTypingStates              ChatTypingState[]
+  lineageCorpusSnapshots        LineageCorpusSnapshot[]
+  lineageReviews                LineageReview[]
+  lineageAssets                 LineageCorpusAsset[]
+  integrationClients            IntegrationClient[]            @relation("IntegrationClientCreator")
+  integrationGrants             IntegrationGrant[]
+  integrationIdempotencyRecords IntegrationIdempotencyRecord[]
+  integrationAudits             IntegrationCreationAudit[]
 }
 
 model LineageCorpusSnapshot {
@@ -53,16 +57,16 @@ model LineageAssetBlob {
 }
 
 model LineageCorpusAsset {
-  id                   Int              @id @default(autoincrement())
-  ownerId              String
-  corpusId             String
-  assetId              String
-  archivePath          String
+  id                       Int              @id @default(autoincrement())
+  ownerId                  String
+  corpusId                 String
+  assetId                  String
+  archivePath              String
   accessibilityDescription String?
-  blobSha256           String
-  createdAt            DateTime         @default(now())
-  owner                User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  blob                 LineageAssetBlob @relation(fields: [blobSha256], references: [sha256], onDelete: Restrict)
+  blobSha256               String
+  createdAt                DateTime         @default(now())
+  owner                    User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  blob                     LineageAssetBlob @relation(fields: [blobSha256], references: [sha256], onDelete: Restrict)
 
   @@unique([ownerId, corpusId, assetId])
   @@index([ownerId, corpusId])
@@ -70,7 +74,7 @@ model LineageCorpusAsset {
 }
 
 model LineageReview {
-  id                      Int      @id @default(autoincrement())
+  id                      Int       @id @default(autoincrement())
   userId                  String
   corpusId                String
   promptId                String
@@ -93,12 +97,173 @@ model LineageReview {
   fsrsReps                Int?
   fsrsLapses              Int?
   fsrsState               Int?
-  reviewedAt              DateTime @default(now())
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedAt              DateTime  @default(now())
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, reviewedAt])
   @@index([corpusId, promptId, promptRevision])
   @@index([userId, corpusId, fsrsDueAt])
+}
+
+model IntegrationClient {
+  id                 String                          @id @default(cuid())
+  clientId           String                          @unique
+  name               String
+  clientType         String
+  clientSecretHash   String?
+  createdByUserId    String?
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
+  disabledAt         DateTime?
+  createdBy          User?                           @relation("IntegrationClientCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  redirectUris       IntegrationRedirectUri[]
+  grants             IntegrationGrant[]
+  authorizationCodes IntegrationAuthorizationCode[]
+  accessTokens       IntegrationAccessToken[]
+  refreshFamilies    IntegrationRefreshTokenFamily[]
+  idempotencyRecords IntegrationIdempotencyRecord[]
+  creationAudits     IntegrationCreationAudit[]
+
+  @@index([createdByUserId])
+}
+
+model IntegrationRedirectUri {
+  id        String            @id @default(cuid())
+  clientId  String
+  uri       String
+  createdAt DateTime          @default(now())
+  client    IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, uri])
+  @@index([clientId])
+}
+
+model IntegrationGrant {
+  id                 String                          @id @default(cuid())
+  userId             String
+  clientId           String
+  scope              String
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
+  lastUsedAt         DateTime?
+  revokedAt          DateTime?
+  user               User                            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client             IntegrationClient               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  authorizationCodes IntegrationAuthorizationCode[]
+  accessTokens       IntegrationAccessToken[]
+  refreshFamilies    IntegrationRefreshTokenFamily[]
+  idempotencyRecords IntegrationIdempotencyRecord[]
+  creationAudits     IntegrationCreationAudit[]
+
+  @@unique([userId, clientId, scope])
+  @@index([clientId, revokedAt])
+  @@index([userId, revokedAt])
+}
+
+model IntegrationAuthorizationCode {
+  id            String            @id @default(cuid())
+  codeHash      String            @unique
+  clientId      String
+  grantId       String
+  redirectUri   String
+  scope         String
+  codeChallenge String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime          @default(now())
+  client        IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  grant         IntegrationGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, expiresAt])
+  @@index([grantId, expiresAt])
+}
+
+model IntegrationAccessToken {
+  id                 String            @id @default(cuid())
+  tokenHash          String            @unique
+  clientId           String
+  grantId            String
+  scope              String
+  expiresAt          DateTime
+  revokedAt          DateTime?
+  lastUsedAt         DateTime?
+  windowStartedAt    DateTime?
+  windowRequestCount Int               @default(0)
+  createdAt          DateTime          @default(now())
+  client             IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  grant              IntegrationGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, expiresAt])
+  @@index([grantId, revokedAt, expiresAt])
+}
+
+model IntegrationRefreshTokenFamily {
+  id        String                    @id @default(cuid())
+  clientId  String
+  grantId   String
+  revokedAt DateTime?
+  createdAt DateTime                  @default(now())
+  client    IntegrationClient         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  grant     IntegrationGrant          @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  tokens    IntegrationRefreshToken[]
+
+  @@index([clientId, revokedAt])
+  @@index([grantId, revokedAt])
+}
+
+model IntegrationRefreshToken {
+  id           String                        @id @default(cuid())
+  familyId     String
+  tokenHash    String                        @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  replacedById String?
+  createdAt    DateTime                      @default(now())
+  family       IntegrationRefreshTokenFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, expiresAt])
+}
+
+model IntegrationIdempotencyRecord {
+  id           String            @id @default(cuid())
+  clientId     String
+  grantId      String
+  userId       String
+  key          String
+  requestHash  String
+  statusCode   Int
+  responseJson String
+  createdAt    DateTime          @default(now())
+  expiresAt    DateTime
+  client       IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  grant        IntegrationGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, userId, key])
+  @@index([grantId, createdAt])
+  @@index([expiresAt])
+}
+
+model IntegrationCreationAudit {
+  id                 String            @id @default(cuid())
+  requestId          String            @unique
+  clientId           String
+  grantId            String
+  userId             String
+  corpusId           String?
+  priorDigest        String?
+  newDigest          String?
+  itemCount          Int
+  createdPromptCount Int
+  outcome            String
+  createdAt          DateTime          @default(now())
+  client             IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  grant              IntegrationGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt])
+  @@index([grantId, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Session {
@@ -164,16 +329,16 @@ model OwnerClaim {
 }
 
 model ChatConversation {
-  id          String        @id @default(cuid())
-  userId      String        @unique
-  ownerId     String
-  userReadAt  DateTime?
-  ownerReadAt DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  user        User          @relation("ConversationUser", fields: [userId], references: [id], onDelete: Cascade)
-  owner       User          @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  messages    ChatMessage[]
+  id           String            @id @default(cuid())
+  userId       String            @unique
+  ownerId      String
+  userReadAt   DateTime?
+  ownerReadAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  user         User              @relation("ConversationUser", fields: [userId], references: [id], onDelete: Cascade)
+  owner        User              @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  messages     ChatMessage[]
   typingStates ChatTypingState[]
 
   @@index([ownerId, updatedAt])

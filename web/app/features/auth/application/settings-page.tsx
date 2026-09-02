@@ -5,6 +5,7 @@ import {
   IconDatabaseExport,
   IconKey,
   IconMessageCircle,
+  IconPlugConnected,
   IconUser,
 } from "@tabler/icons-react"
 import { useState } from "react"
@@ -86,6 +87,7 @@ export function SettingsPageComponent({
           <a href="#workspace">Workspace</a>
           <a href="#account">Account</a>
           <a href="#passkeys">Passkeys</a>
+          <a href="#integrations">Connected apps</a>
           <a href="#data">Data portability</a>
           <a href="#chat">Founder chat</a>
         </nav>
@@ -213,6 +215,30 @@ export function SettingsPageComponent({
             {actionData?.success === false && (
               <FieldError className={s.status}>{actionData.error}</FieldError>
             )}
+          </section>
+
+          <section className={s.section} id="integrations">
+            <div className={s.sectionHeading}>
+              <h2>Connected apps</h2>
+              <p>Control applications allowed to create Memories for you.</p>
+            </div>
+            <div className={s.settingRow}>
+              <IconPlugConnected
+                aria-hidden="true"
+                className={s.rowIcon}
+                size={17}
+              />
+              <div className={s.settingCopy}>
+                <span className={s.settingTitle}>External applications</span>
+                <span className={s.settingDescription}>
+                  Review permissions, revoke connections, and manage approved
+                  clients.
+                </span>
+              </div>
+              <Link className={s.rowLink} to="/settings/integrations">
+                Manage connected apps
+              </Link>
+            </div>
           </section>
 
           <section className={s.section} id="data">

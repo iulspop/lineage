@@ -16,6 +16,10 @@ export type CorpusSnapshot = {
   formatVersion: number
 }
 
+export type OptimisticAppendResult =
+  | { status: "appended" | "deduplicated" }
+  | { status: "conflict"; reason: "active-corpus-changed" | "snapshot-changed" }
+
 export type CorpusSnapshotStore = {
   append(ownerId: string, snapshot: CorpusSnapshot): Promise<void>
   find(
@@ -25,6 +29,14 @@ export type CorpusSnapshotStore = {
   ): Promise<CorpusSnapshot | null>
   latest(ownerId: string, corpusId: string): Promise<CorpusSnapshot | null>
   listLatest(ownerId: string): Promise<CorpusSnapshot[]>
+}
+
+export type OptimisticCorpusSnapshotStore = CorpusSnapshotStore & {
+  compareAndAppend(
+    ownerId: string,
+    expectedBase: { corpusId: string; digest: string },
+    snapshot: CorpusSnapshot,
+  ): Promise<OptimisticAppendResult>
 }
 
 export type ActiveCorpusPreferenceStore = {
