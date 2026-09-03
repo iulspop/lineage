@@ -6,6 +6,7 @@ import {
   authenticateAccessToken,
   exchangeAuthorizationCode,
   issueAuthorizationCode,
+  registerDynamicClient,
   resolveAuthorizationClient,
   rotateRefreshToken,
 } from "./oauth-service.server"
@@ -41,6 +42,33 @@ afterEach(async () => {
 })
 
 describe("integration OAuth service", () => {
+  it("registers constrained public dynamic clients", async () => {
+    const client = await registerDynamicClient(
+      {
+        application_type: "web",
+        client_name: "MCP host",
+        grant_types: ["authorization_code"],
+        redirect_uris: ["https://host.example/oauth/callback"],
+        response_types: ["code"],
+        scope: "memories:write",
+        token_endpoint_auth_method: "none",
+      },
+      now,
+    )
+    expect(client).toMatchObject({
+      clientSecretHash: null,
+      clientType: "public",
+      name: "MCP host",
+      registrationType: "dynamic",
+    })
+    expect(client?.clientId).toBeTruthy()
+    if (client) {
+      await integrationDatabase.integrationClient.delete({
+        where: { id: client.id },
+      })
+    }
+  })
+
   it("resolves only registered exact redirect URIs", async () => {
     await expect(
       resolveAuthorizationClient({
@@ -58,11 +86,13 @@ describe("integration OAuth service", () => {
 
   it("exchanges a single-use PKCE code for opaque credentials", async () => {
     const verifier = "v".repeat(43)
+    const resource = "https://lineage.example/mcp"
     const code = await issueAuthorizationCode({
       clientDatabaseId,
       codeChallenge: createS256Challenge(verifier),
       now,
       redirectUri,
+      resource,
       userId,
     })
     const tokens = await exchangeAuthorizationCode({
@@ -71,6 +101,7 @@ describe("integration OAuth service", () => {
       codeVerifier: verifier,
       now,
       redirectUri,
+      resource,
     })
     expect(tokens).toMatchObject({
       expiresIn: 3600,
@@ -88,11 +119,19 @@ describe("integration OAuth service", () => {
       }),
     ).resolves.toBeNull()
     await expect(
-      authenticateAccessToken(tokens?.accessToken ?? "", now),
+      authenticateAccessToken(tokens?.accessToken ?? "", now, resource),
     ).resolves.toMatchObject({
       clientName: "Test integration",
+      resource,
       userId,
     })
+    await expect(
+      authenticateAccessToken(
+        tokens?.accessToken ?? "",
+        now,
+        "https://lineage.example/other",
+      ),
+    ).resolves.toBeNull()
   })
 
   it("rotates refresh tokens and revokes the family on reuse", async () => {

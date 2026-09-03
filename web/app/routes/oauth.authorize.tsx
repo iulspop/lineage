@@ -75,6 +75,7 @@ export async function action({ request }: Route.ActionArgs) {
     clientDatabaseId: validated.client.id,
     codeChallenge: validated.request.code_challenge,
     redirectUri: validated.request.redirect_uri,
+    resource: validated.request.resource,
     userId,
   })
   throw redirect(

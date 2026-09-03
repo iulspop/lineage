@@ -14,9 +14,11 @@ describe("IntegrationsPage", () => {
             grants={[
               {
                 appName: "Study Assistant",
+                connectionType: "mcp",
                 createdAt: "2026-09-01T00:00:00.000Z",
                 id: "grant-id",
                 lastUsedAt: null,
+                registrationType: "dynamic",
                 scope: "memories:write",
               },
             ]}
@@ -30,6 +32,8 @@ describe("IntegrationsPage", () => {
     render(<RouterStub initialEntries={["/settings/integrations"]} />)
 
     expect(screen.getByText("Study Assistant")).toBeInTheDocument()
+    expect(screen.getByText(/mcp connection/i)).toBeInTheDocument()
+    expect(screen.getByText(/dynamically registered/i)).toBeInTheDocument()
     expect(screen.getByText(/can create memories/i)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /revoke/i })).toBeInTheDocument()
     expect(screen.queryByText(/approved clients/i)).not.toBeInTheDocument()

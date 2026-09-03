@@ -3,6 +3,7 @@ import { z } from "zod"
 export const INTEGRATION_SCOPE = "memories:write" as const
 
 const oauthText = z.string().trim().min(1).max(2048)
+const optionalResource = oauthText.optional()
 
 export const authorizationRequestSchema = z
   .object({
@@ -10,6 +11,7 @@ export const authorizationRequestSchema = z
     code_challenge: z.string().regex(/^[A-Za-z0-9_-]{43,128}$/),
     code_challenge_method: z.literal("S256"),
     redirect_uri: oauthText,
+    resource: optionalResource,
     response_type: z.literal("code"),
     scope: oauthText,
     state: z.string().min(1).max(1024),
@@ -23,6 +25,7 @@ export const authorizationCodeTokenRequestSchema = z
     code_verifier: z.string().regex(/^[A-Za-z0-9._~-]{43,128}$/),
     grant_type: z.literal("authorization_code"),
     redirect_uri: oauthText,
+    resource: optionalResource,
   })
   .strict()
 
@@ -31,6 +34,7 @@ export const refreshTokenRequestSchema = z
     client_id: z.string().trim().min(1).max(255),
     grant_type: z.literal("refresh_token"),
     refresh_token: z.string().min(32).max(512),
+    resource: optionalResource,
   })
   .strict()
 
@@ -47,7 +51,40 @@ export const revocationRequestSchema = z
   })
   .strict()
 
+export const dynamicClientRegistrationSchema = z
+  .object({
+    application_type: z.literal("web").default("web"),
+    client_name: z.string().trim().min(1).max(120),
+    client_uri: z
+      .url()
+      .max(2048)
+      .refine((value) => new URL(value).protocol === "https:")
+      .optional(),
+    grant_types: z
+      .tuple([z.literal("authorization_code")])
+      .default(["authorization_code"]),
+    redirect_uris: z
+      .array(oauthText)
+      .min(1)
+      .max(10)
+      .refine((values) => new Set(values).size === values.length),
+    response_types: z.tuple([z.literal("code")]).default(["code"]),
+    scope: z.literal(INTEGRATION_SCOPE).default(INTEGRATION_SCOPE),
+    software_id: z.string().trim().min(1).max(255).optional(),
+    software_version: z.string().trim().min(1).max(255).optional(),
+    token_endpoint_auth_method: z.literal("none").default("none"),
+  })
+  .strict()
+  .refine(
+    ({ redirect_uris }) =>
+      redirect_uris.every(isPermittedRegisteredRedirectUri),
+    { message: "Redirect URIs must use HTTPS or loopback HTTP" },
+  )
+
 export type AuthorizationRequest = z.infer<typeof authorizationRequestSchema>
+export type DynamicClientRegistration = z.infer<
+  typeof dynamicClientRegistrationSchema
+>
 export type TokenRequest = z.infer<typeof tokenRequestSchema>
 
 export function normalizeScope(value: string) {
@@ -62,6 +99,17 @@ export function isExactRedirectUri(
   requestedUri: string,
 ) {
   return registeredUris.includes(requestedUri)
+}
+
+export function normalizeResource(value: string | undefined) {
+  if (!value) return ""
+  try {
+    const url = new URL(value)
+    if (url.username || url.password || url.hash || url.search) return null
+    return url.toString()
+  } catch {
+    return null
+  }
 }
 
 export function isPermittedRegisteredRedirectUri(value: string) {

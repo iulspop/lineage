@@ -17,6 +17,19 @@ export async function readBoundedFormData(request: Request) {
   return new URLSearchParams(body)
 }
 
+export function isTrustedIntegrationOrigin(
+  request: Request,
+  trustedOrigin: string,
+) {
+  const origin = request.headers.get("Origin")
+  if (!origin) return true
+  try {
+    return new URL(origin).origin === new URL(trustedOrigin).origin
+  } catch {
+    return false
+  }
+}
+
 export function secureCredentialHeaders(extra?: HeadersInit) {
   return {
     "Cache-Control": "no-store",

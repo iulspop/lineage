@@ -26,22 +26,46 @@ export function createIntegrationClient(input: {
   clientId: string
   clientSecretHash: string | null
   clientType: "confidential" | "public"
-  createdByUserId: string
+  clientUri?: string
+  createdByUserId?: string
   name: string
   redirectUris: string[]
+  registrationType?: "dynamic" | "manual"
+  softwareId?: string
+  softwareVersion?: string
 }) {
   return prisma.integrationClient.create({
     data: {
       clientId: input.clientId,
       clientSecretHash: input.clientSecretHash,
       clientType: input.clientType,
+      clientUri: input.clientUri,
       createdByUserId: input.createdByUserId,
       name: input.name,
       redirectUris: {
         create: input.redirectUris.map((uri) => ({ uri })),
       },
+      registrationType: input.registrationType ?? "manual",
+      softwareId: input.softwareId,
+      softwareVersion: input.softwareVersion,
     },
     include: { redirectUris: true },
+  })
+}
+
+export function countRecentDynamicIntegrationClients(since: Date) {
+  return prisma.integrationClient.count({
+    where: { createdAt: { gte: since }, registrationType: "dynamic" },
+  })
+}
+
+export function deleteAbandonedDynamicIntegrationClients(before: Date) {
+  return prisma.integrationClient.deleteMany({
+    where: {
+      createdAt: { lt: before },
+      grants: { none: {} },
+      registrationType: "dynamic",
+    },
   })
 }
 

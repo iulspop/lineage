@@ -84,11 +84,13 @@ export async function action({ request }: Route.ActionArgs) {
           code: parsed.data.code,
           codeVerifier: parsed.data.code_verifier,
           redirectUri: parsed.data.redirect_uri,
+          resource: parsed.data.resource,
         })
       : await rotateRefreshToken({
           clientId: credentials.clientId,
           clientSecret: credentials.clientSecret,
           refreshToken: parsed.data.refresh_token,
+          resource: parsed.data.resource,
         })
   if (!result)
     return oauthErrorResponse(

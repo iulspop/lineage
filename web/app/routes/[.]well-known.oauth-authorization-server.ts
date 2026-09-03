@@ -8,6 +8,8 @@ export function loader({ request }: { request: Request }) {
       code_challenge_methods_supported: ["S256"],
       grant_types_supported: ["authorization_code", "refresh_token"],
       issuer,
+      registration_endpoint: `${issuer}/oauth/register`,
+      resource_indicators_supported: true,
       response_types_supported: ["code"],
       revocation_endpoint: `${issuer}/oauth/revoke`,
       scopes_supported: ["memories:write"],

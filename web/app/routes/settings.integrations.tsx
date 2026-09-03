@@ -49,12 +49,23 @@ export async function loader({ request }: Route.LoaderArgs) {
       id: client.id,
       name: client.name,
       redirectUris: client.redirectUris.map((redirectUri) => redirectUri.uri),
+      registrationType:
+        client.registrationType === "dynamic"
+          ? ("dynamic" as const)
+          : ("manual" as const),
     })),
     grants: grants.map((grant) => ({
       appName: grant.client.name,
+      connectionType: grant.resource?.endsWith("/mcp")
+        ? ("mcp" as const)
+        : ("integration" as const),
       createdAt: grant.createdAt.toISOString(),
       id: grant.id,
       lastUsedAt: grant.lastUsedAt?.toISOString() ?? null,
+      registrationType:
+        grant.client.registrationType === "dynamic"
+          ? ("dynamic" as const)
+          : ("manual" as const),
       scope: grant.scope,
     })),
     isOwner,

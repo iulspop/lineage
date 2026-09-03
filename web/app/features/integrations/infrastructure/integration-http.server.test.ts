@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 
 import {
+  isTrustedIntegrationOrigin,
   readBoundedFormData,
   redactIntegrationUrl,
   secureCredentialHeaders,
@@ -28,6 +29,31 @@ describe("integration HTTP security", () => {
         }),
       ),
     ).resolves.toBeNull()
+  })
+
+  test("accepts absent or trusted origins and rejects foreign origins", () => {
+    expect(
+      isTrustedIntegrationOrigin(
+        new Request("https://lineage.example/mcp"),
+        "https://lineage.example",
+      ),
+    ).toBe(true)
+    expect(
+      isTrustedIntegrationOrigin(
+        new Request("https://lineage.example/mcp", {
+          headers: { Origin: "https://lineage.example" },
+        }),
+        "https://lineage.example",
+      ),
+    ).toBe(true)
+    expect(
+      isTrustedIntegrationOrigin(
+        new Request("https://lineage.example/mcp", {
+          headers: { Origin: "https://attacker.example" },
+        }),
+        "https://lineage.example",
+      ),
+    ).toBe(false)
   })
 
   test("adds credential response hardening headers", () => {

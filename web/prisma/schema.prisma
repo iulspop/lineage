@@ -111,6 +111,10 @@ model IntegrationClient {
   name               String
   clientType         String
   clientSecretHash   String?
+  registrationType   String                          @default("manual")
+  clientUri          String?
+  softwareId         String?
+  softwareVersion    String?
   createdByUserId    String?
   createdAt          DateTime                        @default(now())
   updatedAt          DateTime                        @updatedAt
@@ -125,6 +129,7 @@ model IntegrationClient {
   creationAudits     IntegrationCreationAudit[]
 
   @@index([createdByUserId])
+  @@index([registrationType, createdAt, disabledAt])
 }
 
 model IntegrationRedirectUri {
@@ -143,6 +148,7 @@ model IntegrationGrant {
   userId             String
   clientId           String
   scope              String
+  resource           String                          @default("")
   createdAt          DateTime                        @default(now())
   updatedAt          DateTime                        @updatedAt
   lastUsedAt         DateTime?
@@ -155,7 +161,7 @@ model IntegrationGrant {
   idempotencyRecords IntegrationIdempotencyRecord[]
   creationAudits     IntegrationCreationAudit[]
 
-  @@unique([userId, clientId, scope])
+  @@unique([userId, clientId, scope, resource])
   @@index([clientId, revokedAt])
   @@index([userId, revokedAt])
 }
@@ -167,6 +173,7 @@ model IntegrationAuthorizationCode {
   grantId       String
   redirectUri   String
   scope         String
+  resource      String            @default("")
   codeChallenge String
   expiresAt     DateTime
   usedAt        DateTime?
@@ -184,6 +191,7 @@ model IntegrationAccessToken {
   clientId           String
   grantId            String
   scope              String
+  resource           String            @default("")
   expiresAt          DateTime
   revokedAt          DateTime?
   lastUsedAt         DateTime?
@@ -201,6 +209,7 @@ model IntegrationRefreshTokenFamily {
   id        String                    @id @default(cuid())
   clientId  String
   grantId   String
+  resource  String                    @default("")
   revokedAt DateTime?
   createdAt DateTime                  @default(now())
   client    IntegrationClient         @relation(fields: [clientId], references: [id], onDelete: Cascade)

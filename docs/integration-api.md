@@ -62,6 +62,8 @@ Content-Type: application/x-www-form-urlencoded
 
 Every successful refresh rotates the refresh token. Reusing an already consumed refresh token revokes its entire token family.
 
+OAuth clients accessing a resource-bound endpoint must also send its exact `resource` value during authorization and token exchange. The remote MCP server requires the canonical `${APP_URL}/mcp` audience; credentials issued for another resource are rejected there. See `docs/mcp-server.md`.
+
 ### Revocation
 
 ```http

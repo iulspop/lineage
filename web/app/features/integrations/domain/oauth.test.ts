@@ -8,8 +8,10 @@ import {
 import {
   appendAuthorizationResult,
   authorizationRequestSchema,
+  dynamicClientRegistrationSchema,
   isExactRedirectUri,
   isPermittedRegisteredRedirectUri,
+  normalizeResource,
   normalizeScope,
   oauthErrorResponse,
 } from "./oauth"
@@ -58,6 +60,27 @@ describe("integration OAuth domain", () => {
     expect(isPermittedRegisteredRedirectUri("http://client.example/cb")).toBe(
       false,
     )
+  })
+
+  it("normalizes resource indicators and constrains dynamic clients", () => {
+    expect(normalizeResource(undefined)).toBe("")
+    expect(normalizeResource("https://lineage.example/mcp")).toBe(
+      "https://lineage.example/mcp",
+    )
+    expect(normalizeResource("https://lineage.example/mcp#fragment")).toBeNull()
+
+    expect(
+      dynamicClientRegistrationSchema.safeParse({
+        client_name: "MCP host",
+        redirect_uris: ["https://host.example/oauth/callback"],
+      }).success,
+    ).toBe(true)
+    expect(
+      dynamicClientRegistrationSchema.safeParse({
+        client_name: "MCP host",
+        redirect_uris: ["http://host.example/oauth/callback"],
+      }).success,
+    ).toBe(false)
   })
 
   it("hashes credentials and verifies PKCE challenges", () => {

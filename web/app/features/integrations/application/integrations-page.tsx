@@ -8,9 +8,11 @@ import { formatDate, useTimeZone } from "~/utils/time-zone"
 
 type GrantSummary = {
   appName: string
+  connectionType: "mcp" | "integration"
   createdAt: string
   id: string
   lastUsedAt: string | null
+  registrationType: "dynamic" | "manual"
   scope: string
 }
 
@@ -21,6 +23,7 @@ type ClientSummary = {
   id: string
   name: string
   redirectUris: string[]
+  registrationType: "dynamic" | "manual"
 }
 
 type ActionData =
@@ -79,7 +82,13 @@ export function IntegrationsPage({
                 <div className={s.settingCopy}>
                   <span className={s.settingTitle}>{grant.appName}</span>
                   <span className={s.settingDescription}>
-                    Can create Memories · Connected{" "}
+                    {grant.connectionType === "mcp"
+                      ? "MCP connection"
+                      : "Connected application"}
+                    {grant.registrationType === "dynamic"
+                      ? " · Dynamically registered"
+                      : " · Owner managed"}
+                    {" · Can create Memories · Connected "}
                     {formatDate(grant.createdAt, timeZone)}
                     {grant.lastUsedAt
                       ? ` · Last used ${formatDate(grant.lastUsedAt, timeZone)}`
@@ -177,7 +186,10 @@ export function IntegrationsPage({
                   <div className={s.settingCopy}>
                     <span className={s.settingTitle}>{client.name}</span>
                     <span className={s.settingDescription}>
-                      {client.clientType} · {client.redirectUris.join(", ")}
+                      {client.registrationType === "dynamic"
+                        ? "Dynamically registered"
+                        : "Owner managed"}
+                      {` · ${client.clientType} · ${client.redirectUris.join(", ")}`}
                     </span>
                   </div>
                   <span className={s.badge}>
