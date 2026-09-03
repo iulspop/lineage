@@ -1,5 +1,8 @@
+import { Select } from "@base-ui/react/select"
 import {
   IconArrowLeft,
+  IconCheck,
+  IconChevronDown,
   IconKey,
   IconPlugConnected,
   IconPlus,
@@ -10,6 +13,7 @@ import { Form, Link } from "react-router"
 
 import { Button } from "~/components/ui/button"
 import { FieldError } from "~/components/ui/field"
+import { Input, inputStyles } from "~/components/ui/input"
 import * as s from "~/features/integrations/application/integrations-page.css"
 import { formatDate, useTimeZone } from "~/utils/time-zone"
 
@@ -44,11 +48,13 @@ export function IntegrationsPage({
   clients,
   grants,
   isOwner,
+  mcpUrl = "/mcp",
 }: {
   actionData?: ActionData
   clients: ClientSummary[]
   grants: GrantSummary[]
   isOwner: boolean
+  mcpUrl?: string
 }) {
   const timeZone = useTimeZone()
   const enabledClients = clients.filter((client) => !client.disabledAt).length
@@ -92,6 +98,41 @@ export function IntegrationsPage({
       </div>
 
       <div className={s.stack}>
+        <section className={s.connectionGuide}>
+          <div className={s.guideHeader}>
+            <IconRobot
+              aria-hidden="true"
+              className={s.panelHeaderIcon}
+              size={20}
+            />
+            <div>
+              <h2>Connect an AI agent</h2>
+              <p>
+                Add Lineage as a remote MCP server in your agent, then approve
+                its limited access here.
+              </p>
+            </div>
+          </div>
+          <div className={s.guideBody}>
+            <ol className={s.guideSteps}>
+              <li>
+                In your AI agent, add a remote MCP server and use this URL.
+              </li>
+              <li>
+                Sign in to Lineage when the agent opens the authorization page.
+              </li>
+              <li>
+                Approve Create Memories access. The agent cannot read your
+                Library, answers, or review history.
+              </li>
+            </ol>
+            <div className={s.endpointBlock}>
+              <span className={s.endpointLabel}>MCP server URL</span>
+              <code className={s.endpointValue}>{mcpUrl}</code>
+            </div>
+          </div>
+        </section>
+
         <section className={s.panel}>
           <div className={s.panelHeader}>
             <IconPlugConnected
@@ -195,7 +236,7 @@ export function IntegrationsPage({
                   <label className={s.label} htmlFor="client-name">
                     Application name
                   </label>
-                  <input
+                  <Input
                     id="client-name"
                     name="name"
                     placeholder="e.g. Study assistant"
@@ -207,14 +248,46 @@ export function IntegrationsPage({
                   <label className={s.label} htmlFor="client-type">
                     Client type
                   </label>
-                  <select
+                  <Select.Root
                     defaultValue="public"
                     id="client-type"
+                    items={{
+                      confidential: "Confidential",
+                      public: "Public (PKCE)",
+                    }}
                     name="clientType"
                   >
-                    <option value="public">Public</option>
-                    <option value="confidential">Confidential</option>
-                  </select>
+                    <Select.Trigger className={s.selectTrigger}>
+                      <Select.Value />
+                      <Select.Icon className={s.selectIcon}>
+                        <IconChevronDown aria-hidden size={18} />
+                      </Select.Icon>
+                    </Select.Trigger>
+                    <Select.Portal>
+                      <Select.Positioner
+                        className={s.selectPositioner}
+                        sideOffset={6}
+                      >
+                        <Select.Popup className={s.selectPopup}>
+                          <Select.Item className={s.selectItem} value="public">
+                            <Select.ItemText>Public (PKCE)</Select.ItemText>
+                            <Select.ItemIndicator className={s.selectIndicator}>
+                              <IconCheck aria-hidden size={16} />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                          <Select.Item
+                            className={s.selectItem}
+                            value="confidential"
+                          >
+                            <Select.ItemText>Confidential</Select.ItemText>
+                            <Select.ItemIndicator className={s.selectIndicator}>
+                              <IconCheck aria-hidden size={16} />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        </Select.Popup>
+                      </Select.Positioner>
+                    </Select.Portal>
+                  </Select.Root>
                 </div>
                 <div className={`${s.field} ${s.fieldWide}`}>
                   <label className={s.label} htmlFor="redirect-uris">
@@ -222,6 +295,7 @@ export function IntegrationsPage({
                   </label>
                   <textarea
                     aria-describedby="redirect-help"
+                    className={inputStyles.textarea}
                     id="redirect-uris"
                     name="redirectUris"
                     placeholder="https://example.com/oauth/callback"

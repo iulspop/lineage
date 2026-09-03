@@ -39,6 +39,33 @@ describe("IntegrationsPage", () => {
     expect(screen.queryByText(/approved clients/i)).not.toBeInTheDocument()
   })
 
+  test("given: the Connected apps page, should: explain how to connect an AI agent", () => {
+    const RouterStub = createRoutesStub([
+      {
+        Component: () => (
+          <IntegrationsPage
+            clients={[]}
+            grants={[]}
+            isOwner={false}
+            mcpUrl="https://lineage.example/mcp"
+          />
+        ),
+        path: "/settings/integrations",
+      },
+    ])
+
+    render(<RouterStub initialEntries={["/settings/integrations"]} />)
+
+    expect(
+      screen.getByRole("heading", { name: /connect an ai agent/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("https://lineage.example/mcp")).toBeInTheDocument()
+    expect(screen.getByText(/add a remote mcp server/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/approve create memories access/i),
+    ).toBeInTheDocument()
+  })
+
   test("shows client registration only to the owner", () => {
     const RouterStub = createRoutesStub([
       {

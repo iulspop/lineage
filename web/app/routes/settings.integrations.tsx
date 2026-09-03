@@ -3,6 +3,7 @@ import { data, redirect } from "react-router"
 
 import type { Route } from "./+types/settings.integrations"
 import { AppShell } from "~/components/app-shell/app-shell"
+import { getServerEnv } from "~/config/server-env.server"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
 import { retrieveOwnerStatusForUser } from "~/features/chat/infrastructure/chat-model.server"
 import { IntegrationsPage } from "~/features/integrations/application/integrations-page"
@@ -69,6 +70,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       scope: grant.scope,
     })),
     isOwner,
+    mcpUrl: new URL("/mcp", getServerEnv().APP_URL ?? request.url).toString(),
     pageTitle: "Connected apps",
     userEmail: user.email,
   }
@@ -153,6 +155,7 @@ export default function SettingsIntegrationsRoute({
         clients={loaderData.clients}
         grants={loaderData.grants}
         isOwner={loaderData.isOwner}
+        mcpUrl={loaderData.mcpUrl}
       />
     </AppShell>
   )

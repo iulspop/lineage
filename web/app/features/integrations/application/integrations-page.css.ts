@@ -115,6 +115,80 @@ export const stack = style({
   gap: theme.space[5],
 })
 
+export const connectionGuide = style({
+  background: theme.color.background.subtle,
+  border: `1px solid ${theme.color.border.interactive}`,
+  borderRadius: theme.radius.lg,
+  overflow: "hidden",
+})
+
+export const guideHeader = style({
+  alignItems: "flex-start",
+  display: "flex",
+  gap: theme.space[3],
+  padding: `${theme.space[5]} ${theme.space[5]} ${theme.space[4]}`,
+})
+
+globalStyle(`${guideHeader} h2`, {
+  fontSize: theme.font.role.sectionTitle,
+  fontWeight: theme.font.weight.semibold,
+})
+
+globalStyle(`${guideHeader} p`, {
+  color: theme.color.text.muted,
+  fontSize: theme.font.role.supporting,
+  lineHeight: theme.font.lineHeight.normal,
+  marginTop: theme.space[1],
+})
+
+export const guideBody = style({
+  "@media": {
+    "(max-width: 42rem)": { gridTemplateColumns: "1fr" },
+  },
+  borderTop: `1px solid ${theme.color.border.subtle}`,
+  display: "grid",
+  gap: theme.space[5],
+  gridTemplateColumns: "minmax(0, 1fr) minmax(16rem, 0.8fr)",
+  padding: theme.space[5],
+})
+
+export const guideSteps = style({
+  color: theme.color.text.secondary,
+  display: "flex",
+  flexDirection: "column",
+  fontSize: theme.font.role.supporting,
+  gap: theme.space[3],
+  lineHeight: theme.font.lineHeight.normal,
+  margin: 0,
+  paddingLeft: theme.space[5],
+})
+
+export const endpointBlock = style({
+  alignSelf: "start",
+  background: theme.color.background.card,
+  border: `1px solid ${theme.color.border.subtle}`,
+  borderRadius: theme.radius.md,
+  minWidth: 0,
+  padding: theme.space[4],
+})
+
+export const endpointLabel = style({
+  color: theme.color.text.muted,
+  display: "block",
+  fontSize: theme.font.role.metadata,
+  fontWeight: theme.font.weight.medium,
+  marginBottom: theme.space[2],
+})
+
+export const endpointValue = style({
+  color: theme.color.text.primary,
+  display: "block",
+  fontFamily: theme.font.family.mono,
+  fontSize: theme.font.role.metadata,
+  overflowWrap: "anywhere",
+  userSelect: "all",
+})
+
 export const panel = style({
   background: theme.color.background.card,
   border: `1px solid ${theme.color.border.default}`,
@@ -271,6 +345,89 @@ export const help = style({
   fontSize: theme.font.role.metadata,
   lineHeight: theme.font.lineHeight.normal,
 })
+export const selectTrigger = style({
+  alignItems: "center",
+  background: theme.color.background.card,
+  border: `1px solid ${theme.color.border.interactive}`,
+  borderRadius: theme.radius.md,
+  boxShadow: theme.shadow.xs,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  display: "flex",
+  fontFamily: "inherit",
+  fontSize: theme.font.size.sm,
+  justifyContent: "space-between",
+  minHeight: theme.layout.controlHeight,
+  outline: "none",
+  padding: `${theme.space[2]} ${theme.space[3]}`,
+  selectors: {
+    "&:focus-visible": {
+      borderColor: theme.color.focus,
+      boxShadow: theme.shadow.focus,
+    },
+    "&:hover": { borderColor: theme.color.border.strong },
+    "&[data-popup-open]": {
+      borderColor: theme.color.focus,
+      boxShadow: theme.shadow.focus,
+    },
+  },
+  transition: `background ${theme.duration.fast} ${theme.easing.standard}, border-color ${theme.duration.fast} ${theme.easing.standard}, box-shadow ${theme.duration.fast} ${theme.easing.standard}`,
+  width: "100%",
+})
+
+export const selectIcon = style({
+  alignItems: "center",
+  color: theme.color.text.muted,
+  display: "flex",
+  selectors: {
+    "[data-popup-open] &": { transform: "rotate(180deg)" },
+  },
+  transition: `transform ${theme.duration.fast} ${theme.easing.standard}`,
+})
+
+export const selectPositioner = style({
+  outline: "none",
+  zIndex: 50,
+})
+
+export const selectPopup = style({
+  background: theme.color.background.card,
+  border: `1px solid ${theme.color.border.interactive}`,
+  borderRadius: theme.radius.md,
+  boxShadow: theme.shadow.elevated,
+  minWidth: "var(--anchor-width)",
+  outline: "none",
+  padding: theme.space[1],
+  transformOrigin: "var(--transform-origin)",
+})
+
+export const selectItem = style({
+  alignItems: "center",
+  borderRadius: theme.radius.sm,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  display: "flex",
+  fontSize: theme.font.size.sm,
+  gap: theme.space[3],
+  justifyContent: "space-between",
+  minHeight: theme.layout.controlHeight,
+  outline: "none",
+  padding: `${theme.space[2]} ${theme.space[3]}`,
+  selectors: {
+    "&[data-highlighted]": { background: theme.color.background.sunken },
+    "&[data-selected]": {
+      color: theme.color.text.link,
+      fontWeight: theme.font.weight.semibold,
+    },
+  },
+})
+
+export const selectIndicator = style({
+  alignItems: "center",
+  color: theme.color.text.link,
+  display: "flex",
+})
+
 export const formFooter = style({
   alignItems: "center",
   borderTop: `1px solid ${theme.color.border.subtle}`,
