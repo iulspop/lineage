@@ -1,9 +1,16 @@
-import { IconPlugConnected, IconPlus } from "@tabler/icons-react"
+import {
+  IconArrowLeft,
+  IconKey,
+  IconPlugConnected,
+  IconPlus,
+  IconRobot,
+  IconShieldCheck,
+} from "@tabler/icons-react"
 import { Form, Link } from "react-router"
 
 import { Button } from "~/components/ui/button"
 import { FieldError } from "~/components/ui/field"
-import * as s from "~/features/auth/application/settings-page.css"
+import * as s from "~/features/integrations/application/integrations-page.css"
 import { formatDate, useTimeZone } from "~/utils/time-zone"
 
 type GrantSummary = {
@@ -44,163 +51,237 @@ export function IntegrationsPage({
   isOwner: boolean
 }) {
   const timeZone = useTimeZone()
+  const enabledClients = clients.filter((client) => !client.disabledAt).length
 
   return (
     <section className={s.page}>
       <header className={s.header}>
         <div>
+          <p className={s.eyebrow}>Access & permissions</p>
           <h1 className={s.title}>Connected apps</h1>
           <p className={s.subtitle}>
-            Manage applications allowed to create Memories in your active
-            workspace.
+            Control which applications and AI assistants can create Memories in
+            your active workspace.
           </p>
         </div>
         <Link className={s.backLink} to="/settings">
-          Back to settings
+          <IconArrowLeft aria-hidden="true" size={16} />
+          Settings
         </Link>
       </header>
 
-      <section className={s.section}>
-        <div className={s.sectionHeading}>
-          <h2>Connections</h2>
-          <p>
-            Revoking a connection immediately invalidates its active
-            credentials.
-          </p>
-        </div>
-        {grants.length === 0 ? (
-          <p className={s.settingDescription}>No applications are connected.</p>
-        ) : (
-          <ul className={s.passkeyList}>
-            {grants.map((grant) => (
-              <li className={s.passkeyItem} key={grant.id}>
-                <IconPlugConnected
-                  aria-hidden="true"
-                  className={s.rowIcon}
-                  size={17}
-                />
-                <div className={s.settingCopy}>
-                  <span className={s.settingTitle}>{grant.appName}</span>
-                  <span className={s.settingDescription}>
-                    {grant.connectionType === "mcp"
-                      ? "MCP connection"
-                      : "Connected application"}
-                    {grant.registrationType === "dynamic"
-                      ? " · Dynamically registered"
-                      : " · Owner managed"}
-                    {" · Can create Memories · Connected "}
-                    {formatDate(grant.createdAt, timeZone)}
-                    {grant.lastUsedAt
-                      ? ` · Last used ${formatDate(grant.lastUsedAt, timeZone)}`
-                      : " · Not used yet"}
-                  </span>
-                </div>
-                <Form method="post">
-                  <input name="grantId" type="hidden" value={grant.id} />
-                  <Button
-                    name="intent"
-                    size="xs"
-                    type="submit"
-                    value="revokeGrant"
-                    variant="destructive"
-                  >
-                    Revoke
-                  </Button>
-                </Form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {isOwner && (
-        <section className={s.section}>
-          <div className={s.sectionHeading}>
-            <h2>Approved clients</h2>
-            <p>Register a trusted application with exact redirect URIs.</p>
+      <div className={s.overview}>
+        <div className={s.overviewCard}>
+          <span className={s.overviewIcon}>
+            <IconPlugConnected aria-hidden="true" size={20} />
+          </span>
+          <div>
+            <span className={s.overviewLabel}>Active connections</span>
+            <span className={s.overviewValue}>{grants.length}</span>
           </div>
-          <Form method="post">
-            <div className={s.settingRow}>
-              <IconPlus aria-hidden="true" className={s.rowIcon} size={17} />
-              <div className={s.settingCopy}>
-                <label className={s.settingTitle} htmlFor="client-name">
-                  Application name
-                </label>
-                <input id="client-name" name="name" required type="text" />
-              </div>
-              <div className={s.settingCopy}>
-                <label className={s.settingTitle} htmlFor="client-type">
-                  Client type
-                </label>
-                <select
-                  defaultValue="public"
-                  id="client-type"
-                  name="clientType"
-                >
-                  <option value="public">Public</option>
-                  <option value="confidential">Confidential</option>
-                </select>
-              </div>
-            </div>
-            <div className={s.settingRow}>
-              <div className={s.settingCopy}>
-                <label className={s.settingTitle} htmlFor="redirect-uris">
-                  Redirect URIs
-                </label>
-                <textarea
-                  aria-describedby="redirect-help"
-                  id="redirect-uris"
-                  name="redirectUris"
-                  required
-                  rows={3}
-                />
-                <span className={s.settingDescription} id="redirect-help">
-                  One exact HTTPS URI per line. HTTP is allowed only for
-                  loopback hosts.
-                </span>
-              </div>
-              <Button name="intent" type="submit" value="createClient">
-                Register client
-              </Button>
-            </div>
-          </Form>
+        </div>
+        <div className={s.overviewCard}>
+          <span className={s.overviewIcon}>
+            <IconShieldCheck aria-hidden="true" size={20} />
+          </span>
+          <div>
+            <span className={s.overviewLabel}>Permission granted</span>
+            <span className={s.overviewValue}>Create Memories only</span>
+          </div>
+        </div>
+      </div>
 
-          {actionData?.success && "clientId" in actionData && (
-            <div className={s.notificationRows}>
-              <p className={s.settingTitle}>Client registered</p>
-              <p className={s.settingDescription}>
-                Client ID: {actionData.clientId}
+      <div className={s.stack}>
+        <section className={s.panel}>
+          <div className={s.panelHeader}>
+            <IconPlugConnected
+              aria-hidden="true"
+              className={s.panelHeaderIcon}
+              size={20}
+            />
+            <div>
+              <h2>Connections</h2>
+              <p>
+                Apps with access to your workspace. Revoking access immediately
+                invalidates their credentials.
               </p>
-              {actionData.clientSecret && (
-                <p className={s.settingDescription}>
-                  Client secret (shown once): {actionData.clientSecret}
-                </p>
-              )}
             </div>
-          )}
+          </div>
 
-          {clients.length > 0 && (
-            <ul className={s.passkeyList}>
-              {clients.map((client) => (
-                <li className={s.passkeyItem} key={client.id}>
-                  <div className={s.settingCopy}>
-                    <span className={s.settingTitle}>{client.name}</span>
-                    <span className={s.settingDescription}>
-                      {client.registrationType === "dynamic"
-                        ? "Dynamically registered"
-                        : "Owner managed"}
-                      {` · ${client.clientType} · ${client.redirectUris.join(", ")}`}
+          {grants.length === 0 ? (
+            <div className={s.emptyState}>
+              <span className={s.emptyIcon}>
+                <IconRobot aria-hidden="true" size={22} />
+              </span>
+              <p className={s.emptyTitle}>No apps connected</p>
+              <p className={s.emptyDescription}>
+                When you authorize an AI assistant or another application, it
+                will appear here with its exact permission and activity.
+              </p>
+            </div>
+          ) : (
+            <ul className={s.connectionList}>
+              {grants.map((grant) => (
+                <li className={s.connectionItem} key={grant.id}>
+                  <div className={s.connectionIdentity}>
+                    <span className={s.appIcon}>
+                      {grant.connectionType === "mcp" ? (
+                        <IconRobot aria-hidden="true" size={20} />
+                      ) : (
+                        <IconPlugConnected aria-hidden="true" size={20} />
+                      )}
                     </span>
+                    <div className={s.connectionCopy}>
+                      <p className={s.connectionTitle}>{grant.appName}</p>
+                      <p className={s.connectionMeta}>
+                        Connected {formatDate(grant.createdAt, timeZone)}
+                        {grant.lastUsedAt
+                          ? ` · Last used ${formatDate(grant.lastUsedAt, timeZone)}`
+                          : " · Not used yet"}
+                      </p>
+                      <div className={s.chips}>
+                        <span className={s.chip}>
+                          {grant.connectionType === "mcp"
+                            ? "MCP connection"
+                            : "Connected application"}
+                        </span>
+                        <span className={s.chip}>Can create Memories</span>
+                        <span className={s.chip}>
+                          {grant.registrationType === "dynamic"
+                            ? "Dynamically registered"
+                            : "Owner managed"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <span className={s.badge}>
-                    {client.disabledAt ? "Disabled" : "Enabled"}
-                  </span>
+                  <Form method="post">
+                    <input name="grantId" type="hidden" value={grant.id} />
+                    <Button
+                      name="intent"
+                      size="sm"
+                      type="submit"
+                      value="revokeGrant"
+                      variant="destructive"
+                    >
+                      Revoke access
+                    </Button>
+                  </Form>
                 </li>
               ))}
             </ul>
           )}
         </section>
-      )}
+
+        {isOwner && (
+          <section className={s.panel}>
+            <div className={s.panelHeader}>
+              <IconKey
+                aria-hidden="true"
+                className={s.panelHeaderIcon}
+                size={20}
+              />
+              <div>
+                <h2>Approved clients</h2>
+                <p>
+                  Developer controls for trusted applications using exact OAuth
+                  redirect URIs. {enabledClients} currently enabled.
+                </p>
+              </div>
+            </div>
+
+            <Form className={s.registrationForm} method="post">
+              <div className={s.formGrid}>
+                <div className={s.field}>
+                  <label className={s.label} htmlFor="client-name">
+                    Application name
+                  </label>
+                  <input
+                    id="client-name"
+                    name="name"
+                    placeholder="e.g. Study assistant"
+                    required
+                    type="text"
+                  />
+                </div>
+                <div className={s.field}>
+                  <label className={s.label} htmlFor="client-type">
+                    Client type
+                  </label>
+                  <select
+                    defaultValue="public"
+                    id="client-type"
+                    name="clientType"
+                  >
+                    <option value="public">Public</option>
+                    <option value="confidential">Confidential</option>
+                  </select>
+                </div>
+                <div className={`${s.field} ${s.fieldWide}`}>
+                  <label className={s.label} htmlFor="redirect-uris">
+                    Redirect URIs
+                  </label>
+                  <textarea
+                    aria-describedby="redirect-help"
+                    id="redirect-uris"
+                    name="redirectUris"
+                    placeholder="https://example.com/oauth/callback"
+                    required
+                    rows={3}
+                  />
+                  <span className={s.help} id="redirect-help">
+                    One exact HTTPS URI per line. HTTP is allowed only for
+                    loopback hosts.
+                  </span>
+                </div>
+              </div>
+              <div className={s.formFooter}>
+                <Button name="intent" type="submit" value="createClient">
+                  <IconPlus aria-hidden="true" size={16} />
+                  Register client
+                </Button>
+              </div>
+            </Form>
+
+            {actionData?.success && "clientId" in actionData && (
+              <div className={s.result}>
+                <p className={s.resultTitle}>Client registered</p>
+                <p className={s.resultValue}>
+                  Client ID: {actionData.clientId}
+                </p>
+                {actionData.clientSecret && (
+                  <p className={s.resultValue}>
+                    Client secret (shown once): {actionData.clientSecret}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {clients.length > 0 && (
+              <ul className={s.clientList}>
+                {clients.map((client) => (
+                  <li className={s.clientItem} key={client.id}>
+                    <div className={s.connectionCopy}>
+                      <p className={s.connectionTitle}>{client.name}</p>
+                      <p className={s.clientUri}>
+                        {client.registrationType === "dynamic"
+                          ? "Dynamically registered"
+                          : "Owner managed"}
+                        {` · ${client.clientType}`}
+                        {client.redirectUris.length > 0
+                          ? ` · ${client.redirectUris.join(", ")}`
+                          : ""}
+                      </p>
+                    </div>
+                    <span className={s.statusBadge}>
+                      {client.disabledAt ? "Disabled" : "Enabled"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+      </div>
 
       {actionData && !actionData.success && (
         <FieldError className={s.status}>{actionData.error}</FieldError>

@@ -34,7 +34,7 @@ describe("IntegrationsPage", () => {
     expect(screen.getByText("Study Assistant")).toBeInTheDocument()
     expect(screen.getByText(/mcp connection/i)).toBeInTheDocument()
     expect(screen.getByText(/dynamically registered/i)).toBeInTheDocument()
-    expect(screen.getByText(/can create memories/i)).toBeInTheDocument()
+    expect(screen.getByText(/^can create memories$/i)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /revoke/i })).toBeInTheDocument()
     expect(screen.queryByText(/approved clients/i)).not.toBeInTheDocument()
   })
