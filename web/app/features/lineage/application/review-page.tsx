@@ -8,7 +8,13 @@ import {
   IconX,
 } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
-import { Form, Link, useNavigate, useSearchParams } from "react-router"
+import {
+  Form,
+  Link,
+  Navigate,
+  useNavigate,
+  useSearchParams,
+} from "react-router"
 
 import * as s from "./review-page.css"
 import { LatexText } from "~/components/latex-text/latex-text"
@@ -131,11 +137,6 @@ export function ReviewPage({
     loaderData.prompt?.kind === "basic" || loaderData.prompt?.kind === "cloze"
 
   useEffect(() => {
-    if (actionData && "completed" in actionData && actionData.completed)
-      navigate(continueTo, { replace: true })
-  }, [actionData, continueTo, navigate])
-
-  useEffect(() => {
     if (editing) editChallengeRef.current?.focus()
   }, [editing])
 
@@ -244,6 +245,9 @@ export function ReviewPage({
     resolved,
     showShortcuts,
   ])
+
+  if (resolved?.completed && historyIndex === null)
+    return <Navigate replace to={continueTo} />
 
   return (
     <main className={s.shell}>
