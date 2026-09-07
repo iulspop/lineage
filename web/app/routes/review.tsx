@@ -12,7 +12,10 @@ import {
   loadReviewPrompt,
   resolveReview,
 } from "~/features/lineage/application/review-flow.server"
-import { createReviewContinuationUrl } from "~/features/lineage/application/review-navigation"
+import {
+  createReviewAfterDeletionUrl,
+  createReviewContinuationUrl,
+} from "~/features/lineage/application/review-navigation"
 import { ReviewPage } from "~/features/lineage/application/review-page"
 import {
   acceptMemoryRevision,
@@ -164,8 +167,7 @@ export async function action({ request }: Route.ActionArgs) {
       store: corpusSnapshotStore,
       validator: lineageRuntime,
     })
-    const reviewUrl = new URL(request.url)
-    throw redirect(`${reviewUrl.pathname}${reviewUrl.search}`)
+    throw redirect(createReviewAfterDeletionUrl(request.url))
   }
 
   if (intent === "revise") {

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest"
 
-import { createReviewContinuationUrl } from "./review-navigation"
+import {
+  createReviewAfterDeletionUrl,
+  createReviewContinuationUrl,
+} from "./review-navigation"
 
 describe("createReviewContinuationUrl", () => {
   test("given: a completed limited review, should: continue directly to the next Prompt", () => {
@@ -10,5 +13,15 @@ describe("createReviewContinuationUrl", () => {
     const expected = "/review?limit=10&completed=4"
 
     expect(actual).toEqual(expected)
+  })
+})
+
+describe("createReviewAfterDeletionUrl", () => {
+  test("given: a deleted historical review, should: return to the current queue without incrementing progress", () => {
+    const actual = createReviewAfterDeletionUrl(
+      "https://lineage.test/review?limit=10&completed=3&history=0",
+    )
+
+    expect(actual).toEqual("/review?limit=10&completed=3")
   })
 })

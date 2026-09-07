@@ -310,6 +310,85 @@ export const editActionButtons = style({
   gap: theme.space[2],
 })
 
+export const deleteDialogBackdrop = style({
+  background: "rgb(0 0 0 / 0.55)",
+  inset: 0,
+  position: "fixed",
+  transition: `opacity ${theme.duration.fast} ${theme.easing.standard}`,
+  zIndex: 30,
+})
+
+export const deleteDialogViewport = style({
+  alignItems: "center",
+  display: "flex",
+  inset: 0,
+  justifyContent: "center",
+  padding: theme.space[4],
+  position: "fixed",
+  zIndex: 30,
+})
+
+export const deleteDialogPopup = style({
+  background: theme.color.background.elevated,
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.lg,
+  boxShadow: theme.shadow.elevated,
+  display: "grid",
+  gap: theme.space[4],
+  maxWidth: "28rem",
+  padding: theme.space[6],
+  width: "100%",
+})
+
+export const deleteDialogIcon = style({
+  alignItems: "center",
+  background: theme.color.intent.danger.subtle,
+  borderRadius: "999px",
+  color: theme.color.text.danger,
+  display: "flex",
+  height: "3rem",
+  justifyContent: "center",
+  width: "3rem",
+})
+
+export const deleteDialogTitle = style({
+  color: theme.color.text.primary,
+  fontSize: theme.font.role.pageTitle,
+  fontWeight: theme.font.weight.semibold,
+  letterSpacing: "-0.02em",
+  margin: 0,
+})
+
+export const deleteDialogDescription = style({
+  color: theme.color.text.muted,
+  lineHeight: theme.font.lineHeight.relaxed,
+  margin: 0,
+})
+
+export const deleteDialogActions = style({
+  alignItems: "center",
+  display: "flex",
+  gap: theme.space[3],
+  justifyContent: "flex-end",
+  marginTop: theme.space[2],
+})
+
+export const deleteDialogCancel = style({
+  background: "transparent",
+  border: `1px solid ${theme.color.border.default}`,
+  borderRadius: theme.radius.md,
+  color: theme.color.text.primary,
+  cursor: "pointer",
+  font: "inherit",
+  fontWeight: theme.font.weight.semibold,
+  minHeight: "2.75rem",
+  paddingInline: theme.space[4],
+  selectors: {
+    "&:focus-visible": { boxShadow: theme.shadow.focus, outline: 0 },
+    "&:hover": { background: theme.color.background.subtle },
+  },
+})
+
 export const error = style({
   background: theme.color.intent.danger.subtle,
   borderRadius: theme.radius.md,

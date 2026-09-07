@@ -1,3 +1,4 @@
+import { Dialog } from "@base-ui/react/dialog"
 import {
   IconArrowLeft,
   IconChevronLeft,
@@ -92,6 +93,7 @@ export function ReviewPage({
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const editChallengeRef = useRef<HTMLTextAreaElement>(null)
   const editingSnapshotDigest = useRef(loaderData.snapshotDigest)
   const navigate = useNavigate()
@@ -156,6 +158,11 @@ export function ReviewPage({
         target?.isContentEditable
 
       if (event.key === "Escape") {
+        if (confirmingDelete) {
+          setConfirmingDelete(false)
+          event.preventDefault()
+          return
+        }
         if (editing) {
           setEditing(false)
           event.preventDefault()
@@ -237,6 +244,7 @@ export function ReviewPage({
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [
     canQuickEdit,
+    confirmingDelete,
     continueTo,
     editing,
     navigate,
@@ -450,99 +458,154 @@ export function ReviewPage({
             </div>
 
             {editing ? (
-              <Form
-                aria-label="Quick edit memory"
-                aria-modal="true"
-                className={s.editPanel}
-                method="post"
-                role="dialog"
-              >
-                <div className={s.editHeader}>
-                  <div>
-                    <p className={s.eyebrow}>Quick edit</p>
-                    <h2>Revise without leaving review</h2>
-                  </div>
-                  <button
-                    aria-label="Cancel quick edit"
-                    className={s.iconButton}
-                    onClick={() => setEditing(false)}
-                    type="button"
-                  >
-                    <IconX aria-hidden="true" />
-                  </button>
-                </div>
-                <input
-                  name="corpusId"
-                  type="hidden"
-                  value={loaderData.corpusId}
-                />
-                <input
-                  name="promptId"
-                  type="hidden"
-                  value={loaderData.prompt.id}
-                />
-                <input
-                  name="promptRevision"
-                  type="hidden"
-                  value={loaderData.prompt.revision}
-                />
-                <input
-                  name="snapshotDigest"
-                  type="hidden"
-                  value={loaderData.snapshotDigest}
-                />
-                <input name="intent" type="hidden" value="revise" />
-                <Label htmlFor="review-edit-challenge">Challenge</Label>
-                <textarea
-                  className={s.editTextarea}
-                  defaultValue={(
-                    loaderData.prompt.challenge ?? loaderData.presentation
-                  ).join("\n")}
-                  id="review-edit-challenge"
-                  name="challenge"
-                  ref={editChallengeRef}
-                  rows={3}
-                />
-                <Label htmlFor="review-edit-answer">Answer</Label>
-                <textarea
-                  className={s.editTextarea}
-                  defaultValue={(
-                    loaderData.prompt.withheld ??
-                    loaderData.prompt.resolution ??
-                    []
-                  ).join("\n")}
-                  id="review-edit-answer"
-                  name="answer"
-                  rows={3}
-                />
-                <div className={s.editActions}>
-                  <span>
-                    <kbd>⌘↵</kbd> save · <kbd>⌘⌫</kbd> delete
-                  </span>
-                  <div className={s.editActionButtons}>
-                    <Button
-                      data-review-shortcut="delete-edit"
-                      name="intent"
-                      onClick={(event) => {
-                        if (
-                          !window.confirm(
-                            "Delete this Memory? You can restore it from Library for 30 days.",
-                          )
-                        )
-                          event.preventDefault()
-                      }}
-                      type="submit"
-                      value="delete"
-                      variant="destructive"
+              <>
+                <Form
+                  aria-label="Quick edit memory"
+                  aria-modal="true"
+                  className={s.editPanel}
+                  method="post"
+                  role="dialog"
+                >
+                  <div className={s.editHeader}>
+                    <div>
+                      <p className={s.eyebrow}>Quick edit</p>
+                      <h2>Revise without leaving review</h2>
+                    </div>
+                    <button
+                      aria-label="Cancel quick edit"
+                      className={s.iconButton}
+                      onClick={() => setEditing(false)}
+                      type="button"
                     >
-                      <IconTrash aria-hidden="true" /> Delete
-                    </Button>
-                    <Button data-review-shortcut="save-edit" type="submit">
-                      Save revision
-                    </Button>
+                      <IconX aria-hidden="true" />
+                    </button>
                   </div>
-                </div>
-              </Form>
+                  <input
+                    name="corpusId"
+                    type="hidden"
+                    value={loaderData.corpusId}
+                  />
+                  <input
+                    name="promptId"
+                    type="hidden"
+                    value={loaderData.prompt.id}
+                  />
+                  <input
+                    name="promptRevision"
+                    type="hidden"
+                    value={loaderData.prompt.revision}
+                  />
+                  <input
+                    name="snapshotDigest"
+                    type="hidden"
+                    value={loaderData.snapshotDigest}
+                  />
+                  <input name="intent" type="hidden" value="revise" />
+                  <Label htmlFor="review-edit-challenge">Challenge</Label>
+                  <textarea
+                    className={s.editTextarea}
+                    defaultValue={(
+                      loaderData.prompt.challenge ?? loaderData.presentation
+                    ).join("\n")}
+                    id="review-edit-challenge"
+                    name="challenge"
+                    ref={editChallengeRef}
+                    rows={3}
+                  />
+                  <Label htmlFor="review-edit-answer">Answer</Label>
+                  <textarea
+                    className={s.editTextarea}
+                    defaultValue={(
+                      loaderData.prompt.withheld ??
+                      loaderData.prompt.resolution ??
+                      []
+                    ).join("\n")}
+                    id="review-edit-answer"
+                    name="answer"
+                    rows={3}
+                  />
+                  <div className={s.editActions}>
+                    <span>
+                      <kbd>⌘↵</kbd> save · <kbd>⌘⌫</kbd> delete
+                    </span>
+                    <div className={s.editActionButtons}>
+                      <Button
+                        data-review-shortcut="delete-edit"
+                        onClick={() => setConfirmingDelete(true)}
+                        type="button"
+                        variant="destructive"
+                      >
+                        <IconTrash aria-hidden="true" /> Delete
+                      </Button>
+                      <Button data-review-shortcut="save-edit" type="submit">
+                        Save revision
+                      </Button>
+                    </div>
+                  </div>
+                </Form>
+                <Dialog.Root
+                  onOpenChange={setConfirmingDelete}
+                  open={confirmingDelete}
+                >
+                  <Dialog.Portal>
+                    <Dialog.Backdrop className={s.deleteDialogBackdrop} />
+                    <Dialog.Viewport className={s.deleteDialogViewport}>
+                      <Dialog.Popup className={s.deleteDialogPopup}>
+                        <div className={s.deleteDialogIcon}>
+                          <IconTrash aria-hidden="true" />
+                        </div>
+                        <Dialog.Title className={s.deleteDialogTitle}>
+                          Delete this Memory?
+                        </Dialog.Title>
+                        <Dialog.Description
+                          className={s.deleteDialogDescription}
+                        >
+                          It will leave your Review queue immediately. You can
+                          restore it from Library for 30 days.
+                        </Dialog.Description>
+                        <div className={s.deleteDialogActions}>
+                          <Dialog.Close
+                            className={s.deleteDialogCancel}
+                            type="button"
+                          >
+                            Keep Memory
+                          </Dialog.Close>
+                          <Form method="post">
+                            <input
+                              name="corpusId"
+                              type="hidden"
+                              value={loaderData.corpusId}
+                            />
+                            <input
+                              name="promptId"
+                              type="hidden"
+                              value={loaderData.prompt.id}
+                            />
+                            <input
+                              name="promptRevision"
+                              type="hidden"
+                              value={loaderData.prompt.revision}
+                            />
+                            <input
+                              name="snapshotDigest"
+                              type="hidden"
+                              value={loaderData.snapshotDigest}
+                            />
+                            <Button
+                              name="intent"
+                              type="submit"
+                              value="delete"
+                              variant="destructive"
+                            >
+                              Delete Memory
+                            </Button>
+                          </Form>
+                        </div>
+                      </Dialog.Popup>
+                    </Dialog.Viewport>
+                  </Dialog.Portal>
+                </Dialog.Root>
+              </>
             ) : !resolved ? (
               <Form className={s.recallControls} method="post">
                 <input

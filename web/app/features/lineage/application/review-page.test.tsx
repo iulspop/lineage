@@ -211,11 +211,25 @@ describe("ReviewPage", () => {
     expect(container.querySelector('input[name="promptId"]')).toHaveValue(
       "capital-of-france",
     )
-    expect(screen.getByRole("button", { name: "Delete" })).toHaveAttribute(
-      "data-review-shortcut",
-      "delete-edit",
-    )
+    const deleteButton = screen.getByRole("button", { name: "Delete" })
+    expect(deleteButton).toHaveAttribute("data-review-shortcut", "delete-edit")
     expect(screen.getByText(/⌘⌫/)).toBeInTheDocument()
+
+    fireEvent.click(deleteButton)
+
+    expect(
+      screen.getByRole("heading", { name: "Delete this Memory?" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/leave your Review queue immediately/),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Keep Memory" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Delete Memory" })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep Memory" }))
+    expect(
+      screen.queryByRole("heading", { name: "Delete this Memory?" }),
+    ).not.toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: "Escape" })
     expect(screen.queryByLabelText("Challenge")).not.toBeInTheDocument()
