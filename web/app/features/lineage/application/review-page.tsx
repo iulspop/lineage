@@ -131,6 +131,11 @@ export function ReviewPage({
     loaderData.prompt?.kind === "basic" || loaderData.prompt?.kind === "cloze"
 
   useEffect(() => {
+    if (actionData && "completed" in actionData && actionData.completed)
+      navigate(continueTo, { replace: true })
+  }, [actionData, continueTo, navigate])
+
+  useEffect(() => {
     if (editing) editChallengeRef.current?.focus()
   }, [editing])
 

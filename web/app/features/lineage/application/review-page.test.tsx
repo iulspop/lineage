@@ -1,4 +1,4 @@
-import { createRoutesStub } from "react-router"
+import { createRoutesStub, useLocation } from "react-router"
 import { describe, expect, test } from "vitest"
 
 import { ReviewPage } from "./review-page"
@@ -62,6 +62,32 @@ describe("ReviewPage", () => {
     expect(container.querySelector('input[name="snapshotDigest"]')).toHaveValue(
       "demo-digest",
     )
+  })
+
+  test("advances immediately after recording an assessment", async () => {
+    function ReviewRoute() {
+      const location = useLocation()
+      if (location.search === "?completed=1") return <h1>Next memory</h1>
+      return (
+        <ReviewPage
+          actionData={{
+            assessment: "good",
+            completed: true,
+            nextIntervalMinutes: 10,
+          }}
+          loaderData={loaderData}
+        />
+      )
+    }
+
+    const Router = createRoutesStub([
+      { Component: ReviewRoute, path: "/review" },
+    ])
+    render(<Router initialEntries={["/review"]} />)
+
+    expect(
+      await screen.findByRole("heading", { name: "Next memory" }),
+    ).toBeInTheDocument()
   })
 
   test("conceals every image region and highlights only the atomic target", () => {
