@@ -177,24 +177,29 @@ export function ReviewPage({
         return
       }
 
+      if (
+        canQuickEdit &&
+        (event.metaKey || event.ctrlKey) &&
+        (event.key === "Backspace" || event.key === "Delete")
+      ) {
+        event.preventDefault()
+        setEditing(true)
+        setConfirmingDelete(true)
+        return
+      }
+
       if (typing) {
-        if (editing && (event.metaKey || event.ctrlKey)) {
-          if (event.key === "Enter") {
-            event.preventDefault()
-            document
-              .querySelector<HTMLButtonElement>(
-                '[data-review-shortcut="save-edit"]',
-              )
-              ?.click()
-          }
-          if (event.key === "Backspace" || event.key === "Delete") {
-            event.preventDefault()
-            document
-              .querySelector<HTMLButtonElement>(
-                '[data-review-shortcut="delete-edit"]',
-              )
-              ?.click()
-          }
+        if (
+          editing &&
+          (event.metaKey || event.ctrlKey) &&
+          event.key === "Enter"
+        ) {
+          event.preventDefault()
+          document
+            .querySelector<HTMLButtonElement>(
+              '[data-review-shortcut="save-edit"]',
+            )
+            ?.click()
         }
         return
       }

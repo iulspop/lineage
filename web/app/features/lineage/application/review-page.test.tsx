@@ -235,6 +235,25 @@ describe("ReviewPage", () => {
     expect(screen.queryByLabelText("Challenge")).not.toBeInTheDocument()
   })
 
+  test("opens delete confirmation with Command-Backspace from the review", () => {
+    const Router = createRoutesStub([
+      {
+        Component: () => (
+          <ReviewPage actionData={undefined} loaderData={loaderData} />
+        ),
+        path: "/review",
+      },
+    ])
+    render(<Router initialEntries={["/review"]} />)
+
+    fireEvent.keyDown(window, { key: "Backspace", metaKey: true })
+
+    expect(
+      screen.getByRole("heading", { name: "Delete this Memory?" }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Delete Memory" })).toBeEnabled()
+  })
+
   test("navigates back to a completed review and keeps quick edit available", () => {
     const Router = createRoutesStub([
       {
