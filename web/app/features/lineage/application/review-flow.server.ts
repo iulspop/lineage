@@ -93,20 +93,22 @@ export async function loadReviewPrompt({
 
 export async function loadReviewProgress({
   corpusId,
+  historyLimit = 10,
   nextDueAt = null,
   promptId,
   store,
   userId,
 }: {
   corpusId: string
+  historyLimit?: number
   nextDueAt?: Date | null
   promptId: string | null
   store: ReviewRecordStore
   userId: string
 }) {
   const [history, latest, reviewCount] = await Promise.all([
-    store.recentForCorpus?.({ corpusId, limit: 10, userId }) ??
-      store.recentForUser(userId, 10),
+    store.recentForCorpus?.({ corpusId, limit: historyLimit, userId }) ??
+      store.recentForUser(userId, historyLimit),
     promptId
       ? store.latestForPrompt({ corpusId, promptId, userId })
       : Promise.resolve(null),

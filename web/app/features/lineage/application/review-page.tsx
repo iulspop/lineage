@@ -1,5 +1,7 @@
 import {
   IconArrowLeft,
+  IconChevronLeft,
+  IconChevronRight,
   IconEdit,
   IconKeyboard,
   IconTrash,
@@ -60,14 +62,22 @@ export function ReviewPage({
       assessment: string
       attemptedResponse: string | null
       nextIntervalMinutes: number
+      promptId: string
       reviewedAt: string
     }>
+    historyIndex?: number | null
     presentation: string[]
     prompt:
       | (Pick<ReviewContract, "id" | "revision"> & Partial<ReviewContract>)
       | null
     reviewedAt: string
     reviewCount: number
+    reviewedResult?: {
+      assessment: string
+      completed: true
+      nextIntervalMinutes: number
+      presentation: string[]
+    } | null
     sessionCompleted: number
     sessionLimit: number | null
     snapshotDigest: string
@@ -81,7 +91,10 @@ export function ReviewPage({
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const timeZone = useTimeZone()
-  const resolved = actionData && "completed" in actionData ? actionData : null
+  const resolved =
+    actionData && "completed" in actionData
+      ? actionData
+      : (loaderData.reviewedResult ?? null)
   const presentation =
     resolved?.completed === false
       ? resolved.presentation
@@ -96,6 +109,24 @@ export function ReviewPage({
     continueSearch.set("limit", String(loaderData.sessionLimit))
   continueSearch.set("completed", String(nextCompleted))
   const continueTo = `/review?${continueSearch.toString()}`
+  const historyIndex = loaderData.historyIndex ?? null
+  const reviewNavigationUrl = (nextHistoryIndex: number | null) => {
+    const nextSearch = new URLSearchParams(searchParams)
+    if (nextHistoryIndex === null) nextSearch.delete("history")
+    else nextSearch.set("history", String(nextHistoryIndex))
+    return `/review?${nextSearch.toString()}`
+  }
+  const previousReviewUrl =
+    loaderData.sessionCompleted > 0 &&
+    (historyIndex === null ||
+      historyIndex + 1 <
+        Math.min(loaderData.sessionCompleted, loaderData.history.length))
+      ? reviewNavigationUrl(historyIndex === null ? 0 : historyIndex + 1)
+      : null
+  const nextReviewUrl =
+    historyIndex === null
+      ? null
+      : reviewNavigationUrl(historyIndex === 0 ? null : historyIndex - 1)
   const canQuickEdit =
     loaderData.prompt?.kind === "basic" || loaderData.prompt?.kind === "cloze"
 
@@ -160,6 +191,16 @@ export function ReviewPage({
         setShowShortcuts((value) => !value)
         return
       }
+      if (event.key === "ArrowLeft" && previousReviewUrl) {
+        event.preventDefault()
+        navigate(previousReviewUrl)
+        return
+      }
+      if (event.key === "ArrowRight" && nextReviewUrl) {
+        event.preventDefault()
+        navigate(nextReviewUrl)
+        return
+      }
       if (event.key.toLowerCase() === "e" && canQuickEdit) {
         event.preventDefault()
         setEditing(true)
@@ -188,7 +229,16 @@ export function ReviewPage({
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [canQuickEdit, continueTo, editing, navigate, resolved, showShortcuts])
+  }, [
+    canQuickEdit,
+    continueTo,
+    editing,
+    navigate,
+    nextReviewUrl,
+    previousReviewUrl,
+    resolved,
+    showShortcuts,
+  ])
 
   return (
     <main className={s.shell}>
@@ -206,6 +256,28 @@ export function ReviewPage({
           <span>{loaderData.reviewCount} reviewed</span>
         </div>
         <div className={s.topbarActions}>
+          <button
+            aria-label="Previous reviewed memory"
+            className={s.iconButton}
+            disabled={!previousReviewUrl}
+            onClick={() => {
+              if (previousReviewUrl) navigate(previousReviewUrl)
+            }}
+            type="button"
+          >
+            <IconChevronLeft aria-hidden="true" />
+          </button>
+          <button
+            aria-label="Next memory in review history"
+            className={s.iconButton}
+            disabled={!nextReviewUrl}
+            onClick={() => {
+              if (nextReviewUrl) navigate(nextReviewUrl)
+            }}
+            type="button"
+          >
+            <IconChevronRight aria-hidden="true" />
+          </button>
           {canQuickEdit && loaderData.prompt ? (
             <button
               aria-label="Quick edit memory"
@@ -259,6 +331,12 @@ export function ReviewPage({
                 <kbd>E</kbd>
               </dt>
               <dd>Quick edit</dd>
+            </div>
+            <div>
+              <dt>
+                <kbd>←</kbd> <kbd>→</kbd>
+              </dt>
+              <dd>Previous or next reviewed memory</dd>
             </div>
             <div>
               <dt>

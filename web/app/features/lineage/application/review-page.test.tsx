@@ -195,6 +195,55 @@ describe("ReviewPage", () => {
     expect(screen.queryByLabelText("Challenge")).not.toBeInTheDocument()
   })
 
+  test("navigates back to a completed review and keeps quick edit available", () => {
+    const Router = createRoutesStub([
+      {
+        Component: () => (
+          <ReviewPage
+            actionData={undefined}
+            loaderData={{
+              ...loaderData,
+              history: [
+                {
+                  assessment: "good",
+                  attemptedResponse: "Paris",
+                  nextIntervalMinutes: 10,
+                  promptId: "capital-of-france",
+                  reviewedAt: "2026-08-26T12:00:00.000Z",
+                },
+              ],
+              historyIndex: 0,
+              presentation: ["What is the capital of France?", "Paris"],
+              reviewedResult: {
+                assessment: "good",
+                completed: true,
+                nextIntervalMinutes: 10,
+                presentation: ["What is the capital of France?", "Paris"],
+              },
+              sessionCompleted: 1,
+            }}
+          />
+        ),
+        path: "/review",
+      },
+    ])
+    render(<Router initialEntries={["/review?completed=1&history=0"]} />)
+
+    expect(screen.getByText("Paris")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Previous reviewed memory" }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole("button", { name: "Next memory in review history" }),
+    ).toBeEnabled()
+
+    fireEvent.keyDown(window, { key: "e" })
+
+    expect(
+      screen.getByRole("heading", { name: "Revise without leaving review" }),
+    ).toBeInTheDocument()
+  })
+
   test("given: every Prompt is scheduled for the future, should: show no review card", () => {
     const Router = createRoutesStub([
       {

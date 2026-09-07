@@ -52,6 +52,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [progress, user] = await Promise.all([
     loadReviewProgress({
       corpusId: review.corpusId,
+      historyLimit: Math.max(10, sessionCompleted),
       nextDueAt: review.queueDueAt ? new Date(review.queueDueAt) : null,
       promptId: review.prompt?.id ?? null,
       store: reviewRecordStore,
@@ -59,9 +60,44 @@ export async function loader({ request }: Route.LoaderArgs) {
     }),
     retrieveUserFromDatabaseById(userId),
   ])
+  const requestedHistoryIndex = Number(searchParams.get("history"))
+  const historyIndex =
+    Number.isInteger(requestedHistoryIndex) &&
+    requestedHistoryIndex >= 0 &&
+    requestedHistoryIndex < Math.min(sessionCompleted, progress.history.length)
+      ? requestedHistoryIndex
+      : null
+  const historicalReview =
+    historyIndex === null ? null : progress.history[historyIndex]
+  const historicalPrompt = historicalReview
+    ? (parseCorpusDocument(
+        JSON.parse(resolution.snapshot.canonicalJson),
+      ).prompts.find((prompt) => prompt.id === historicalReview.promptId) ??
+      null)
+    : null
+  const historicalResolution =
+    historicalPrompt && historicalReview
+      ? reviewCore.resolve(historicalPrompt, historicalReview.attemptedResponse)
+      : null
+
   return {
     ...review,
     ...progress,
+    ...(historicalPrompt && historicalReview && historicalResolution
+      ? {
+          captureResponse: false,
+          presentation: historicalResolution.presentation,
+          prompt: historicalPrompt,
+          reviewedResult: {
+            assessment: historicalReview.assessment,
+            completed: true as const,
+            nextIntervalMinutes: historicalReview.nextIntervalMinutes,
+            presentation: historicalResolution.presentation,
+          },
+          snapshotDigest: resolution.snapshot.digest,
+        }
+      : { reviewedResult: null }),
+    historyIndex,
     sessionCompleted,
     sessionLimit,
     userEmail: user?.email ?? "",
