@@ -10,6 +10,7 @@ const prompts: ReviewContract[] = ["first", "second", "third"].map((id) => ({
   resolution: [`Challenge ${id}`, `Answer ${id}`],
   response: "text",
   revision: 1,
+  status: "active",
   withheld: [`Answer ${id}`],
 }))
 

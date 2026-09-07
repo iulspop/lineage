@@ -69,4 +69,20 @@ describe("recall queue parity", () => {
 			"2026-09-03T12:00:00.000Z",
 		);
 	});
+
+	it("excludes retired and suspended prompts from selection and due counts", () => {
+		const input = {
+			asOf: new Date("2026-09-02T12:00:00Z"),
+			latestReviews: [],
+			prompts: [
+				{ ...prompts[0], status: "retired" as const },
+				{ ...prompts[1], status: "suspended" as const },
+				prompts[2],
+			],
+			toRecallState,
+		};
+
+		expect(selectNextRecall(input)?.prompt.id).toBe("third");
+		expect(countDueRecalls(input)).toBe(1);
+	});
 });

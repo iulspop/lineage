@@ -26,25 +26,27 @@ export function selectNextRecall<T extends RecallQueueReview>(
 	const reviewsByPrompt = new Map(
 		input.latestReviews.map((review) => [review.promptId, review]),
 	);
-	const queue = input.prompts.map((prompt, corpusOrder) => {
-		const latest = reviewsByPrompt.get(prompt.id) ?? null;
-		const promptDueAt = latest
-			? policy.dueAt(input.toRecallState(latest))
-			: null;
-		const priority = !latest
-			? 1
-			: promptDueAt && promptDueAt <= input.asOf
-				? 0
-				: 2;
-		return {
-			corpusOrder,
-			dueAt: promptDueAt,
-			latest,
-			priority,
-			prompt,
-			reviewed: latest !== null,
-		};
-	});
+	const queue = input.prompts
+		.filter((prompt) => prompt.status === "active")
+		.map((prompt, corpusOrder) => {
+			const latest = reviewsByPrompt.get(prompt.id) ?? null;
+			const promptDueAt = latest
+				? policy.dueAt(input.toRecallState(latest))
+				: null;
+			const priority = !latest
+				? 1
+				: promptDueAt && promptDueAt <= input.asOf
+					? 0
+					: 2;
+			return {
+				corpusOrder,
+				dueAt: promptDueAt,
+				latest,
+				priority,
+				prompt,
+				reviewed: latest !== null,
+			};
+		});
 	queue.sort((left, right) => {
 		if (left.priority !== right.priority) return left.priority - right.priority;
 		if (left.priority !== 1) {
@@ -65,6 +67,8 @@ export function countDueRecalls<T extends RecallQueueReview>(
 		input.latestReviews.map((review) => [review.promptId, review]),
 	);
 	return input.prompts.filter((prompt) => {
+		if (prompt.status !== "active") return false;
+
 		const latest = reviewsByPrompt.get(prompt.id) ?? null;
 		const promptDueAt = latest
 			? policy.dueAt(input.toRecallState(latest))
