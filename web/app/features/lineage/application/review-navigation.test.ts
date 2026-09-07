@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest"
 import {
   createReviewAfterDeletionUrl,
   createReviewContinuationUrl,
+  parseReviewHistoryIndex,
 } from "./review-navigation"
 
 describe("createReviewContinuationUrl", () => {
@@ -13,6 +14,16 @@ describe("createReviewContinuationUrl", () => {
     const expected = "/review?limit=10&completed=4"
 
     expect(actual).toEqual(expected)
+  })
+})
+
+describe("parseReviewHistoryIndex", () => {
+  test("given: no history parameter, should: keep the current Review queue selected", () => {
+    expect(parseReviewHistoryIndex(null, 3)).toBeNull()
+  })
+
+  test("given: an explicit valid history parameter, should: select that completed Review", () => {
+    expect(parseReviewHistoryIndex("0", 3)).toBe(0)
   })
 })
 

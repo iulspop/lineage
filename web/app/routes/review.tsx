@@ -15,6 +15,7 @@ import {
 import {
   createReviewAfterDeletionUrl,
   createReviewContinuationUrl,
+  parseReviewHistoryIndex,
 } from "~/features/lineage/application/review-navigation"
 import { ReviewPage } from "~/features/lineage/application/review-page"
 import {
@@ -63,13 +64,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     }),
     retrieveUserFromDatabaseById(userId),
   ])
-  const requestedHistoryIndex = Number(searchParams.get("history"))
-  const historyIndex =
-    Number.isInteger(requestedHistoryIndex) &&
-    requestedHistoryIndex >= 0 &&
-    requestedHistoryIndex < Math.min(sessionCompleted, progress.history.length)
-      ? requestedHistoryIndex
-      : null
+  const historyIndex = parseReviewHistoryIndex(
+    searchParams.get("history"),
+    Math.min(sessionCompleted, progress.history.length),
+  )
   const historicalReview =
     historyIndex === null ? null : progress.history[historyIndex]
   const historicalPrompt = historicalReview

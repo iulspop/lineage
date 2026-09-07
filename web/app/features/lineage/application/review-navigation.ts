@@ -12,6 +12,20 @@ const reviewSessionSearch = (requestUrl: string) => {
   return continuation
 }
 
+export const parseReviewHistoryIndex = (
+  value: string | null,
+  historyLength: number,
+) => {
+  if (value === null) return null
+
+  const requestedIndex = Number(value)
+  return Number.isInteger(requestedIndex) &&
+    requestedIndex >= 0 &&
+    requestedIndex < historyLength
+    ? requestedIndex
+    : null
+}
+
 export const createReviewAfterDeletionUrl = (requestUrl: string) => {
   const continuation = reviewSessionSearch(requestUrl)
   const search = continuation.toString()
