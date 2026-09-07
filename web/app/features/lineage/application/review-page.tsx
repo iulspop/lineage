@@ -160,7 +160,7 @@ export function ReviewPage({
         setShowShortcuts((value) => !value)
         return
       }
-      if (event.key.toLowerCase() === "e" && canQuickEdit && !resolved) {
+      if (event.key.toLowerCase() === "e" && canQuickEdit) {
         event.preventDefault()
         setEditing(true)
         return
@@ -206,7 +206,7 @@ export function ReviewPage({
           <span>{loaderData.reviewCount} reviewed</span>
         </div>
         <div className={s.topbarActions}>
-          {canQuickEdit && loaderData.prompt && !resolved ? (
+          {canQuickEdit && loaderData.prompt ? (
             <button
               aria-label="Quick edit memory"
               className={s.iconButton}

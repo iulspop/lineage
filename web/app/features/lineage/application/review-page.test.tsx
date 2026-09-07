@@ -249,5 +249,18 @@ describe("ReviewPage", () => {
     expect(document.querySelector('input[name="reviewedAt"]')).toHaveValue(
       "2026-08-26T12:00:00.000Z",
     )
+    expect(
+      screen.getByRole("button", { name: "Quick edit memory" }),
+    ).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: "e" })
+
+    expect(
+      screen.getByRole("heading", { name: "Revise without leaving review" }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("Challenge")).toHaveValue(
+      "What is the capital of France?",
+    )
+    expect(screen.getByLabelText("Answer")).toHaveValue("Paris")
   })
 })
