@@ -2,6 +2,7 @@ import {
   IconArrowLeft,
   IconEdit,
   IconKeyboard,
+  IconTrash,
   IconX,
 } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
@@ -133,17 +134,23 @@ export function ReviewPage({
       }
 
       if (typing) {
-        if (
-          editing &&
-          (event.metaKey || event.ctrlKey) &&
-          event.key === "Enter"
-        ) {
-          event.preventDefault()
-          document
-            .querySelector<HTMLButtonElement>(
-              '[data-review-shortcut="save-edit"]',
-            )
-            ?.click()
+        if (editing && (event.metaKey || event.ctrlKey)) {
+          if (event.key === "Enter") {
+            event.preventDefault()
+            document
+              .querySelector<HTMLButtonElement>(
+                '[data-review-shortcut="save-edit"]',
+              )
+              ?.click()
+          }
+          if (event.key === "Backspace" || event.key === "Delete") {
+            event.preventDefault()
+            document
+              .querySelector<HTMLButtonElement>(
+                '[data-review-shortcut="delete-edit"]',
+              )
+              ?.click()
+          }
         }
         return
       }
@@ -423,11 +430,30 @@ export function ReviewPage({
                 />
                 <div className={s.editActions}>
                   <span>
-                    <kbd>⌘↵</kbd> save
+                    <kbd>⌘↵</kbd> save · <kbd>⌘⌫</kbd> delete
                   </span>
-                  <Button data-review-shortcut="save-edit" type="submit">
-                    Save revision
-                  </Button>
+                  <div className={s.editActionButtons}>
+                    <Button
+                      data-review-shortcut="delete-edit"
+                      name="intent"
+                      onClick={(event) => {
+                        if (
+                          !window.confirm(
+                            "Delete this Memory? You can restore it from Library for 30 days.",
+                          )
+                        )
+                          event.preventDefault()
+                      }}
+                      type="submit"
+                      value="delete"
+                      variant="destructive"
+                    >
+                      <IconTrash aria-hidden="true" /> Delete
+                    </Button>
+                    <Button data-review-shortcut="save-edit" type="submit">
+                      Save revision
+                    </Button>
+                  </div>
                 </div>
               </Form>
             ) : !resolved ? (

@@ -3,6 +3,7 @@ import {
   IconDownload,
   IconEye,
   IconEyeOff,
+  IconRestore,
   IconSearch,
   IconSparkles,
 } from "@tabler/icons-react"
@@ -13,10 +14,18 @@ import type { CorpusBrowseProjection } from "./corpus-browse-projection"
 import * as s from "./corpus-detail-page.css"
 import { AppShell } from "~/components/app-shell/app-shell"
 import { LatexText } from "~/components/latex-text/latex-text"
+import { Button } from "~/components/ui/button"
 import { PageHeader } from "~/components/ui/page-header"
 import { formatDateTime, useTimeZone } from "~/utils/time-zone"
 
-const tabs = ["overview", "memories", "sources", "history", "advanced"] as const
+const tabs = [
+  "overview",
+  "memories",
+  "sources",
+  "deleted",
+  "history",
+  "advanced",
+] as const
 
 type CorpusDetailPageProps = CorpusBrowseProjection & {
   collectionMemberships: Array<{ collectionId: string; promptId: string }>
@@ -25,6 +34,12 @@ type CorpusDetailPageProps = CorpusBrowseProjection & {
     id: string
     parentId?: string
     title: string
+  }>
+  deletedMemories: Array<{
+    challenge: string[]
+    deletedAt: string
+    promptId: string
+    restoreUntil: string
   }>
   filters: {
     collection: string
@@ -480,6 +495,48 @@ export function CorpusDetailPage(props: CorpusDetailPageProps) {
                 ))
               )}
             </div>
+          </section>
+        )}
+
+        {activeTab === "deleted" && (
+          <section className={s.panel}>
+            <span className={s.eyebrow}>Deleted Memories</span>
+            <h2>Restore for 30 days</h2>
+            <p className={s.muted}>
+              Deleted Memories stay out of Review and can be restored here for
+              30 days.
+            </p>
+            {props.deletedMemories.length === 0 ? (
+              <p className={s.empty}>No restorable deleted Memories.</p>
+            ) : (
+              <div className={s.sectionStack}>
+                {props.deletedMemories.map((memory) => (
+                  <article className={s.panel} key={memory.promptId}>
+                    <LatexText>{memory.challenge.join("\n")}</LatexText>
+                    <small>
+                      Deleted {formatDateTime(memory.deletedAt, timeZone)} ·
+                      Restorable until {formatDateTime(memory.restoreUntil, timeZone)}
+                    </small>
+                    <Form method="post">
+                      <input name="intent" type="hidden" value="restore" />
+                      <input
+                        name="promptId"
+                        type="hidden"
+                        value={memory.promptId}
+                      />
+                      <input
+                        name="snapshotDigest"
+                        type="hidden"
+                        value={props.advanced.digest}
+                      />
+                      <Button type="submit" variant="outline">
+                        <IconRestore aria-hidden="true" /> Restore Memory
+                      </Button>
+                    </Form>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         )}
 

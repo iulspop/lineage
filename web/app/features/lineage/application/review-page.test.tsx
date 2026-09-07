@@ -185,6 +185,11 @@ describe("ReviewPage", () => {
     expect(container.querySelector('input[name="promptId"]')).toHaveValue(
       "capital-of-france",
     )
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveAttribute(
+      "data-review-shortcut",
+      "delete-edit",
+    )
+    expect(screen.getByText(/⌘⌫/)).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: "Escape" })
     expect(screen.queryByLabelText("Challenge")).not.toBeInTheDocument()

@@ -3,6 +3,7 @@ import { data, redirect } from "react-router"
 import type { Route } from "./+types/review"
 import { requireUserId } from "~/features/auth/application/auth-session.server"
 import { resolveActiveCorpus } from "~/features/lineage/application/active-corpus.server"
+import { deleteMemory } from "~/features/lineage/application/delete-memory.server"
 import type { ManualMemoryDraft } from "~/features/lineage/application/manual-memory-draft"
 import {
   completeReview,
@@ -116,6 +117,20 @@ export async function action({ request }: Route.ActionArgs) {
     typeof formData.get("attempt") === "string"
       ? String(formData.get("attempt"))
       : null
+
+  if (intent === "delete") {
+    await deleteMemory({
+      baseDigest: snapshotDigest,
+      corpusId,
+      now: new Date(),
+      ownerId: userId,
+      promptId,
+      store: corpusSnapshotStore,
+      validator: lineageRuntime,
+    })
+    const reviewUrl = new URL(request.url)
+    throw redirect(`${reviewUrl.pathname}${reviewUrl.search}`)
+  }
 
   if (intent === "revise") {
     if (prompt.kind !== "basic" && prompt.kind !== "cloze")

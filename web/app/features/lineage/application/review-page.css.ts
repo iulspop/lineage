@@ -301,7 +301,13 @@ export const editActions = style({
   color: theme.color.text.muted,
   display: "flex",
   fontSize: theme.font.role.metadata,
+  gap: theme.space[3],
   justifyContent: "space-between",
+})
+
+export const editActionButtons = style({
+  display: "flex",
+  gap: theme.space[2],
 })
 
 export const error = style({
